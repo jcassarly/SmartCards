@@ -1,7 +1,9 @@
 import pigpio
 import struct
 import time
-import image_array
+from conversion import DisplayConversion
+import argparse
+import download_image
 
 from command import *
 
@@ -31,7 +33,7 @@ class ImageFlasher:
     RESET_PIN = 5 # gpio 5, pin 29
     READY_PIN = 6 # gpio 6, pin 31
 
-    RESET_DELAY = 0.2 # sec
+    RESET_DELAY = 0.1 # sec
 
     READY_WAIT_TIMEOUT = 1 # sec
 
@@ -62,8 +64,8 @@ class ImageFlasher:
         time.sleep(self.RESET_DELAY)
 
     def __power_up(self):
-        self.__write_command(Command.POWER_SETTING)
         self.__write_command(Command.BOOSTER_SOFT_START)
+        self.__write_command(Command.POWER_SETTING)
         self.__write_command(Command.POWER_ON)
 
         self.__wait_until_ready()
@@ -75,10 +77,10 @@ class ImageFlasher:
         self.__write_command(Command.VCM_DC)
         self.__write_command(Command.VCOM_DATA_INTERVAL)
 
-    def __wait_until_ready(self):
+    def __wait_until_ready(self, use_timeout=True):
         timer = time.time()
         while (self.pi.read(self.READY_PIN) == 0):
-            if (time.time() - timer > self.READY_WAIT_TIMEOUT):
+            if (use_timeout and (time.time() - timer > self.READY_WAIT_TIMEOUT)):
                 print("Timed out")
                 return False
 
@@ -103,9 +105,44 @@ class ImageFlasher:
 
     def transmit_data(self, data):
         self.__write_command(transmission_command(data))
-        #self.__write_command(Command.DATA_STOP)
         self.__write_command(Command.REFRESH)
 
-flasher = ImageFlasher()
+        self.__wait_until_ready(use_timeout=False)
 
-flasher.transmit_data(image_array.arr)
+if __name__ == '__main__':
+    output_path = 'yeet.jpg'
+
+    start_time = time.time()
+
+    downloaded = download_image.cli_download(output_path)
+
+    print("Download Elapsed: {}".format(time.time() - start_time))
+
+
+    if downloaded:
+        start_time = time.time()
+
+        image = DisplayConversion(output_path)
+
+        print("Conversion Elapsed: {}".format(time.time() - start_time))
+
+        start_time = time.time()
+
+        flasher = ImageFlasher()
+        flasher.transmit_data(image.epaper_array)
+
+        print("Flash Elapsed: {}".format(time.time() - start_time))
+
+'''
+    with open(os.path.join("flashing", "image_array.py"), "w") as output:
+        output.write("arr = [")
+
+        index = 0
+        for b in arr:
+            if index % 50 == 0:
+                output.write('\n    ')
+            output.write('0x{0:02X},'.format(b))
+            index = index + 1
+
+        output.write("\n]\n")
+'''
