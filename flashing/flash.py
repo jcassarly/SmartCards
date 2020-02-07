@@ -3,7 +3,7 @@ import struct
 import time
 from conversion import DisplayConversion
 import argparse
-import download_image
+import image_loader
 
 from command import *
 
@@ -110,19 +110,16 @@ class ImageFlasher:
         self.__wait_until_ready(use_timeout=False)
 
 if __name__ == '__main__':
-    output_path = 'img.jpg'
-
     start_time = time.time()
 
-    downloaded = download_image.cli_download(output_path)
+    image_array = image_loader.image_cli()
 
     print("Download Elapsed: {}".format(time.time() - start_time))
 
-
-    if downloaded:
+    if image_array:
         start_time = time.time()
 
-        image = DisplayConversion(output_path)
+        image = DisplayConversion(image_array)
 
         print("Conversion Elapsed: {}".format(time.time() - start_time))
 
