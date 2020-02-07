@@ -110,7 +110,7 @@ class ImageFlasher:
         self.__wait_until_ready(use_timeout=False)
 
 if __name__ == '__main__':
-    output_path = 'yeet.jpg'
+    output_path = 'img.jpg'
 
     start_time = time.time()
 
