@@ -74,7 +74,6 @@ def image_cli():
     elif args.source in url_choices:
         print("Downloading URL")
         image_array = __download_image(args.source_arg)
-        print(image_array)
     elif args.source in file_choices:
         print("Reading Image file")
         image_array = args.source_arg

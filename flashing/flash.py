@@ -18,14 +18,14 @@ class ImageFlasher:
     # p is 0 since CS is active low
     # u is 0 since using GPIO reserved for SPI
     # A is 0 since using auxillary SPI
-    # W is 0 since device is not 3-wire
-    # n is 0 since it is ignored to to W=0
+    # W is 1 since device is not 3-wire
+    # n is 1 since it is ignored to to W=0
     # T is 0 since the pi is little endian by default
-    # R is 1 since the ADC is big endian
+    # R is 1 since the ADC is big endian TODO: update this comment and maybe change to 0
     # b is 0 since using 8-bit words
 
     # SPI setup options
-    SPI_FLAGS   = 0x00008000
+    SPI_FLAGS   = 0x00000000
     SPI_BAUD    = 2000000
     SPI_CHANNEL = 0  # CE is on pin 8
 
@@ -33,19 +33,42 @@ class ImageFlasher:
     RESET_PIN = 5 # gpio 5, pin 29
     READY_PIN = 6 # gpio 6, pin 31
 
+    AND1_PIN = 17 # gpio 17, pin 11
+    AND2_PIN = 27 # gpio 27, pin 13
+    AND3_PIN = 22 # gpio 22, pin 15
+    AND_OUT_PIN = 18 # gpio 18, pin 12
+
     RESET_DELAY = 0.1 # sec
 
     READY_WAIT_TIMEOUT = 1 # sec
 
+    MIN_ID = 1
+    MAX_ID = 6
+    ID_RANGE = range(MIN_ID, MAX_ID + 1)
+
     def __init__(self):
         self.pi = pigpio.pi()
         self.spi_handle = self.pi.spi_open(self.SPI_CHANNEL, self.SPI_BAUD, self.SPI_FLAGS)
+
+        self.__setup_and_gate_pins()
 
         self.__setup_non_spi_pins()
 
         self.__reset_display()
 
         self.__power_up()
+
+    def __setup_and_gate_pins(self):
+        self.pi.set_mode(self.AND1_PIN, pigpio.OUTPUT)
+        self.pi.set_mode(self.AND2_PIN, pigpio.OUTPUT)
+        self.pi.set_mode(self.AND3_PIN, pigpio.OUTPUT)
+        self.pi.set_mode(self.AND_OUT_PIN, pigpio.INPUT)
+
+        self.pi.write(self.AND1_PIN, 0)
+        self.pi.write(self.AND2_PIN, 0)
+        self.pi.write(self.AND3_PIN, 0)
+
+        self.pi.set_pull_up_down(self.AND_OUT_PIN, pigpio.PUD_DOWN)
 
     def __setup_non_spi_pins(self):
         # Set IO modes
@@ -54,10 +77,9 @@ class ImageFlasher:
         self.pi.set_mode(self.READY_PIN, pigpio.INPUT)
 
         # put a pull down on the ready
-        self.pi.set_pull_up_down(self.READY_PIN, pigpio.PUD_UP) # TODO: verify correct pull up/down
+        self.pi.set_pull_up_down(self.READY_PIN, pigpio.PUD_UP)
 
     def __reset_display(self):
-        print("resetting display")
         self.pi.write(self.RESET_PIN, 0)
         time.sleep(self.RESET_DELAY)
         self.pi.write(self.RESET_PIN, 1)
@@ -76,6 +98,13 @@ class ImageFlasher:
         self.__write_command(Command.RESOLUTION)
         self.__write_command(Command.VCM_DC)
         self.__write_command(Command.VCOM_DATA_INTERVAL)
+
+    def __ping_display(self, display_id):
+        self.pi.write(self.AND1_PIN, (display_id & 0x01) > 0)
+        self.pi.write(self.AND2_PIN, (display_id & 0x02) > 0)
+        self.pi.write(self.AND3_PIN, (display_id & 0x04) > 0)
+
+        return self.pi.read(self.AND_OUT_PIN) == 1
 
     def __wait_until_ready(self, use_timeout=True):
         timer = time.time()
@@ -96,18 +125,25 @@ class ImageFlasher:
         # write the command to the display
         self.__put_in_command_mode()
         self.pi.spi_write(self.spi_handle, [command_structure.command])
-        print("writing: {}".format(command_structure.command))
 
         # write any data to the display
-        #for data_byte in command_structure.data:
         self.__put_in_data_mode()
-        self.pi.spi_write(self.spi_handle, command_structure.data) # TODO: may need to make CS go high after each byte
+        self.pi.spi_write(self.spi_handle, command_structure.data)
 
     def transmit_data(self, data):
-        self.__write_command(transmission_command(data))
-        self.__write_command(Command.REFRESH)
+        for display_id in self.ID_RANGE:
+            if self.__ping_display(display_id):
+                print("Flashing display {}".format(display_id))
 
-        self.__wait_until_ready(use_timeout=False)
+                self.__write_command(transmission_command(data))
+                self.__write_command(Command.REFRESH)
+
+                self.__wait_until_ready(use_timeout=False)
+
+                return display_id
+
+        print("Could not find a valid ID [1-6] - not flashing")
+        return False
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -126,20 +162,7 @@ if __name__ == '__main__':
         start_time = time.time()
 
         flasher = ImageFlasher()
-        flasher.transmit_data(image.epaper_array)
+        display_id = flasher.transmit_data(image.epaper_array)
+        # TODO: integrate the display ID with the deck management
 
         print("Flash Elapsed: {}".format(time.time() - start_time))
-
-'''
-    with open(os.path.join("flashing", "image_array.py"), "w") as output:
-        output.write("arr = [")
-
-        index = 0
-        for b in arr:
-            if index % 50 == 0:
-                output.write('\n    ')
-            output.write('0x{0:02X},'.format(b))
-            index = index + 1
-
-        output.write("\n]\n")
-'''
