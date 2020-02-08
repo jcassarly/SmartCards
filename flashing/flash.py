@@ -38,6 +38,9 @@ class ImageFlasher:
     AND3_PIN = 22 # gpio 22, pin 15
     AND_OUT_PIN = 18 # gpio 18, pin 12
 
+    RUNNING_LED_PIN = 23 # gpio 23, pin 16
+    FLASH_STATUS_PIN = 24 # gpio 24, pin 18
+
     RESET_DELAY = 0.1 # sec
 
     READY_WAIT_TIMEOUT = 1 # sec
@@ -57,6 +60,14 @@ class ImageFlasher:
         self.__reset_display()
 
         self.__power_up()
+
+    def __setup_status_pins(self):
+        self.pi.set_mode(self.RUNNING_LED_PIN, pigpio.OUTPUT)
+        self.pi.set_mode(self.FLASH_STATUS_PIN, pigpio.OUTPUT)
+
+        self.pi.write(self.RUNNING_LED_PIN, 1)
+        self.pi.set_PWM_dutycycle(self.FLASH_STATUS_PIN, 0)
+        self.pi.set_PWM_frequency(self.FLASH_STATUS_PIN, 4)
 
     def __setup_and_gate_pins(self):
         self.pi.set_mode(self.AND1_PIN, pigpio.OUTPUT)
@@ -131,6 +142,7 @@ class ImageFlasher:
         self.pi.spi_write(self.spi_handle, command_structure.data)
 
     def transmit_data(self, data):
+        self.pi.set_PWM_dutycycle(self.FLASH_STATUS_PIN, 1)
         for display_id in self.ID_RANGE:
             if self.__ping_display(display_id):
                 print("Flashing display {}".format(display_id))
@@ -139,6 +151,8 @@ class ImageFlasher:
                 self.__write_command(Command.REFRESH)
 
                 self.__wait_until_ready(use_timeout=False)
+
+                self.pi.set_PWM_dutycycle(self.FLASH_STATUS_PIN, 255)
 
                 return display_id
 
