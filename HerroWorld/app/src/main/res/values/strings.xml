@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">HerroWorld</string>
+    <string name="action_settings">Settings</string>
+    <string name="button_text">Touch Me Daddy</string>
+    <string name="aloha_text">Aloha</string>
+    <string name="penis_text"></string>
+    <string name="py_text"></string>
+    <string name="bluebutton">Bluetooth</string>
+    <string name="bluetextview"></string>
+    <string name="receivedtextview">Discovered: </string>
+</resources>
