@@ -15,40 +15,23 @@ endif
 :Load Decklist in;
 
 :Spawn Bluetooth and Flashing processes;
+note left: Bluetooth process in separate diagram
 
-fork 
-  :__Flashing__;
-  repeat
-    :Wait for display insertion;
-    note left: Id goes from 0 to !0
-    :Acquire lock on deck;
-    if (Deck empty?) then (no)
-        :Move card on display to "Discard";
-        :Move next card in deck to "In Play";
-        :Flash new "In Play" card and blink status;
-        :Wait for display to finish refreshing;
-    else (yes)
-        :Indicate EMPTY status;
-    endif
-    :Stop blinking and turn on DONE LED;
-  repeat while (release lock on deck)
-fork again
-  :__Bluetooth__;
-  if (Connection exists?) then (no)
-    :Wait for connection established;
-    :Send current decklist;
-    if (Prompt User Override) then (yes)
-      while (Decklist received?) is (no)
-        :Request Decklist;
-      endwhile (yes)
-      else (no)
-    endif
-  else (yes)
-  endif
-  :Wait for change in deck object;
-  :Send new and old decklist;
-endfork
-
-stop
+:__Flashing__;
+repeat
+:Wait for display insertion;
+note left: Id goes from 0 to !0
+:Acquire lock on deck;
+if (Deck empty?) then (no)
+    :Move card on display to "Discard";
+    :Move next card in deck to "In Play";
+    :Flash new "In Play" card and blink status;
+    :Wait for display to finish refreshing;
+    :Set "Deck Changed" flag;
+else (yes)
+    :Indicate EMPTY status;
+endif
+:Stop blinking and turn on DONE LED;
+repeat while (release lock on deck)
 
 @enduml
