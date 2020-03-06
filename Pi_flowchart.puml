@@ -1,6 +1,6 @@
 @startuml
 
-title Conditional - Activity Diagram 
+title Pi Flowchart 
 
 start
 
@@ -17,19 +17,22 @@ endif
 :Spawn Bluetooth and Flashing processes;
 note left: Bluetooth process in separate diagram
 
-:__Flashing__;
+:__Begin Flashing Process__;
 repeat
 :Wait for display insertion;
 note left: Id goes from 0 to !0
 :Acquire lock on deck;
-if (Deck empty?) then (no)
+if (Clear Mode?) then (yes)
+    :Move card on display to "Discard";
+    :Flash blank card and blink status;
+    :Wait for display to finish refreshing;
+else if (Deck empty?) then (yes)
+    :Indicate EMPTY status;
+else (No)
     :Move card on display to "Discard";
     :Move next card in deck to "In Play";
     :Flash new "In Play" card and blink status;
     :Wait for display to finish refreshing;
-    :Set "Deck Changed" flag;
-else (yes)
-    :Indicate EMPTY status;
 endif
 :Stop blinking and turn on DONE LED;
 repeat while (release lock on deck)
