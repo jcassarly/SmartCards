@@ -1,9 +1,11 @@
 class CommandStructure:
+    """Class to represent a Command for the ePaper Display"""
     def __init__(self, command, data):
         self.command = command
         self.data = data
 
 class Command:
+    """Definitions for specific command on  the ePaper Display"""
     PANEL_SETTING = CommandStructure(0x00, [0x1B])
     POWER_SETTING = CommandStructure(0x01, [0x03, 0x00, 0x2B, 0x2B]) # TODO: only datasheet as the last byte (0x09)
     POWER_ON = CommandStructure(0x04, [])
@@ -15,5 +17,12 @@ class Command:
     RESOLUTION = CommandStructure(0x61, [0x01, 0x90, 0x01, 0x2c])
     VCM_DC = CommandStructure(0x82, [0x12])
 
+TRANSMIT_COMMAND_OP_CODE = 0x13
+
 def transmission_command(data):
-    return CommandStructure(0x13, data)
+    """Generates a command for transmitting data to the ePaper display using data
+
+    :param bytearray data: a bytearray with the data to transmit to the display
+
+    """
+    return CommandStructure(TRANSMIT_COMMAND_OP_CODE, data)

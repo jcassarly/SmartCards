@@ -4,9 +4,11 @@ import json
 import requests
 import argparse
 
+CARD_DATABASE = 'scryfall-default-cards.json'
+
 def __download_card_image_greedy(cardname):
     found_card = False
-    with open('scryfall-default-cards.json', 'r') as inp:
+    with open(CARD_DATABASE, 'r') as inp:
         for prefix, event, value in ijson.parse(inp):
             if prefix.endswith('.name') and value == cardname:
                 found_card = True
@@ -21,7 +23,7 @@ def __download_card_image_greedy(cardname):
 
 def __download_card_image(cardname):
     data = []
-    with open('scryfall-default-cards.json', 'r') as inp:
+    with open(CARD_DATABASE, 'r') as inp:
         data = json.load(inp)
 
     for item in data:
@@ -40,19 +42,6 @@ def __download_image(image_url):
 
     return io.BytesIO(response.content) if valid_response else None
 
-def __load_image(image_path):
-    image_content = bytearray()
-    with open(image_path, 'rb') as inp:
-        while True:
-            image_byte = inp.read(1)
-
-            if not image_byte:
-                image_content.append(image_byte)
-            else:
-                break
-
-    return io.BytesIO(image_content) if image_content != [] else None
-
 def image_cli():
     parser = argparse.ArgumentParser("Pull down a card image and convert it to the proper format and put it in the image processor")
 
@@ -70,7 +59,6 @@ def image_cli():
     if args.source in card_choices:
         print("Finding Magic Card")
         image_array = __download_card_image_greedy(args.source_arg)
-        print(image_array)
     elif args.source in url_choices:
         print("Downloading URL")
         image_array = __download_image(args.source_arg)
@@ -84,4 +72,4 @@ def image_cli():
     return image_array
 
 if __name__ == '__main__':
-    args = cli_download("img.jpg")
+    args = image_cli()

@@ -1,11 +1,12 @@
 import pigpio
-import struct
 import time
-from conversion import DisplayConversion
 import argparse
-import image_loader
 
-from command import *
+from command import Command, transmission_command
+from conversion import DisplayConversion
+from display_identification import DisplayIdentification
+import image_loader
+from led_status import LEDStatus
 
 class ImageFlasher:
     """Class to handle flashing images to the ePaper Display."""
@@ -18,10 +19,10 @@ class ImageFlasher:
     # p is 0 since CS is active low
     # u is 0 since using GPIO reserved for SPI
     # A is 0 since using auxillary SPI
-    # W is 1 since device is not 3-wire
-    # n is 1 since it is ignored to to W=0
+    # W is 0 since device is not 3-wire
+    # n is 0 since it is ignored to to W=0
     # T is 0 since the pi is little endian by default
-    # R is 1 since the ADC is big endian TODO: update this comment and maybe change to 0
+    # R is 0 since the everything is little endian
     # b is 0 since using 8-bit words
 
     # SPI setup options
@@ -33,53 +34,21 @@ class ImageFlasher:
     RESET_PIN = 5 # gpio 5, pin 29
     READY_PIN = 6 # gpio 6, pin 31
 
-    AND1_PIN = 17 # gpio 17, pin 11
-    AND2_PIN = 27 # gpio 27, pin 13
-    AND3_PIN = 22 # gpio 22, pin 15
-    AND_OUT_PIN = 18 # gpio 18, pin 12
-
-    RUNNING_LED_PIN = 23 # gpio 23, pin 16
-    FLASH_STATUS_PIN = 24 # gpio 24, pin 18
-
     RESET_DELAY = 0.1 # sec
 
     READY_WAIT_TIMEOUT = 1 # sec
 
-    MIN_ID = 1
-    MAX_ID = 6
-    ID_RANGE = range(MIN_ID, MAX_ID + 1)
+    def __init__(self, led_status):
+        self.led_status = led_status
 
-    def __init__(self):
         self.pi = pigpio.pi()
         self.spi_handle = self.pi.spi_open(self.SPI_CHANNEL, self.SPI_BAUD, self.SPI_FLAGS)
-
-        self.__setup_and_gate_pins()
 
         self.__setup_non_spi_pins()
 
         self.__reset_display()
 
         self.__power_up()
-
-    def __setup_status_pins(self):
-        self.pi.set_mode(self.RUNNING_LED_PIN, pigpio.OUTPUT)
-        self.pi.set_mode(self.FLASH_STATUS_PIN, pigpio.OUTPUT)
-
-        self.pi.write(self.RUNNING_LED_PIN, 1)
-        self.pi.set_PWM_dutycycle(self.FLASH_STATUS_PIN, 0)
-        self.pi.set_PWM_frequency(self.FLASH_STATUS_PIN, 4)
-
-    def __setup_and_gate_pins(self):
-        self.pi.set_mode(self.AND1_PIN, pigpio.OUTPUT)
-        self.pi.set_mode(self.AND2_PIN, pigpio.OUTPUT)
-        self.pi.set_mode(self.AND3_PIN, pigpio.OUTPUT)
-        self.pi.set_mode(self.AND_OUT_PIN, pigpio.INPUT)
-
-        self.pi.write(self.AND1_PIN, 0)
-        self.pi.write(self.AND2_PIN, 0)
-        self.pi.write(self.AND3_PIN, 0)
-
-        self.pi.set_pull_up_down(self.AND_OUT_PIN, pigpio.PUD_DOWN)
 
     def __setup_non_spi_pins(self):
         # Set IO modes
@@ -91,12 +60,14 @@ class ImageFlasher:
         self.pi.set_pull_up_down(self.READY_PIN, pigpio.PUD_UP)
 
     def __reset_display(self):
+        """Toggles the reset pin to reset the display."""
         self.pi.write(self.RESET_PIN, 0)
         time.sleep(self.RESET_DELAY)
         self.pi.write(self.RESET_PIN, 1)
         time.sleep(self.RESET_DELAY)
 
     def __power_up(self):
+        """Performs the startup sequence as specified by the datasheet."""
         self.__write_command(Command.BOOSTER_SOFT_START)
         self.__write_command(Command.POWER_SETTING)
         self.__write_command(Command.POWER_ON)
@@ -110,29 +81,42 @@ class ImageFlasher:
         self.__write_command(Command.VCM_DC)
         self.__write_command(Command.VCOM_DATA_INTERVAL)
 
-    def __ping_display(self, display_id):
-        self.pi.write(self.AND1_PIN, (display_id & 0x01) > 0)
-        self.pi.write(self.AND2_PIN, (display_id & 0x02) > 0)
-        self.pi.write(self.AND3_PIN, (display_id & 0x04) > 0)
+    def __is_ready(self):
+        """Verifies whether the display is ready (checks the ready pin).
 
-        return self.pi.read(self.AND_OUT_PIN) == 1
+        :returns: true if the ready pin is active LOW, false otherwise
+
+        """
+        return self.pi.read(self.READY_PIN) == 0
 
     def __wait_until_ready(self, use_timeout=True):
-        timer = time.time()
-        while (self.pi.read(self.READY_PIN) == 0):
-            if (use_timeout and (time.time() - timer > self.READY_WAIT_TIMEOUT)):
-                print("Timed out")
-                return False
+        """Waits until the display is ready, blinking the status LED during this period.
 
-        return True
+        :param bool use_timeout:
+            True if the READY_WAIT_TIMEOUT should be used, otherwise
+            the pi will wait indefinitely for the ready pin to go low
+        :returns:
+            whether True if the ready pin went low, false if the blinking timed out
+
+        """
+        timeout = self.READY_WAIT_TIMEOUT if use_timeout else None
+        return self.led_status.blink_until(self.__is_ready, timeout=timeout)
 
     def __put_in_command_mode(self):
+        """Puts the display into command mode such that info sent will be interpreted as commands."""
         self.pi.write(self.DATA_COMMAND_PIN, False)
 
     def __put_in_data_mode(self):
+        """Puts the display into data mode such that info sent will be interpreted as data."""
         self.pi.write(self.DATA_COMMAND_PIN, True)
 
     def __write_command(self, command_structure):
+        """Writes a command structure object to the display.
+
+        :param CommandStructure command_structure:
+            A CommandStructure object where to send the command and then the data to the display
+
+        """
         # write the command to the display
         self.__put_in_command_mode()
         self.pi.spi_write(self.spi_handle, [command_structure.command])
@@ -142,22 +126,17 @@ class ImageFlasher:
         self.pi.spi_write(self.spi_handle, command_structure.data)
 
     def transmit_data(self, data):
-        self.pi.set_PWM_dutycycle(self.FLASH_STATUS_PIN, 1)
-        for display_id in self.ID_RANGE:
-            if self.__ping_display(display_id):
-                print("Flashing display {}".format(display_id))
+        """Transmits image data to the display and refreshes the display.
 
-                self.__write_command(transmission_command(data))
-                self.__write_command(Command.REFRESH)
+        :param bytearray data: an array of bytes to display on the ePaper display
 
-                self.__wait_until_ready(use_timeout=False)
+        """
+        self.__write_command(transmission_command(data))
+        self.__write_command(Command.REFRESH)
 
-                self.pi.set_PWM_dutycycle(self.FLASH_STATUS_PIN, 255)
+        self.__wait_until_ready(use_timeout=False)
 
-                return display_id
-
-        print("Could not find a valid ID [1-6] - not flashing")
-        return False
+        self.led_status.update_flash_status(True)
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -169,14 +148,19 @@ if __name__ == '__main__':
     if image_array:
         start_time = time.time()
 
+        led_status = LEDStatus()
         image = DisplayConversion(image_array)
 
         print("Conversion Elapsed: {}".format(time.time() - start_time))
 
         start_time = time.time()
 
-        flasher = ImageFlasher()
-        display_id = flasher.transmit_data(image.epaper_array)
+        flasher = ImageFlasher(led_status)
+        flasher.transmit_data(image.epaper_array)
         # TODO: integrate the display ID with the deck management
 
-        print("Flash Elapsed: {}".format(time.time() - start_time))
+        elapsed = time.time() - start_time
+        print("Flash Elapsed: {}".format(elapsed))
+
+        if elapsed < 1:
+            led_status.blink_for_time(5)
