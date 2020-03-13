@@ -1,0 +1,40 @@
+@startuml
+
+hide empty description
+
+state user as "User"
+state app as "Application"
+
+state shuffle as "User chooses Shuffle"
+shuffle : App makes deck change that
+shuffle : shuffles the cards in the deck
+
+state connect as "User chooses\nEstablish Connection to the Pi"
+
+state edit as "User Chooses Edit Deck"
+edit : Can add cards to the deck (in any spot)
+edit : Can move cards from the discard to the deck
+
+state once_done as "Once the user finishes\neditting a deck"
+state pi_feedback as "Feedback from the Pi"
+pi_feedback : see the bluetooth sequence
+pi_feedback : diagram for information on
+pi_feedback : how the Pi and App exchange
+pi_feedback : info on deck changes
+
+user --> app
+app --> shuffle
+app --> connect
+app --> edit
+
+shuffle --> once_done
+
+connect --> pi_feedback
+
+edit --> once_done
+
+once_done --> pi_feedback
+
+pi_feedback --> app
+
+@enduml
