@@ -10,15 +10,17 @@ def discover():
     message = "Addresses: \n"
     for bdaddr in nearby_devices:
         found_name = bluetooth.lookup_name( bdaddr )
-        # print("{}, {}".format(found_name, bdaddr))
-        # if target_name == found_name:
-        #     target_address = bdaddr
-        #     break
-        message = message + bdaddr "\n"
+        print("{}, {}".format(found_name, bdaddr))
+        if target_name == found_name:
+            target_address = bdaddr
+            break
+        message = message + bdaddr + "\n"
     
-    return message
+    # return message
 
-    # if target_address is not None:
-    #     print("found target bluetooth device with address ", target_address)
-    # else:
-    #     print("could not find target bluetooth device nearby")
+    if target_address is not None:
+        print("found target bluetooth device with address ", target_address)
+    else:
+        print("could not find target bluetooth device nearby")
+
+discover()

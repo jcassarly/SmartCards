@@ -19,6 +19,10 @@ public class BluetoothService {
     private ConnectThread make_conn_thread = null;
     private ConnectedThread manage_conn_thread = null;
 
+    public BluetoothService(Handler msg_handler) {
+        handler = msg_handler;
+    }
+
     // Defines several constants used when transmitting messages between the
     // service and the UI.
     private interface MessageConstants {
@@ -168,10 +172,15 @@ public class BluetoothService {
         }
     }
 
-    public void Connect(BluetoothAdapter adapter, BluetoothDevice device, UUID uuid) {
+    public void connect(BluetoothAdapter adapter, BluetoothDevice device, UUID uuid) {
         make_conn_thread = new ConnectThread(adapter, device, uuid);
         make_conn_thread.start();
     }
+
+    public void send(String msg) {
+        manage_conn_thread.write(msg.getBytes());
+    }
+
 
 }
 

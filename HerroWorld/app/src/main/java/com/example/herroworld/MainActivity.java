@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
@@ -17,10 +19,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.ParcelUuid;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.TextView;
 
 
@@ -35,7 +39,7 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
 
     public static final String CONNECTION_ERROR_TAG = "CONNECTION_ERROR";
-    public static UUID CONNECTION_UUID;
+    public static UUID CONNECTION_UUID = UUID.fromString("b5c65192-1d67-471f-8147-0d0e8904efaa");
     public static final String MESSAGE = "com.example.herroworld.MESSAGE";
     private Python py;
     private final static int REQUEST_ENABLE_BT = 1;
@@ -79,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         });
         py = Python.getInstance();
 
-        CONNECTION_UUID = UUID.randomUUID();
+//        CONNECTION_UUID = UUID.randomUUID();
 
         // For bluetooth device discovery
         // Register for broadcasts when a device is discovered.
@@ -162,13 +166,48 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-            bluetooth_service = new BluetoothService();
+            Handler bluetooth_handler = new Handler() {
+                public void handleMessage(Message msg) {
+                    // TODO
+                    TextView msgView = (TextView) findViewById(R.id.android_rcv_msg);
+                    msgView.setText(msg.toString());
+                }
+            };
+            bluetooth_service = new BluetoothService(bluetooth_handler);
         }
 
         return success && bluetooth_device != null;
     }
 
     public void connectBluetooth(View view) {
-        bluetooth_service.Connect(bluetooth_adapter, bluetooth_device, CONNECTION_UUID);
+        bluetooth_service.connect(bluetooth_adapter, bluetooth_device, CONNECTION_UUID);
     }
+
+    public void debugBluetooth(View view) {
+        Set<BluetoothDevice> pairedDevices = bluetooth_adapter.getBondedDevices();
+        TextView txtVw = (TextView) findViewById(R.id.android_rcv_msg);
+        String message = "Could not find Laptop.";
+        if (pairedDevices.size() > 0) {
+            // There are paired devices. Get the name and address of each paired device.
+            for (BluetoothDevice device : pairedDevices) {
+                if (device.getName().equals(BLUETOOTH_DEVICE_NAME)) {
+                    message = device.getAddress();
+                }
+            }
+        }
+        message = message + "\n";
+        ParcelUuid uuids[] = bluetooth_device.getUuids();
+        for (ParcelUuid uuid : uuids) {
+            message = message + uuid.toString() + "\n";
+            System.out.println("UUID: " + uuid.toString());
+        }
+        txtVw.setText(message);}
+
+
+    public void sendBluetooth(View view) {
+        EditText blueMsg = (EditText) findViewById(R.id.bluemsg);
+        String message = blueMsg.getText().toString();
+        bluetooth_service.send(message);
+    }
+
 }

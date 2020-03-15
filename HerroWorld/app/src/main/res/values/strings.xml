@@ -6,7 +6,9 @@
     <string name="penis_text"></string>
     <string name="py_text"></string>
     <string name="blue_connect_button">Connect</string>
+    <string name="blue_debug_button">Debug</string>
     <string name="blue_send_button">Send</string>
     <string name="blue_msg_hint">Message to send...</string>
     <string name="blue_rcv_msg">No message received yet...</string>
+    <string name="android_rcv_msg">Android Messages Here.</string>
 </resources>
