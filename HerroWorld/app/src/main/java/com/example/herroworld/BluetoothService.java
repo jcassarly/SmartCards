@@ -45,7 +45,7 @@ public class BluetoothService {
                 // MY_UUID is the app's UUID string, also used in the server code.
                 tmp = device.createRfcommSocketToServiceRecord(CONNECTION_UUID);
             } catch (IOException e) {
-                Log.e(BluetoothConstants.TAG, "Socket's create() method failed", e);
+                Log.e(TAG, "Socket's create() method failed", e);
             }
             mmSocket = tmp;
             mmAdapter = adapter;
@@ -64,7 +64,7 @@ public class BluetoothService {
                 try {
                     mmSocket.close();
                 } catch (IOException closeException) {
-                    Log.e(BluetoothConstants.TAG, "Could not close the client socket", closeException);
+                    Log.e(TAG, "Could not close the client socket", closeException);
                 }
                 return;
             }
@@ -81,7 +81,7 @@ public class BluetoothService {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(BluetoothConstants.TAG, "Could not close the client socket", e);
+                Log.e(TAG, "Could not close the client socket", e);
             }
         }
     }
