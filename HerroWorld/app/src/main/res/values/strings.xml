@@ -5,7 +5,8 @@
     <string name="aloha_text">Aloha</string>
     <string name="penis_text"></string>
     <string name="py_text"></string>
-    <string name="bluebutton">Bluetooth</string>
-    <string name="bluetextview"></string>
-    <string name="receivedtextview">Discovered: </string>
+    <string name="blue_connect_button">Connect</string>
+    <string name="blue_send_button">Send</string>
+    <string name="blue_msg_hint">Message to send...</string>
+    <string name="blue_rcv_msg">No message received yet...</string>
 </resources>
