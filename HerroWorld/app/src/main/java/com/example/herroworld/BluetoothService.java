@@ -3,20 +3,21 @@ package com.example.herroworld;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothAdapter;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.UUID;
 
 public class BluetoothService {
     private static final String TAG = "BLUETOOTH_SERVICE";
     private Handler handler; // handler that gets info from Bluetooth service
-
-    public BluetoothService(BluetoothSocket socket) {
-
-    }
+    private ConnectThread make_conn_thread = null;
+    private ConnectedThread manage_conn_thread = null;
 
     // Defines several constants used when transmitting messages between the
     // service and the UI.
@@ -26,6 +27,63 @@ public class BluetoothService {
         public static final int MESSAGE_TOAST = 2;
 
         // ... (Add other message types here as needed.)
+    }
+
+    private class ConnectThread extends Thread {
+        private final BluetoothAdapter mmAdapter;
+        private final BluetoothSocket mmSocket;
+        private final BluetoothDevice mmDevice;
+
+        public ConnectThread(BluetoothAdapter adapter, BluetoothDevice device, UUID CONNECTION_UUID) {
+            // Use a temporary object that is later assigned to mmSocket
+            // because mmSocket is final.
+            BluetoothSocket tmp = null;
+            mmDevice = device;
+
+            try {
+                // Get a BluetoothSocket to connect with the given BluetoothDevice.
+                // MY_UUID is the app's UUID string, also used in the server code.
+                tmp = device.createRfcommSocketToServiceRecord(CONNECTION_UUID);
+            } catch (IOException e) {
+                Log.e(BluetoothConstants.TAG, "Socket's create() method failed", e);
+            }
+            mmSocket = tmp;
+            mmAdapter = adapter;
+        }
+
+        public void run() {
+            // Cancel discovery because it otherwise slows down the connection.
+            mmAdapter.cancelDiscovery();
+
+            try {
+                // Connect to the remote device through the socket. This call blocks
+                // until it succeeds or throws an exception.
+                mmSocket.connect();
+            } catch (IOException connectException) {
+                // Unable to connect; close the socket and return.
+                try {
+                    mmSocket.close();
+                } catch (IOException closeException) {
+                    Log.e(BluetoothConstants.TAG, "Could not close the client socket", closeException);
+                }
+                return;
+            }
+
+            // The connection attempt succeeded. Perform work associated with
+            // the connection in a separate thread.
+//            manageMyConnectedSocket(mmSocket);
+            manage_conn_thread = new ConnectedThread(mmSocket);
+            manage_conn_thread.start();
+        }
+
+        // Closes the client socket and causes the thread to finish.
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) {
+                Log.e(BluetoothConstants.TAG, "Could not close the client socket", e);
+            }
+        }
     }
 
     private class ConnectedThread extends Thread {
@@ -109,5 +167,11 @@ public class BluetoothService {
             }
         }
     }
+
+    public void Connect(BluetoothAdapter adapter, BluetoothDevice device, UUID uuid) {
+        make_conn_thread = new ConnectThread(adapter, device, uuid);
+        make_conn_thread.start();
+    }
+
 }
 
