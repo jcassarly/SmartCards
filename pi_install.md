@@ -25,5 +25,9 @@ sudo systemctl daemon-reload
 sudo service bluetooth restart
 sudo hciconfig hci0 piscan
 ```
+5. restart the pi
 
-5. Run the server script (we only tested with python 3)
+
+6. The pi needs to be discoverable. in order to accomplish this, you will need to run `sudo bluetoothctl discoverable yes`.  This is done in startup currently because it needs to be run every time the pi is restarted before running the script 
+
+7. Run the server script (we only tested with python 3)
