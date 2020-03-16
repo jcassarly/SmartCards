@@ -31,6 +31,7 @@ while Running and counter < msg_max:
     if data == b'quit':
         Running = False
     counter += 1
+    client_sock.send(b"received: " + data)
 
 client_sock.close()
 server_sock.close()

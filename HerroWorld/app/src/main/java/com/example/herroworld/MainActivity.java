@@ -170,7 +170,8 @@ public class MainActivity extends AppCompatActivity {
                 public void handleMessage(Message msg) {
                     // TODO
                     TextView msgView = (TextView) findViewById(R.id.android_rcv_msg);
-                    msgView.setText(msg.toString());
+                    String msgTxt = new String((byte[])msg.obj);
+                    msgView.setText(msgTxt);
                 }
             };
             bluetooth_service = new BluetoothService(bluetooth_handler);
