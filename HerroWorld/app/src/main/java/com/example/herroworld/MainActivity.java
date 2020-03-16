@@ -44,7 +44,8 @@ public class MainActivity extends AppCompatActivity {
     private Python py;
     private final static int REQUEST_ENABLE_BT = 1;
     private BluetoothService bluetooth_service = null;
-    private String BLUETOOTH_DEVICE_NAME = "LAPTOP-COVRD6IN";
+//    private String BLUETOOTH_DEVICE_NAME = "LAPTOP-COVRD6IN";
+private String BLUETOOTH_DEVICE_NAME = "raspberrypi";
     private BluetoothDevice bluetooth_device = null;
     private BluetoothAdapter bluetooth_adapter = null;
 
