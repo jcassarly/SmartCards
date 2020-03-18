@@ -13,6 +13,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
@@ -119,10 +120,35 @@ public class BluetoothService {
     }
 
     private class ConnectedThread extends Thread {
+        // Heartbeat states
+        private final int WAIT_HEARTBEAT = 0;
+        private final int RESPONSE_SENT = 1;
+        private final int MERGING = 2;
+        private int state = WAIT_HEARTBEAT;
+
+        // Message Structure
+        private final int CMD_INDEX = 0;
+        private final int REV_NUM_INDEX = 4;
+
+        // Message Commands
+        private final int CMD_HEARTBEAT = 0;
+        private final int CMD_LOCKED = 1;
+        private final int CMD_UNLOCKED = 2;
+
+        // if there's an error in the command
+        private final int ERROR_IN_CMD = -1;
+
+        private final int BUFFER_SIZE = 1024;
+
+        // Deck Revision numbers
+        private int cur_rev_num = 0;
+        private int pi_rev_num = 0;
+
+
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
-        private byte[] mmBuffer; // mmBuffer store for the stream
+        private ByteBuffer mmBuffer; // mmBuffer store for the stream
 
         public ConnectedThread(BluetoothSocket socket) {
             mmSocket = socket;
@@ -144,28 +170,27 @@ public class BluetoothService {
 
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
+            mmBuffer = ByteBuffer.allocate(BUFFER_SIZE);
         }
 
         public void run() {
-            mmBuffer = new byte[1024];
+//            mmBuffer = new byte[1024];
             int numBytes; // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs.
             while (true) {
                 try {
-//                    Arrays.fill(mmBuffer, (byte)0);
                     // Read from the InputStream.
-                    String msgTxt = new String(mmBuffer);
-                    numBytes = mmInStream.read(mmBuffer);
-                    byte msgCopy[] = Arrays.copyOfRange(mmBuffer, 0, numBytes);
-                    msgTxt = new String(mmBuffer);
+                    numBytes = mmInStream.read(mmBuffer.array());
+                    byte msgCopy[] = Arrays.copyOfRange(mmBuffer.array(), 0, numBytes);
+                    Arrays.fill(mmBuffer.array(), 0, numBytes, (byte)0);
+                    runStateMachine(msgCopy, numBytes);
+
                     // Send the obtained bytes to the UI activity.
-                    Message readMsg = handler.obtainMessage(
-                            MessageConstants.MESSAGE_READ, numBytes, -1,
-                            msgCopy);
-                    readMsg.sendToTarget();
-                    Arrays.fill(mmBuffer, 0, numBytes, (byte)0);
-                    msgTxt = new String(mmBuffer);
+//                    Message readMsg = handler.obtainMessage(
+//                            MessageConstants.MESSAGE_READ, numBytes, -1,
+//                            msgCopy);
+//                    readMsg.sendToTarget();
                 } catch (IOException e) {
                     Log.d(TAG, "Input stream was disconnected", e);
                     break;
@@ -176,12 +201,18 @@ public class BluetoothService {
         // Call this from the main activity to send data to the remote device.
         public void write(byte[] bytes) {
             try {
-                mmOutStream.write(bytes);
+                if (state == MERGING) {
+                    mmOutStream.write(bytes);
+                    state = WAIT_HEARTBEAT;
+                } else {
+                    // TODO: Error handling
+                }
 
-                // Share the sent message with the UI activity.
-                Message writtenMsg = handler.obtainMessage(
-                        MessageConstants.MESSAGE_WRITE, -1, -1, mmBuffer);
-                writtenMsg.sendToTarget();
+//                // Share the sent message with the UI activity.
+//                Message writtenMsg = handler.obtainMessage(
+//                        MessageConstants.MESSAGE_WRITE, -1, -1, mmBuffer);
+//                String msgTxt = new String(mmBuffer.array());
+//                writtenMsg.sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Error occurred when sending data", e);
 
@@ -194,6 +225,44 @@ public class BluetoothService {
                 writeErrorMsg.setData(bundle);
                 handler.sendMessage(writeErrorMsg);
             }
+        }
+
+        public int runStateMachine(byte msg[], int numBytes) {
+            boolean command_error = true;
+            switch (state) {
+                case WAIT_HEARTBEAT:
+                    if (getMsgInt(msg, CMD_INDEX) == CMD_HEARTBEAT) {
+                        // Update the pi's revision number and send our current revision number
+                        byte send_num[] = ByteBuffer.allocate(Integer.BYTES).putInt(cur_rev_num).array();
+                        pi_rev_num = getMsgInt(msg, REV_NUM_INDEX);
+                        write(send_num);
+                        state = RESPONSE_SENT;
+                        command_error = false;
+                    }
+                    break;
+                case RESPONSE_SENT:
+                    int command = getMsgInt(msg, CMD_INDEX);
+                    if (command == CMD_LOCKED) {
+                        cur_rev_num = pi_rev_num;
+                        state = WAIT_HEARTBEAT;
+                        command_error = false;
+                    } else if (command == CMD_UNLOCKED) {
+                        Message readMsg = handler.obtainMessage(
+                                MessageConstants.MESSAGE_READ, numBytes, -1,
+                                msg);
+                        readMsg.sendToTarget();
+                        state = MERGING;
+                        command_error = false;
+                    }
+                    break;
+            }
+            return command_error == false ? state : ERROR_IN_CMD;
+        }
+
+
+
+        private int getMsgInt(byte[] msg, int index) {
+            return ByteBuffer.wrap(msg).getInt(index);
         }
 
         // Call this method from the main activity to shut down the connection.
@@ -213,6 +282,10 @@ public class BluetoothService {
 
     public void send(String msg) {
         manage_conn_thread.write(msg.getBytes());
+    }
+
+    public int getRevisionNumber(byte[] buffer) {
+        return ByteBuffer.wrap(buffer).getInt(0);
     }
 
     public int checkBluetoothEnabled() {
