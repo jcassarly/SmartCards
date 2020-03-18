@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 
 import com.chaquo.python.PyObject;
@@ -41,13 +42,13 @@ public class MainActivity extends AppCompatActivity {
     public static final String CONNECTION_ERROR_TAG = "CONNECTION_ERROR";
     public static UUID CONNECTION_UUID = UUID.fromString("b5c65192-1d67-471f-8147-0d0e8904efaa");
     public static final String MESSAGE = "com.example.herroworld.MESSAGE";
+
     private Python py;
-    private final static int REQUEST_ENABLE_BT = 1;
+
+    private String BLUETOOTH_DEVICE_NAME = "LAPTOP-COVRD6IN";
+    //    private String BLUETOOTH_DEVICE_NAME = "raspberrypi";
     private BluetoothService bluetooth_service = null;
-//    private String BLUETOOTH_DEVICE_NAME = "LAPTOP-COVRD6IN";
-private String BLUETOOTH_DEVICE_NAME = "raspberrypi";
-    private BluetoothDevice bluetooth_device = null;
-    private BluetoothAdapter bluetooth_adapter = null;
+    private ReceiveMsgHandler receive_msg_handler = null;
 
     // For bluetooth device discovery
     // Create a BroadcastReceiver for ACTION_FOUND.
@@ -63,6 +64,21 @@ private String BLUETOOTH_DEVICE_NAME = "raspberrypi";
 //                TextView txtVw = (TextView) findViewById(R.id.bluetextview);
 //                txtVw.setText(txtVw.getText() + "\n" + deviceHardwareAddress);
             }
+        }
+    };
+
+    private class ReceiveMsgHandler extends Handler {
+
+        public ReceiveMsgHandler() {
+            super(Looper.getMainLooper());
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            // TODO
+            TextView msgView = (TextView) findViewById(R.id.android_rcv_msg);
+            String msgTxt = new String((byte[])msg.obj);
+            msgView.setText(msgTxt);
         }
     };
 
@@ -92,7 +108,8 @@ private String BLUETOOTH_DEVICE_NAME = "raspberrypi";
         registerReceiver(receiver, filter);
 
         // Setup bluetooth, do something if it fails?
-        boolean bluetoothSetupStatus = bluetoothSetup();
+        receive_msg_handler = new ReceiveMsgHandler();
+        bluetooth_service = new BluetoothService("", BLUETOOTH_DEVICE_NAME, receive_msg_handler, this);
     }
 
     @Override
@@ -143,67 +160,68 @@ private String BLUETOOTH_DEVICE_NAME = "raspberrypi";
 
     }
 
-    public boolean bluetoothSetup() {
-        boolean success = false;
-
-        bluetooth_adapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetooth_adapter != null) {
-            // Ask to enable Bluetooth if not already
-            if (!bluetooth_adapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            }
-
-            // Query already paired devices
-            Set<BluetoothDevice> pairedDevices = bluetooth_adapter.getBondedDevices();
-
-            if (pairedDevices.size() > 0) {
-                // There are paired devices. Get the name and address of each paired device.
-                for (BluetoothDevice device : pairedDevices) {
-                    if (device.getName().equals(BLUETOOTH_DEVICE_NAME)) {
-                        bluetooth_device = device;
-                        success = true;
-                        break;
-                    }
-                }
-            }
-            Handler bluetooth_handler = new Handler() {
-                public void handleMessage(Message msg) {
-                    // TODO
-                    TextView msgView = (TextView) findViewById(R.id.android_rcv_msg);
-                    String msgTxt = new String((byte[])msg.obj);
-                    msgView.setText(msgTxt);
-                }
-            };
-            bluetooth_service = new BluetoothService(bluetooth_handler);
-        }
-
-        return success && bluetooth_device != null;
-    }
+//    public boolean bluetoothSetup() {
+//        boolean success = false;
+//
+//        bluetooth_adapter = BluetoothAdapter.getDefaultAdapter();
+//        if (bluetooth_adapter != null) {
+//            // Ask to enable Bluetooth if not already
+//            if (!bluetooth_adapter.isEnabled()) {
+//                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+//            }
+//
+//            // Query already paired devices
+//            Set<BluetoothDevice> pairedDevices = bluetooth_adapter.getBondedDevices();
+//
+//            if (pairedDevices.size() > 0) {
+//                // There are paired devices. Get the name and address of each paired device.
+//                for (BluetoothDevice device : pairedDevices) {
+//                    if (device.getName().equals(BLUETOOTH_DEVICE_NAME)) {
+//                        bluetooth_device = device;
+//                        success = true;
+//                        break;
+//                    }
+//                }
+//            }
+//            Handler bluetooth_handler = new Handler() {
+//                public void handleMessage(Message msg) {
+//                    // TODO
+//                    TextView msgView = (TextView) findViewById(R.id.android_rcv_msg);
+//                    String msgTxt = new String((byte[])msg.obj);
+//                    msgView.setText(msgTxt);
+//                }
+//            };
+//            bluetooth_service = new BluetoothService(bluetooth_handler);
+//        }
+//
+//        return success && bluetooth_device != null;
+//    }
 
     public void connectBluetooth(View view) {
-        bluetooth_service.connect(bluetooth_adapter, bluetooth_device, CONNECTION_UUID);
+        bluetooth_service.connect(CONNECTION_UUID);
     }
 
     public void debugBluetooth(View view) {
-        Set<BluetoothDevice> pairedDevices = bluetooth_adapter.getBondedDevices();
-        TextView txtVw = (TextView) findViewById(R.id.android_rcv_msg);
-        String message = "Could not find Laptop.";
-        if (pairedDevices.size() > 0) {
-            // There are paired devices. Get the name and address of each paired device.
-            for (BluetoothDevice device : pairedDevices) {
-                if (device.getName().equals(BLUETOOTH_DEVICE_NAME)) {
-                    message = device.getAddress();
-                }
-            }
-        }
-        message = message + "\n";
-        ParcelUuid uuids[] = bluetooth_device.getUuids();
-        for (ParcelUuid uuid : uuids) {
-            message = message + uuid.toString() + "\n";
-            System.out.println("UUID: " + uuid.toString());
-        }
-        txtVw.setText(message);}
+//        Set<BluetoothDevice> pairedDevices = bluetooth_adapter.getBondedDevices();
+//        TextView txtVw = (TextView) findViewById(R.id.android_rcv_msg);
+//        String message = "Could not find Laptop.";
+//        if (pairedDevices.size() > 0) {
+//            // There are paired devices. Get the name and address of each paired device.
+//            for (BluetoothDevice device : pairedDevices) {
+//                if (device.getName().equals(BLUETOOTH_DEVICE_NAME)) {
+//                    message = device.getAddress();
+//                }
+//            }
+//        }
+//        message = message + "\n";
+//        ParcelUuid uuids[] = bluetooth_device.getUuids();
+//        for (ParcelUuid uuid : uuids) {
+//            message = message + uuid.toString() + "\n";
+//            System.out.println("UUID: " + uuid.toString());
+//        }
+//        txtVw.setText(message);
+    }
 
 
     public void sendBluetooth(View view) {

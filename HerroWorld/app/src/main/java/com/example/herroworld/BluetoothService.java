@@ -1,8 +1,10 @@
 package com.example.herroworld;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -11,15 +13,42 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
 
 public class BluetoothService {
-    private static final String TAG = "BLUETOOTH_SERVICE";
+    public static final String TAG = "BLUETOOTH_SERVICE";
+    public final static int REQUEST_ENABLE_BT = 1;
+    public final static int NO_ERROR = 0;
+    public final static int BLUETOOTH_ADAPTER_NULL = -1;
+    public final static int BLUETOOTH_NOT_ENABLED = -2;
+
+    private Activity parent_activity = null;
     private Handler handler; // handler that gets info from Bluetooth service
+    private BluetoothAdapter mmAdapter;
+    private BluetoothDevice mmDevice = null;
     private ConnectThread make_conn_thread = null;
     private ConnectedThread manage_conn_thread = null;
 
-    public BluetoothService(Handler msg_handler) {
+    public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity) {
+        parent_activity = activity;
+        mmAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mmAdapter != null && checkBluetoothEnabled() == NO_ERROR) {
+
+            // Query already paired devices
+            Set<BluetoothDevice> pairedDevices = mmAdapter.getBondedDevices();
+
+            if (pairedDevices.size() > 0) {
+                // There are paired devices. Get the name and address of each paired device.
+                for (BluetoothDevice device : pairedDevices) {
+                    if (device.getAddress().equals(device_address) || device.getName().equals(device_name)) {
+                        mmDevice = device;
+                        break;
+                    }
+                }
+            }
+        }
         handler = msg_handler;
     }
 
@@ -34,25 +63,23 @@ public class BluetoothService {
     }
 
     private class ConnectThread extends Thread {
-        private final BluetoothAdapter mmAdapter;
-        private final BluetoothSocket mmSocket;
-        private final BluetoothDevice mmDevice;
 
-        public ConnectThread(BluetoothAdapter adapter, BluetoothDevice device, UUID CONNECTION_UUID) {
+        private BluetoothSocket mmSocket = null;
+
+        public ConnectThread(UUID connection_uuid) {
             // Use a temporary object that is later assigned to mmSocket
             // because mmSocket is final.
             BluetoothSocket tmp = null;
-            mmDevice = device;
 
             try {
                 // Get a BluetoothSocket to connect with the given BluetoothDevice.
                 // MY_UUID is the app's UUID string, also used in the server code.
-                tmp = device.createRfcommSocketToServiceRecord(CONNECTION_UUID);
+                tmp = mmDevice.createRfcommSocketToServiceRecord(connection_uuid);
             } catch (IOException e) {
                 Log.e(TAG, "Socket's create() method failed", e);
             }
             mmSocket = tmp;
-            mmAdapter = adapter;
+
         }
 
         public void run() {
@@ -78,6 +105,7 @@ public class BluetoothService {
 //            manageMyConnectedSocket(mmSocket);
             manage_conn_thread = new ConnectedThread(mmSocket);
             manage_conn_thread.start();
+
         }
 
         // Closes the client socket and causes the thread to finish.
@@ -125,13 +153,19 @@ public class BluetoothService {
             // Keep listening to the InputStream until an exception occurs.
             while (true) {
                 try {
+//                    Arrays.fill(mmBuffer, (byte)0);
                     // Read from the InputStream.
+                    String msgTxt = new String(mmBuffer);
                     numBytes = mmInStream.read(mmBuffer);
+                    byte msgCopy[] = Arrays.copyOfRange(mmBuffer, 0, numBytes);
+                    msgTxt = new String(mmBuffer);
                     // Send the obtained bytes to the UI activity.
                     Message readMsg = handler.obtainMessage(
                             MessageConstants.MESSAGE_READ, numBytes, -1,
-                            mmBuffer);
+                            msgCopy);
                     readMsg.sendToTarget();
+                    Arrays.fill(mmBuffer, 0, numBytes, (byte)0);
+                    msgTxt = new String(mmBuffer);
                 } catch (IOException e) {
                     Log.d(TAG, "Input stream was disconnected", e);
                     break;
@@ -172,8 +206,8 @@ public class BluetoothService {
         }
     }
 
-    public void connect(BluetoothAdapter adapter, BluetoothDevice device, UUID uuid) {
-        make_conn_thread = new ConnectThread(adapter, device, uuid);
+    public void connect(UUID uuid) {
+        make_conn_thread = new ConnectThread(uuid);
         make_conn_thread.start();
     }
 
@@ -181,6 +215,16 @@ public class BluetoothService {
         manage_conn_thread.write(msg.getBytes());
     }
 
-
+    public int checkBluetoothEnabled() {
+        // TODO: Add a way to detect if bluetooth access denied
+        int return_code = NO_ERROR;
+        // Ask to enable Bluetooth if not already
+        if (!mmAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            parent_activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            return BLUETOOTH_NOT_ENABLED;
+        }
+        return return_code;
+    }
 }
 
