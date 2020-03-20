@@ -37,7 +37,7 @@ def flash_loop():
            and new_display_id != DisplayIdentification.NO_DISPLAY:
             # acquire the lock on the deck
 
-            # If in clear mode
+            # If in clear mode - probably need a new class that checks a button/switch
                 # move card on display to discard
                 # flash a blank card to the display
             # else if deck is empty

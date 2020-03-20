@@ -2,7 +2,7 @@ from PIL import Image
 
 class DisplayConversion:
 
-    WHITE_PIXEL = 0x00
+    WHITE_PIXEL = 0x00  # value of white pixel in image epaper data
 
     DISPLAY_WIDTH_PIXELS = 300
     DISPLAY_LENGTH_PIXELS = 400
@@ -13,6 +13,8 @@ class DisplayConversion:
     ROTATE_PORTRAIT_IMAGE = 270
     ROTATE_LANDSCAPE_IMAGE = 180
 
+    BLACK_AND_WHITE_IMAGE = '1'
+    BLANK_PIXEL = 1  # value of white pixel in blank and white PIL image object
 
     def __bmp_to_epaper(self):
         """Converts self.image object into an array in ePaper Display format
@@ -53,10 +55,17 @@ class DisplayConversion:
 
         The converted image is placed in self.image
 
-        :param str input_image: the path or file object for the image to convert
+        :param str input_image:
+            the path or file object for the image to convert (None for a blank image)
 
         """
-        self.image = Image.open(input_image)
+        if input_image is not None:
+            self.image = Image.open(input_image)
+        else:
+            # when the input image is none, flash a blank image
+            self.image = Image.new(self.BLACK_AND_WHITE_IMAGE,
+                                   (self.DISPLAY_LENGTH_PIXELS, self.DISPLAY_WIDTH_PIXELS),
+                                   self.BLANK_PIXEL)
 
         # rotate the image such that it appears best on the display
         rotation = self.ROTATE_PORTRAIT_IMAGE
@@ -72,12 +81,13 @@ class DisplayConversion:
         self.image = self.image.resize((self.DISPLAY_LENGTH_PIXELS, self.DISPLAY_WIDTH_PIXELS))
 
         # monochrome the image
-        self.image = self.image.convert('1')
+        self.image = self.image.convert(self.BLACK_AND_WHITE_IMAGE)
 
     def __init__(self, input_image):
         """Initializes the DisplayConversion and puts the converted array into epaper_array
 
-        :param str input_image: the path or file object for the image to convert
+        :param str input_image:
+            the path or file object for the image to convert (None for a blank image)
 
         """
         self.__convert_image(input_image)

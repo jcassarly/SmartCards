@@ -3,6 +3,7 @@ import io
 import json
 import requests
 import argparse
+from PIL import Image
 
 CARD_DATABASE = 'scryfall-default-cards.json'
 
@@ -19,7 +20,7 @@ def __download_card_image_greedy(cardname):
                 return __download_image(value)
 
     print("Failed to find {}".format(cardname))
-    return False
+    return None
 
 def __download_card_image(cardname):
     data = []
@@ -48,7 +49,8 @@ def image_cli():
     card_choices = ['card', 'cardname', 'mtg','c']
     url_choices = ['url', 'u']
     file_choices = ['file', 'filepath', 'f']
-    choices = card_choices + url_choices + file_choices
+    blank_choices = ['blank', 'b']
+    choices = card_choices + url_choices + file_choices + blank_choices
 
     parser.add_argument("source", choices=choices, help="Choose from card, url, or file as the source to download from")
     parser.add_argument("source_arg", type=str, help="The data for the source type (Magic: The Gathering card name for card, image url for url, filepath for file)")
@@ -65,6 +67,9 @@ def image_cli():
     elif args.source in file_choices:
         print("Reading Image file")
         image_array = args.source_arg
+    elif args.source in blank_choices:
+        print("Clearing Card")
+        image_array = None  # None yields a blank image
     else:
         print("Error: did not receive a valid choice")
 

@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     print("Download Elapsed: {}".format(time.time() - start_time))
 
-    if image_array:
+    if image_array or image_array is None:
         start_time = time.time()
 
         led_status = LEDStatus()
@@ -164,3 +164,5 @@ if __name__ == '__main__':
 
         if elapsed < 1:
             led_status.blink_for_time(5)
+
+        led_status.turn_status_leds_off()

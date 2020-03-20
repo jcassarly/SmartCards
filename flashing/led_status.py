@@ -25,6 +25,7 @@ class LEDStatus:
         while not wait_function():
             if (timeout is not None and (time.time() - timer > timeout)):
                 print("Timed out")
+                self.update_flash_status(False)
                 return False
 
             if time.time() >= next_end_cycle:
@@ -32,6 +33,7 @@ class LEDStatus:
                 next_end_cycle = next_end_cycle + self.BLINK_INTERVAL
                 blink_status = not blink_status
 
+        self.update_flash_status(False)
         return True
 
     def blink_for_time(self, blink_time):
@@ -39,3 +41,7 @@ class LEDStatus:
 
     def update_flash_status(self, new_status):
         self.pi.write(self.FLASH_STATUS_PIN, new_status)
+
+    def turn_status_leds_off(self):
+        self.pi.write(self.RUNNING_LED_PIN, False)
+        self.update_flash_status(False)
