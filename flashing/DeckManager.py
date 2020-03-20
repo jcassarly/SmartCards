@@ -18,22 +18,25 @@ class Deck:
 
 	def __init__(self, imageList):
 		for x in imageList:
-			deckList.append(Card(imageList.index(x), x))
+			self.deckList.append(Card(imageList.index(x), x))
 
 	def draw(self):
-		n = randint(0, len(deckList)-1)
-		return deckList.pop(n)
+		n = randint(0, len(self.deckList)-1)
+		return self.deckList.pop(n)
 
 	def moveCard(self, n):
-		x = inPlayList.pop(n)
+		x = self.inPlayList.pop(n)
 		if (x != 0):
-			discardList.append(x)
-		inPlayList.insert(n, draw())
+			self.discardList.append(x)
+		self.inPlayList.insert(n, draw())
 
 	def returnToDeck(self):
 		for x in discardList:
-			deckList.append(discardList.pop(discardList.index(x)))
+			self.deckList.append(self.discardList.pop(self.discardList.index(x)))
 		for x in inPlayList:
-			deckList.append(inPlayList.pop(inPlayList.index(x)))
+			self.deckList.append(self.inPlayList.pop(self.inPlayList.index(x)))
 		for x in range(0,5):
-			inPlayList.append(0)
+			self.inPlayList.append(0)
+
+	def is_empty(self):
+		return self.deckList == []

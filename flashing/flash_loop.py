@@ -1,6 +1,7 @@
 import time
 import argparse
 import threading
+import os
 
 from command import Command
 from conversion import DisplayConversion
@@ -9,19 +10,24 @@ import image_loader
 from led_status import LEDStatus
 from flash import ImageFlasher
 from clear_mode import ClearMode
+from DeckManager import Deck
 
 DECK_FOLDER = "deck"
 REREAD_DELAY = 0.5 # s
 
 def deck_loader():
+    cards = []
+
     # check if the deck folder exists
-
-    # if it does
+    if os.path.isdir(DECK_FOLDER):
         # get a list of the filenames in the folder (all images)
-        # return a Deck object using the list of filenames
-    # else return an empty deck
+        filenames = os.listdir(DECK_FOLDER)
 
-    return None
+        for cardname in filenames:
+            cards.append(os.path.join(DECK_FOLDER, cardname))
+
+    # return the cards in the deck folder or an empty deck if the folder did not exist
+    return Deck(cards)
 
 def flash_loop():
     deck = deck_loader()
@@ -43,15 +49,18 @@ def flash_loop():
     while True:
         new_display_id = identifier.find_display()
 
+        led_status.update_deck_empty_status(deck.is_empty())
+
         if current_display_id == DisplayIdentification.NO_DISPLAY \
            and new_display_id != DisplayIdentification.NO_DISPLAY:
             # wait a bit and reread the display to allow all the wires to finish
             # being plugged in
             # TODO: maybe make a real hysteresis to alleviate the issue, but the user taking forever to plug in could still be an issue
+            # TODO: may also want to unbundle the inputs from the output and vcc/gnd
             time.sleep(REREAD_DELAY)
             new_display_id = identifier.find_display()
 
-            # acquire the lock on the deck
+            # TODO: acquire the lock on the deck
 
             print("Found display {}".format(new_display_id))
 
@@ -62,19 +71,18 @@ def flash_loop():
                 # flash a blank card to the display
                 blank = DisplayConversion(None)
                 flasher.transmit_data(blank.epaper_array)
+            elif deck.is_empty():
+                pass  # do nothing because the status led is already set correctly
             else:
+                # TODO: move card on the display to discard
+                # TODO: "draw" a card (moving the next card into play)
+
+                # flash the new card
                 print("Flashing Image")
-                image = DisplayConversion("test.jpg")
+                image = DisplayConversion("test.jpg") # TODO: placeholder for card from deck
                 flasher.transmit_data(image.epaper_array)
 
-            # else if deck is empty
-                # indicate empty status
-            # else
-                # move card on the display to discard
-                # "draw" a card (moving the next card into play)
-                # flash the new card
-
-            # release the lock on the deck
+            # TODO: release the lock on the deck
 
             pass
 
