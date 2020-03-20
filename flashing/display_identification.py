@@ -37,10 +37,7 @@ class DisplayIdentification:
 
     def find_display(self):
         for display_id in self.ID_RANGE:
-            if self.__ping_display(display_id):
-                print("Found display {}".format(display_id))
-
+            if self.ping_display(display_id):
                 return display_id
 
-        print("Could not find a valid ID [1-6] - not flashing")
         return self.NO_DISPLAY

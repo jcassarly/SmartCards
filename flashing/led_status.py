@@ -4,6 +4,8 @@ import time
 class LEDStatus:
     RUNNING_LED_PIN = 23 # gpio 23, pin 16
     FLASH_STATUS_PIN = 24 # gpio 24, pin 18
+    CLEAR_MODE_STATUS_PIN = 25 # gpio 25, pin 22
+    DECK_EMPTY_STATUS_PIN = 12 # gpio 12, pin 32
 
     BLINK_INTERVAL = 0.25 # sec
 
@@ -14,6 +16,8 @@ class LEDStatus:
     def __setup_status_pins(self):
         self.pi.set_mode(self.RUNNING_LED_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.FLASH_STATUS_PIN, pigpio.OUTPUT)
+        self.pi.set_mode(self.CLEAR_MODE_STATUS_PIN, pigpio.OUTPUT)
+        self.pi.set_mode(self.DECK_EMPTY_STATUS_PIN, pigpio.OUTPUT)
 
         self.pi.write(self.RUNNING_LED_PIN, 1)
         self.update_flash_status(False)
@@ -39,9 +43,20 @@ class LEDStatus:
     def blink_for_time(self, blink_time):
         self.blink_until(lambda: False, timeout=blink_time)
 
+    def __update_status(self, pin, new_status):
+        self.pi.write(pin, new_status)
+
     def update_flash_status(self, new_status):
-        self.pi.write(self.FLASH_STATUS_PIN, new_status)
+        self.__update_status(self.FLASH_STATUS_PIN, new_status)
+
+    def update_clear_mode_status(self, new_status):
+        self.__update_status(self.CLEAR_MODE_STATUS_PIN, new_status)
+
+    def update_deck_empty_status(self, new_status):
+        self.__update_status(self.DECK_EMPTY_STATUS_PIN, new_status)
 
     def turn_status_leds_off(self):
         self.pi.write(self.RUNNING_LED_PIN, False)
         self.update_flash_status(False)
+        self.update_clear_mode_status(False)
+        self.update_deck_empty_status(False)
