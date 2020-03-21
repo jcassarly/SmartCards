@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -121,10 +122,9 @@ public class BluetoothService {
 
     private class ConnectedThread extends Thread {
         // Heartbeat states
-        private final int WAIT_HEARTBEAT = 0;
-        private final int RESPONSE_SENT = 1;
-        private final int MERGING = 2;
-        private int state = WAIT_HEARTBEAT;
+        public static final int WAIT_RESPONSE = 0;
+        public static final int MERGING = 1;
+        private int state = WAIT_RESPONSE;
 
         // Message Structure
         private final int CMD_INDEX = 0;
@@ -142,13 +142,15 @@ public class BluetoothService {
 
         // Deck Revision numbers
         private int cur_rev_num = 0;
-        private int pi_rev_num = 0;
+        private int cur_pi_rev_num = 0;
+        private int prev_rev_num = 0;
 
 
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
         private ByteBuffer mmBuffer; // mmBuffer store for the stream
+        private byte staged_deck[];
 
         public ConnectedThread(BluetoothSocket socket) {
             mmSocket = socket;
@@ -201,12 +203,7 @@ public class BluetoothService {
         // Call this from the main activity to send data to the remote device.
         public void write(byte[] bytes) {
             try {
-                if (state == MERGING) {
-                    mmOutStream.write(bytes);
-                    state = WAIT_HEARTBEAT;
-                } else {
-                    // TODO: Error handling
-                }
+                mmOutStream.write(bytes);
 
 //                // Share the sent message with the UI activity.
 //                Message writtenMsg = handler.obtainMessage(
@@ -228,41 +225,68 @@ public class BluetoothService {
         }
 
         public int runStateMachine(byte msg[], int numBytes) {
-            boolean command_error = true;
-            switch (state) {
-                case WAIT_HEARTBEAT:
-                    if (getMsgInt(msg, CMD_INDEX) == CMD_HEARTBEAT) {
-                        // Update the pi's revision number and send our current revision number
-                        byte send_num[] = ByteBuffer.allocate(Integer.BYTES).putInt(cur_rev_num).array();
-                        pi_rev_num = getMsgInt(msg, REV_NUM_INDEX);
-                        write(send_num);
-                        state = RESPONSE_SENT;
-                        command_error = false;
-                    }
+            boolean command_error = false;
+            boolean send_response = true;
+            int command = getMsgInt(msg, CMD_INDEX);
+            switch (command) {
+                case CMD_HEARTBEAT:
+                    // Update the pi's revision number and send our current revision number
+                    cur_pi_rev_num = getMsgInt(msg, REV_NUM_INDEX);
                     break;
-                case RESPONSE_SENT:
-                    int command = getMsgInt(msg, CMD_INDEX);
-                    if (command == CMD_LOCKED) {
-                        cur_rev_num = pi_rev_num;
-                        state = WAIT_HEARTBEAT;
-                        command_error = false;
-                    } else if (command == CMD_UNLOCKED) {
-                        Message readMsg = handler.obtainMessage(
-                                MessageConstants.MESSAGE_READ, numBytes, -1,
-                                msg);
-                        readMsg.sendToTarget();
-                        state = MERGING;
-                        command_error = false;
-                    }
+                case CMD_LOCKED:
+                    // TODO: Revert deck back to revision from pi, save change log
+                    cur_rev_num = prev_rev_num;
+                    break;
+                case CMD_UNLOCKED:
+                    Message readMsg = handler.obtainMessage(
+                            MessageConstants.MESSAGE_READ, numBytes, -1,
+                            msg);
+                    readMsg.sendToTarget();
+                    send_response = false;
+                    state = MERGING;
+                    break;
+                default:
+                    command_error = true;
                     break;
             }
+
+            if (send_response && !command_error) {
+                ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2);
+                send_bytes.putInt(command).putInt(cur_rev_num);
+                write(send_bytes.array());
+            }
+
             return command_error == false ? state : ERROR_IN_CMD;
         }
 
 
 
         private int getMsgInt(byte[] msg, int index) {
+            // Because of little endian
             return ByteBuffer.wrap(msg).getInt(index);
+        }
+
+        public void stageMerge(int new_rev, byte new_deck[]) {
+            prev_rev_num = cur_rev_num;
+            cur_rev_num = new_rev;
+            staged_deck = Arrays.copyOf(new_deck, new_deck.length);
+
+        }
+
+        public void merge() {
+            if (state == MERGING) {
+                ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2 + staged_deck.length);
+                send_bytes.putInt(CMD_UNLOCKED).putInt(cur_rev_num);
+                send_bytes.put(staged_deck);
+                write(send_bytes.array());
+                state = WAIT_RESPONSE;
+            } else {
+                System.out.println("Not ready to merge yet!");
+            }
+        }
+
+        public int getServerState() {
+            return state;
         }
 
         // Call this method from the main activity to shut down the connection.
@@ -280,8 +304,21 @@ public class BluetoothService {
         make_conn_thread.start();
     }
 
+    /**
+     * This function stages a new deck for sending to the pi
+     * @param msg
+     */
     public void send(String msg) {
-        manage_conn_thread.write(msg.getBytes());
+//        manage_conn_thread.write(msg.getBytes());
+        int serverState = manage_conn_thread.getServerState();
+        if (serverState == ConnectedThread.WAIT_RESPONSE) {
+            Random randy = new Random();
+            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
+            manage_conn_thread.stageMerge(Integer.valueOf(msg), new_deck);
+        } else if(serverState == ConnectedThread.MERGING) {
+            manage_conn_thread.merge();
+        }
+
     }
 
     public int getRevisionNumber(byte[] buffer) {
