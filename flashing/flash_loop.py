@@ -60,13 +60,15 @@ def flash_loop():
             time.sleep(REREAD_DELAY)
             new_display_id = identifier.find_display()
 
-            # TODO: acquire the lock on the deck
+            # acquire the lock on the deck
+            deck.deckLock.acquire()
 
             print("Found display {}".format(new_display_id))
 
             if clear_mode_monitor.is_in_clear_mode():
                 print("Flashing Blank")
-                # TODO: move card on display to discard
+                # move card on display to discard
+                deck.discardCard(new_display_id)
 
                 # flash a blank card to the display
                 blank = DisplayConversion(None)
@@ -74,15 +76,17 @@ def flash_loop():
             elif deck.is_empty():
                 pass  # do nothing because the status led is already set correctly
             else:
-                # TODO: move card on the display to discard
-                # TODO: "draw" a card (moving the next card into play)
+                # move card on the display to discard
+                # "draw" a card (moving the next card into play)
+                image_path = deck.moveCard(new_display_id)
 
                 # flash the new card
                 print("Flashing Image")
-                image = DisplayConversion("test.jpg") # TODO: placeholder for card from deck
+                image = DisplayConversion(image_path)
                 flasher.transmit_data(image.epaper_array)
 
-            # TODO: release the lock on the deck
+            # release the lock on the deck
+            deck.deckLock.release()
 
             pass
 
