@@ -31,9 +31,12 @@ def deck_loader():
 
 def flash_loop():
     deck = deck_loader()
+    deck_lock = threading.Lock()
 
     # spawn the bluetooth update process with deck
-    # TODO: tell shota that when the contents of the deck list changes, that needs to be written to non-volatile memory
+    # TODO: finish up the bluetooth spawning
+    #bluetooth_thread = threading.Thread(target=None, args=(deck, deck_lock)) # TODO replace None with the bluetooth call
+    #bluetooth_thread.start()
 
     led_status = LEDStatus()
     clear_mode_monitor = ClearMode(led_status)
@@ -61,7 +64,7 @@ def flash_loop():
             new_display_id = identifier.find_display()
 
             # acquire the lock on the deck
-            deck.deckLock.acquire()
+            deck_lock.acquire()
 
             print("Found display {}".format(new_display_id))
 
@@ -86,7 +89,7 @@ def flash_loop():
                 flasher.transmit_data(image.epaper_array)
 
             # release the lock on the deck
-            deck.deckLock.release()
+            deck_lock.release()
 
             pass
 
