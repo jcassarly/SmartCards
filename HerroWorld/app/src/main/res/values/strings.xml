@@ -11,4 +11,12 @@
     <string name="blue_msg_hint">Message to send...</string>
     <string name="blue_rcv_msg">No message received yet...</string>
     <string name="android_rcv_msg">Android Messages Here.</string>
+
+    <!-- title screen -->
+    <string name="title_text">Smart\nCards</string>
+    <string name="play_button_text">Play</string>
+    <string name="create_deck_button_text">Create New Deck</string>
+    <string name="info_button_text">Info</string>
+
+
 </resources>

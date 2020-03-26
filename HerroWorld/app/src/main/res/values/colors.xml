@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
+    <color name="colorPrimary">@color/colorMagSilver</color>
+    <color name="colorPrimaryDark">@color/colorMagBlue</color>
+    <color name="colorAccent">@color/colorMagGold</color>
+
+    <!-- Magic Colors -->
+    <color name="colorMagSilver">#CABDB8</color>
+    <color name="colorMagRed">#E78E71</color>
+    <color name="colorMagGold">#FCE171</color>
+    <color name="colorMagBlue">#D2E5FA</color>
+    <!-- Palette Colors -->
+    <color name="colorTeaGreen">#D9F4C7</color>
+
+    <!-- Basic Colors -->
+    <color name="black">#000000</color>
+    <color name="white">#ffffff</color>
+
 </resources>
