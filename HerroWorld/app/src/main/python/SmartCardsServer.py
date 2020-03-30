@@ -7,6 +7,9 @@ import sys
 shota_phone = "4C:DD:31:C9:92:05"
 HOST_MAC = "B4:69:21:BE:FA:A9"
 UUID = "b5c65192-1d67-471f-8147-0d0e8904efaa"
+FILE_PATH = "deck.txt"
+IMAGE_DIR = "./images/"
+ENCODING = "utf-8"
 
 # states
 SEND_HEARTBEAT = 0
@@ -46,6 +49,48 @@ global_placeholder = Placeholder()
 def printDebugInfo(action, state, command, payload):
     print("{0} in state: {1}\n    Command: {2}\n    Payload: {3}".format(action, state, command, payload))
 
+def readFile():
+    revision_number = -1
+    image_names = []
+    with open(FILE_PATH, 'r') as phil:
+        for line in phil:
+            if "revnumber" in line:
+                num_list = [int(word) for word in line.split() if word.isdigit()][0] # maybe need to add error checking for if there's more than 1 num?
+            elif "]" not in line and '[' not in line:
+                image_names.append(line)
+
+    return revision_number, image_names
+
+def checkDeckAck(client_sock):
+    ack = client_sock.recv(1024)
+    return True #TODO add acutal error checking
+
+def sendDeck(client_sock):
+    # deck_manager.toFile()
+    revision_number, image_names = readFile()
+    command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
+    payload = revision_number.to_bytes(4, byteorder="big")
+    client_sock.send(command + payload)
+
+    # wait for response
+    checkDeckAck(client_sock)
+
+    # send contents of deck file
+    with open(FILE_PATH, 'rb') as phil:
+        payload = phil.read()
+        client_sock.send(payload)
+
+    # wait for acknowledgement
+    checkDeckAck(client_sock)
+    
+    # send images
+    for image_name in image_names:
+        with open(IMAGE_DIR + image_name, 'rb') as image:
+            payload = image.read()
+            client_sock.send(payload)
+            checkDeckAck(client_sock)
+
+
 def runStateMachineSend(state, client_sock):
     command = b'\x00'
     payload = b'\x00'
@@ -53,18 +98,22 @@ def runStateMachineSend(state, client_sock):
         command = CMD_HEARTBEAT.to_bytes(4, byteorder="big")
         payload = global_placeholder.getRevision().to_bytes(4, byteorder="big")
         printDebugInfo("Sending", state, command, payload)
+        client_sock.send(command + payload)
     elif state == COMPARE_REVISIONS:
         if global_placeholder.getLockState():
             command = CMD_LOCKED.to_bytes(4, byteorder="big")
             payload = global_placeholder.getRevision().to_bytes(4, byteorder="big")
             printDebugInfo("Sending", state, command, payload)
+            client_sock.send(command + payload)
         else:
-            command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
-            payload = bytes(global_placeholder.getDecklist())
+            # command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
+            # deck.toFile() needs to be run at some point
+            # payload = bytes(global_placeholder.getDecklist())
+            sendDeck(client_sock)
             printDebugInfo("Sending", state, command, payload)
             # state will exit to SEND_HEARTBEAT after receiving new decklist
 
-    client_sock.send(command + payload)
+    # client_sock.send(command + payload)
     return state
 
 def runStateMachineRecv(state, client_sock):
@@ -170,5 +219,5 @@ def debug(server_sock):
     sys.exit(0)
 
 
-if __name__=='__main__':
-    heartbeat()
+# if __name__=='__main__':
+#     heartbeat()
