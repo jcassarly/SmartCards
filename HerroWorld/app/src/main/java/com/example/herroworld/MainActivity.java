@@ -109,7 +109,13 @@ public class MainActivity extends AppCompatActivity {
 
         // Setup bluetooth, do something if it fails?
         receive_msg_handler = new ReceiveMsgHandler();
-        bluetooth_service = new BluetoothService("", BLUETOOTH_DEVICE_NAME, receive_msg_handler, this);
+        bluetooth_service = new BluetoothService(
+                "",
+                BLUETOOTH_DEVICE_NAME,
+                receive_msg_handler,
+                this,
+                "deck.txt",
+                "./images");
     }
 
     @Override

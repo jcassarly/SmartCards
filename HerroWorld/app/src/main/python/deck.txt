@@ -1,0 +1,10 @@
+deckList = [
+orig_bruce.png
+]
+inPlayList = [
+org_gary.jpg
+]
+discardList = [
+orig_murica.jpg
+]
+revnumber = 69

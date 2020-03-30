@@ -69,16 +69,18 @@ def sendDeck(client_sock):
     # deck_manager.toFile()
     revision_number, image_names = readFile()
     command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
-    payload = revision_number.to_bytes(4, byteorder="big")
-    client_sock.send(command + payload)
+    byte_rev_num = revision_number.to_bytes(4, byteorder="big")
+    init_fin_packet = command + byte_rev_num
+    client_sock.send(init_fin_packet)
 
     # wait for response
     checkDeckAck(client_sock)
 
+    payload = b''
     # send contents of deck file
     with open(FILE_PATH, 'rb') as phil:
         payload = phil.read()
-        client_sock.send(payload)
+        client_sock.send(command + payload)
 
     # wait for acknowledgement
     checkDeckAck(client_sock)
@@ -87,8 +89,11 @@ def sendDeck(client_sock):
     for image_name in image_names:
         with open(IMAGE_DIR + image_name, 'rb') as image:
             payload = image.read()
-            client_sock.send(payload)
+            client_sock.send(command + payload)
             checkDeckAck(client_sock)
+
+    # send indication we're done
+    client_sock.send(init_fin_packet)
 
 
 def runStateMachineSend(state, client_sock):

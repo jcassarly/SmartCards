@@ -10,11 +10,20 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import androidx.core.content.res.TypedArrayUtils;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -25,6 +34,8 @@ public class BluetoothService {
     public final static int NO_ERROR = 0;
     public final static int BLUETOOTH_ADAPTER_NULL = -1;
     public final static int BLUETOOTH_NOT_ENABLED = -2;
+    private final String FILE_PATH;
+    private final String IMAGE_DIR;
 
     private Activity parent_activity = null;
     private Handler handler; // handler that gets info from Bluetooth service
@@ -33,7 +44,7 @@ public class BluetoothService {
     private ConnectThread make_conn_thread = null;
     private ConnectedThread manage_conn_thread = null;
 
-    public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity) {
+    public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity, String file_path, String image_dir) {
         parent_activity = activity;
         mmAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mmAdapter != null && checkBluetoothEnabled() == NO_ERROR) {
@@ -52,6 +63,8 @@ public class BluetoothService {
             }
         }
         handler = msg_handler;
+        FILE_PATH = file_path;
+        IMAGE_DIR = image_dir;
     }
 
     // Defines several constants used when transmitting messages between the
@@ -124,11 +137,13 @@ public class BluetoothService {
         // Heartbeat states
         public static final int WAIT_RESPONSE = 0;
         public static final int MERGING = 1;
+        public static final int RECEIVING_FILE = 2;
+        public static final int RECEIVING_IMAGE = 3;
         private int state = WAIT_RESPONSE;
 
         // Message Structure
         private final int CMD_INDEX = 0;
-        private final int REV_NUM_INDEX = 4;
+        private final int PAYLOAD_INDEX = 4;
 
         // Message Commands
         private final int CMD_HEARTBEAT = 0;
@@ -145,6 +160,7 @@ public class BluetoothService {
         private int cur_pi_rev_num = 0;
         private int prev_rev_num = 0;
 
+        private Queue<String> image_queue;
 
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
@@ -224,6 +240,78 @@ public class BluetoothService {
             }
         }
 
+        public Queue<String> getImageList(String file_name) {
+            File file = new File(file_name);
+            Queue<String> imageList = new LinkedList<String>();
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new FileReader(file));
+                String imageName;
+                while((imageName = br.readLine()) != null) {
+                    if (!imageName.contains("[") && !imageName.contains("]")) {
+                        imageList.add(imageName);
+                    }
+                }
+            } catch (IOException ioe) {
+                // TODO: Some proper error handling
+                ioe.printStackTrace();
+            } finally {
+                try {
+                    if (br != null) {
+                        br.close();
+                    }
+                } catch (IOException ioe) {
+                    System.out.println("Error in closing the image name stream");
+                }
+            }
+            return imageList;
+        }
+
+        public void writeToFile(byte data[], String file_name) {
+            File file = null;
+            FileOutputStream fos = null;
+            try {
+
+                file = new File(file_name);
+                fos = new FileOutputStream(file);
+
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+
+                fos.write(data);
+                fos.flush();
+            } catch (IOException ioe) {
+                // TODO: Some proper error handling
+                ioe.printStackTrace();
+            } finally {
+                try {
+                    if (fos != null) {
+                        fos.close();
+                    }
+                } catch (IOException ioe) {
+                    // TODO: some more proper error handling
+                    System.out.println("Error in closing the stream");
+                }
+            }
+
+        }
+
+        public void receiveDeck(byte data[]) {
+            switch (state) {
+                case RECEIVING_FILE:
+                    writeToFile(data, FILE_PATH);
+                    image_queue = getImageList(FILE_PATH);
+                    state = RECEIVING_IMAGE;
+                    break;
+                case RECEIVING_IMAGE:
+                    writeToFile(data, image_queue.remove());
+                    break;
+                default:
+                    // TODO: Some kind of error handling.
+            }
+        }
+
         public int runStateMachine(byte msg[], int numBytes) {
             boolean command_error = false;
             boolean send_response = true;
@@ -231,19 +319,29 @@ public class BluetoothService {
             switch (command) {
                 case CMD_HEARTBEAT:
                     // Update the pi's revision number and send our current revision number
-                    cur_pi_rev_num = getMsgInt(msg, REV_NUM_INDEX);
+                    cur_pi_rev_num = getMsgInt(msg, PAYLOAD_INDEX);
                     break;
                 case CMD_LOCKED:
                     // TODO: Revert deck back to revision from pi, save change log
                     cur_rev_num = prev_rev_num;
                     break;
                 case CMD_UNLOCKED:
-                    Message readMsg = handler.obtainMessage(
-                            MessageConstants.MESSAGE_READ, numBytes, -1,
-                            msg);
-                    readMsg.sendToTarget();
-                    send_response = false;
-                    state = MERGING;
+//                    Message readMsg = handler.obtainMessage(
+//                            MessageConstants.MESSAGE_READ, numBytes, -1,
+//                            msg);
+//                    readMsg.sendToTarget();
+                    if (numBytes == 8) { // 8 bytes is when received two integers: command and rev_num
+                        if (state == WAIT_RESPONSE) {
+                            state = RECEIVING_FILE;
+                        } else if (state == RECEIVING_IMAGE) {
+                            state = MERGING;
+                        } else {
+                            command_error = true;
+                        }
+                    } else {
+                        byte data[] = Arrays.copyOfRange(msg, PAYLOAD_INDEX, numBytes);
+                        receiveDeck(data);
+                    }
                     break;
                 default:
                     command_error = true;
