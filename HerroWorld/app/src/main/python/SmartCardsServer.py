@@ -2,12 +2,13 @@
 import bluetooth
 import threading
 import sys
+import json
 
 
 shota_phone = "4C:DD:31:C9:92:05"
 HOST_MAC = "B4:69:21:BE:FA:A9"
 UUID = "b5c65192-1d67-471f-8147-0d0e8904efaa"
-FILE_PATH = "deck.txt"
+FILE_PATH = "decklist.json"
 IMAGE_DIR = "./images/"
 ENCODING = "utf-8"
 
@@ -49,12 +50,18 @@ def printDebugInfo(action, state, command, payload):
 def readFile():
     revision_number = -1
     image_names = []
-    with open(FILE_PATH, 'r') as phil:
-        for line in phil:
-            if "revnumber" in line:
-                num_list = [int(word) for word in line.split() if word.isdigit()][0] # maybe need to add error checking for if there's more than 1 num?
-            elif "]" not in line and '[' not in line:
-                image_names.append(line)
+    with open(FILE_PATH) as phil:
+        """ old implementation for a text file"""
+        # for line in phil:
+        #     if "revnumber" in line:
+        #         num_list = [int(word) for word in line.split() if word.isdigit()][0] # maybe need to add error checking for if there's more than 1 num?
+        #     elif "]" not in line and '[' not in line:
+        #         image_names.append(line)
+
+        """ new implementation for json """
+        json_dict = json.load(phil)
+        revision_number = json_dict['revnumber']
+        image_names = json_dict['decklist'] + json_dict['inPlayList'] + json_dict['discardList']
 
     return revision_number, image_names
 
@@ -131,7 +138,7 @@ def runStateMachineSend(state, client_sock):
     if state == SEND_HEARTBEAT:
         command = CMD_HEARTBEAT.to_bytes(4, byteorder="big")
         payload = global_placeholder.getRevision().to_bytes(4, byteorder="big")
-        printDebugInfo("Sending", state, command, payload)
+        # printDebugInfo("Sending", state, command, payload)
         client_sock.send(command + payload)
     elif state == COMPARE_REVISIONS:
         if global_placeholder.getLockState():

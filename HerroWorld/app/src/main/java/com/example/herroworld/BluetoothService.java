@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,6 +29,11 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 public class BluetoothService {
     public static final String TAG = "BLUETOOTH_SERVICE";
@@ -66,6 +72,9 @@ public class BluetoothService {
         handler = msg_handler;
         FILE_PATH = file_path;
         IMAGE_DIR = image_dir;
+
+        // Creates a new file directory for images
+        File img_dir = parent_activity.getDir(IMAGE_DIR, Context.MODE_PRIVATE);
     }
 
     // Defines several constants used when transmitting messages between the
@@ -243,24 +252,46 @@ public class BluetoothService {
         }
 
         public Queue<String> getImageList() {
-            File file = new File(FILE_PATH);
+//            File file = new File(FILE_PATH);
             Queue<String> imageList = new LinkedList<String>();
             BufferedReader br = null;
+            FileInputStream fis = null;
+
             try {
-                br = new BufferedReader(new FileReader(file));
-                String imageName;
-                while((imageName = br.readLine()) != null) {
-                    if (!imageName.contains("[") && !imageName.contains("]")) {
-                        imageList.add(imageName);
+//                br = new BufferedReader(new FileReader(file));
+//                String imageName;
+//                while((imageName = br.readLine()) != null) {
+//                    if (!imageName.contains("[") && !imageName.contains("]")) {
+//                        imageList.add(imageName);
+//                    }
+//                }
+//                fis = new FileInputStream(file);
+                fis = parent_activity.openFileInput(FILE_PATH);
+                byte buffer[] = new byte[fis.available()];
+                fis.read(buffer);
+                String jstr = new String(buffer, "UTF-8");
+                JSONObject jobj = new JSONObject(jstr);
+                JSONArray deck = jobj.getJSONArray("deckList");
+                JSONArray inPlay = jobj.getJSONArray("inPlayList");
+                JSONArray discard = jobj.getJSONArray("discardList");
+
+                JSONArray lists[] = {deck, inPlay, discard};
+                for (int list_index = 0; list_index < lists.length; list_index++) {
+                    JSONArray current = lists[list_index];
+                    for (int arr_index = 0; arr_index < current.length(); arr_index++) {
+                        imageList.add(current.getString(arr_index));
                     }
                 }
+
             } catch (IOException ioe) {
                 // TODO: Some proper error handling
                 ioe.printStackTrace();
+            } catch(JSONException je) {
+                je.printStackTrace();
             } finally {
                 try {
-                    if (br != null) {
-                        br.close();
+                    if (fis != null) {
+                        fis.close();
                     }
                 } catch (IOException ioe) {
                     System.out.println("Error in closing the image name stream");
@@ -275,7 +306,8 @@ public class BluetoothService {
             try {
 
                 file = new File(file_name);
-                fos = new FileOutputStream(file);
+//                fos = new FileOutputStream(file);
+                fos = parent_activity.openFileOutput(file_name, Context.MODE_PRIVATE);
 
                 if (!file.exists()) {
                     file.createNewFile();
@@ -303,11 +335,11 @@ public class BluetoothService {
             switch (state) {
                 case RECEIVING_FILE:
                     writeToFile(data, FILE_PATH);
-                    image_queue = getImageList();
+                    getImageList();
                     state = RECEIVING_IMAGE;
                     break;
                 case RECEIVING_IMAGE:
-                    writeToFile(data, image_queue.remove());
+                    writeToFile(data, IMAGE_DIR + image_queue.remove());
                     break;
                 default:
                     // TODO: Some kind of error handling.
@@ -372,12 +404,12 @@ public class BluetoothService {
             prev_rev_num = cur_rev_num;
             // TODO: Read new revision number from deck object, get deck lists
             image_queue = getImageList(); // temporary solution
-            File file = new File(FILE_PATH);
+//            File file = new File(FILE_PATH);
             FileInputStream fis = null;
 
             try {
-                fis = new FileInputStream(file);
-                staged_deck = new byte[(int) file.length()];
+                fis = parent_activity.openFileInput(FILE_PATH);
+                staged_deck = new byte[(int) fis.available()];
                 fis.read(staged_deck);
             } catch (IOException ioe) {
                 ioe.printStackTrace();
@@ -396,12 +428,13 @@ public class BluetoothService {
             byte sendBuffer[];
             if (!image_queue.isEmpty()) {
                 String image_name = image_queue.remove();
-                File file = new File(IMAGE_DIR + image_name);
+//                File file = new File(IMAGE_DIR + image_name);
                 FileInputStream fis = null;
-                sendBuffer = new byte[(int) file.length()];
 
                 try {
-                    fis = new FileInputStream(file);
+//                    fis = new FileInputStream(file);
+                    fis = parent_activity.openFileInput(IMAGE_DIR + image_name);
+                    sendBuffer = new byte[(int) fis.available()];
                     fis.read(sendBuffer);
                 } catch(IOException ioe) {
                     ioe.printStackTrace();

@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     public static final String CONNECTION_ERROR_TAG = "CONNECTION_ERROR";
     public static UUID CONNECTION_UUID = UUID.fromString("b5c65192-1d67-471f-8147-0d0e8904efaa");
     public static final String MESSAGE = "com.example.herroworld.MESSAGE";
+    public static final String FILE_PATH = "decklist.json";
+    public static final String IMAGE_DIR = "images/";
 
     private Python py;
 
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     //    private String BLUETOOTH_DEVICE_NAME = "raspberrypi";
     private BluetoothService bluetooth_service = null;
     private ReceiveMsgHandler receive_msg_handler = null;
+
 
     // For bluetooth device discovery
     // Create a BroadcastReceiver for ACTION_FOUND.
@@ -114,8 +117,8 @@ public class MainActivity extends AppCompatActivity {
                 BLUETOOTH_DEVICE_NAME,
                 receive_msg_handler,
                 this,
-                "deck.txt",
-                "./images");
+                FILE_PATH,
+                IMAGE_DIR);
     }
 
     @Override
