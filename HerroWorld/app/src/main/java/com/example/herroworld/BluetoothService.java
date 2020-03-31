@@ -14,6 +14,7 @@ import androidx.core.content.res.TypedArrayUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -143,7 +144,8 @@ public class BluetoothService {
 
         // Message Structure
         private final int CMD_INDEX = 0;
-        private final int PAYLOAD_INDEX = 4;
+        private final int REV_NUM_INDEX = 4;
+        private final int DECK_DATA_INDEX = 4;
 
         // Message Commands
         private final int CMD_HEARTBEAT = 0;
@@ -240,8 +242,8 @@ public class BluetoothService {
             }
         }
 
-        public Queue<String> getImageList(String file_name) {
-            File file = new File(file_name);
+        public Queue<String> getImageList() {
+            File file = new File(FILE_PATH);
             Queue<String> imageList = new LinkedList<String>();
             BufferedReader br = null;
             try {
@@ -301,7 +303,7 @@ public class BluetoothService {
             switch (state) {
                 case RECEIVING_FILE:
                     writeToFile(data, FILE_PATH);
-                    image_queue = getImageList(FILE_PATH);
+                    image_queue = getImageList();
                     state = RECEIVING_IMAGE;
                     break;
                 case RECEIVING_IMAGE:
@@ -319,7 +321,7 @@ public class BluetoothService {
             switch (command) {
                 case CMD_HEARTBEAT:
                     // Update the pi's revision number and send our current revision number
-                    cur_pi_rev_num = getMsgInt(msg, PAYLOAD_INDEX);
+                    cur_pi_rev_num = getMsgInt(msg, REV_NUM_INDEX);
                     break;
                 case CMD_LOCKED:
                     // TODO: Revert deck back to revision from pi, save change log
@@ -335,11 +337,13 @@ public class BluetoothService {
                             state = RECEIVING_FILE;
                         } else if (state == RECEIVING_IMAGE) {
                             state = MERGING;
+                        } else if (state == MERGING) {
+                            sendImage();
                         } else {
                             command_error = true;
                         }
                     } else {
-                        byte data[] = Arrays.copyOfRange(msg, PAYLOAD_INDEX, numBytes);
+                        byte data[] = Arrays.copyOfRange(msg, DECK_DATA_INDEX, numBytes);
                         receiveDeck(data);
                     }
                     break;
@@ -364,11 +368,53 @@ public class BluetoothService {
             return ByteBuffer.wrap(msg).getInt(index);
         }
 
-        public void stageMerge(int new_rev, byte new_deck[]) {
+        public void stageMerge() {
             prev_rev_num = cur_rev_num;
-            cur_rev_num = new_rev;
-            staged_deck = Arrays.copyOf(new_deck, new_deck.length);
+            // TODO: Read new revision number from deck object, get deck lists
+            image_queue = getImageList(); // temporary solution
+            File file = new File(FILE_PATH);
+            FileInputStream fis = null;
 
+            try {
+                fis = new FileInputStream(file);
+                staged_deck = new byte[(int) file.length()];
+                fis.read(staged_deck);
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            } finally {
+                try {
+                    if (fis != null) {
+                        fis.close();
+                    }
+                } catch (IOException ioe) {
+                    System.out.println("Error in closing filestream reading from deck file.");
+                }
+            }
+        }
+
+        private void sendImage() {
+            byte sendBuffer[];
+            if (!image_queue.isEmpty()) {
+                String image_name = image_queue.remove();
+                File file = new File(IMAGE_DIR + image_name);
+                FileInputStream fis = null;
+                sendBuffer = new byte[(int) file.length()];
+
+                try {
+                    fis = new FileInputStream(file);
+                    fis.read(sendBuffer);
+                } catch(IOException ioe) {
+                    ioe.printStackTrace();
+                } finally {
+                    try {
+                        if (fis != null) {
+                            fis.close();
+                        }
+                    } catch (IOException ioe) {
+                        System.out.print("Error in closing image file input stream.");
+                    }
+                }
+            }
         }
 
         public void merge() {
@@ -377,7 +423,6 @@ public class BluetoothService {
                 send_bytes.putInt(CMD_UNLOCKED).putInt(cur_rev_num);
                 send_bytes.put(staged_deck);
                 write(send_bytes.array());
-                state = WAIT_RESPONSE;
             } else {
                 System.out.println("Not ready to merge yet!");
             }
@@ -410,9 +455,9 @@ public class BluetoothService {
 //        manage_conn_thread.write(msg.getBytes());
         int serverState = manage_conn_thread.getServerState();
         if (serverState == ConnectedThread.WAIT_RESPONSE) {
-            Random randy = new Random();
-            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
-            manage_conn_thread.stageMerge(Integer.valueOf(msg), new_deck);
+//            Random randy = new Random();
+//            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
+            manage_conn_thread.stageMerge();
         } else if(serverState == ConnectedThread.MERGING) {
             manage_conn_thread.merge();
         }

@@ -35,9 +35,6 @@ class Placeholder():
     def getDecklist(self):
         return self.deck
 
-    def unpackDecklist(self, data):
-        self.updateSharedMemory(data)
-
     def updateSharedMemory(self, data):
         new_deck = []
         for index in range(0, len(data), 4):
@@ -70,8 +67,8 @@ def sendDeck(client_sock):
     revision_number, image_names = readFile()
     command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
     byte_rev_num = revision_number.to_bytes(4, byteorder="big")
-    init_fin_packet = command + byte_rev_num
-    client_sock.send(init_fin_packet)
+    init_packet = command + byte_rev_num
+    client_sock.send(init_packet)
 
     # wait for response
     checkDeckAck(client_sock)
@@ -79,7 +76,7 @@ def sendDeck(client_sock):
     payload = b''
     # send contents of deck file
     with open(FILE_PATH, 'rb') as phil:
-        payload = phil.read()
+        payload = init_packet + phil.read()
         client_sock.send(command + payload)
 
     # wait for acknowledgement
@@ -88,13 +85,45 @@ def sendDeck(client_sock):
     # send images
     for image_name in image_names:
         with open(IMAGE_DIR + image_name, 'rb') as image:
-            payload = image.read()
+            payload = init_packet + image.read()
             client_sock.send(command + payload)
             checkDeckAck(client_sock)
 
     # send indication we're done
-    client_sock.send(init_fin_packet)
+    client_sock.send(init_packet)
 
+def receiveDeck(client_sock):
+    # receive the data for the file
+    data = client_sock.recv()
+    command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
+    byte_rev_num = global_placeholder.getRevision().to_bytes(4, byteorder="big")
+    response = command + byte_rev_num
+
+    # write the contents of the deck as a file
+    with open(FILE_PATH, 'wb') as phil:
+        data = client_sock.recv()
+        inc_cmd = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting command
+        if inc_cmd == CMD_UNLOCKED:
+        # inc_rev_num = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting revision number
+            phil.write(data[8:])
+            client_sock.send(response)
+        else:
+            print("Error! Incorrect command when expecting new deck from app.\nCommand: {}".format(inc_cmd))
+
+    # Need to run fromFile() here? Also need to set the new revision number?
+    
+    # receive the images of the deck
+    revision_number, image_names = readFile()
+    
+    for image_name in image_names:
+        with open(IMAGE_DIR + image_name, 'wb') as image:
+            data = client_sock.recv()
+            # Do I need error checking here?
+            image.write(data[8:])
+            client_sock.send(response)
+
+    # final packet should just be command and revision number, need error checking?
+    data = client_sock.recv()
 
 def runStateMachineSend(state, client_sock):
     command = b'\x00'
@@ -134,12 +163,12 @@ def runStateMachineRecv(state, client_sock):
         printDebugInfo("Receiving", state, command, new_rev)
         # TODO: Error check command
         if global_placeholder.getLockState():
-            pass
+            state = SEND_HEARTBEAT
             # TODO: error check that the returned revision number is correct
         else:
             global_placeholder.rev_num = new_rev
-            global_placeholder.unpackDecklist(data[8:])
-        state = SEND_HEARTBEAT
+            receiveDeck(client_sock)
+        
 
     return state, new_rev
 
