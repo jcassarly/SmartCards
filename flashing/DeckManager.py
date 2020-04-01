@@ -4,7 +4,7 @@ import threading
 from random import randint
 
 IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'deck')
-DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.txt')
+DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.json')
 
 def load_deck(file_path):
 	deck = Deck([])
