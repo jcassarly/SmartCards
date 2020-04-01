@@ -12,25 +12,31 @@ from flash import ImageFlasher
 from clear_mode import ClearMode
 from DeckManager import Deck
 
-DECK_FOLDER = "deck"
 REREAD_DELAY = 0.5 # s
 
+# TODO: need to add something to read the from file and load that in
 def deck_loader():
+    '''TODO: uncomment once DeckManager has to/from file
+    deck = Deck([])
+    deck.fromFile(DeckManager.DECK_LIST)
+    return deck
+    '''
+
     cards = []
 
     # check if the deck folder exists
-    if os.path.isdir(DECK_FOLDER):
+    if os.path.isdir(DeckManager.IMAGE_DIR):
         # get a list of the filenames in the folder (all images)
-        filenames = os.listdir(DECK_FOLDER)
+        filenames = os.listdir(DeckManager.IMAGE_DIR)
 
         for cardname in filenames:
-            cards.append(os.path.join(DECK_FOLDER, cardname))
+            cards.append(os.path.join(DeckManager.IMAGE_DIR, cardname))
 
     # return the cards in the deck folder or an empty deck if the folder did not exist
     return Deck(cards)
 
 def flash_loop():
-    deck = deck_loader()
+    deck = DeckManager.load_deck()
     deck_lock = threading.Lock()
 
     # spawn the bluetooth update process with deck
