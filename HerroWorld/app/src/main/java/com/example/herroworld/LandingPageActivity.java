@@ -19,4 +19,10 @@ public class LandingPageActivity extends AppCompatActivity {
         startActivity(intent);
         overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom);
     }
+
+    public void createDeck(View view) {
+        Intent intent = new Intent(this, EditDeck.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+    }
 }
