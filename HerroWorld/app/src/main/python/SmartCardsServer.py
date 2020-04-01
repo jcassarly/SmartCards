@@ -61,7 +61,7 @@ def readFile():
         """ new implementation for json """
         json_dict = json.load(phil)
         revision_number = json_dict['revnumber']
-        image_names = json_dict['decklist'] + json_dict['inPlayList'] + json_dict['discardList']
+        image_names = json_dict['deckList'] + json_dict['inPlayList'] + json_dict['discardList']
 
     return revision_number, image_names
 
@@ -163,7 +163,7 @@ def runStateMachineRecv(state, client_sock):
     new_rev = int.from_bytes(data[4:8], byteorder="big") # get revision number
     if state == SEND_HEARTBEAT:
         # TODO: error check command
-        printDebugInfo("Receiving", state, command, new_rev)
+        # printDebugInfo("Receiving", state, command, new_rev)
         if new_rev != global_placeholder.getRevision():
             state = COMPARE_REVISIONS
     elif state == COMPARE_REVISIONS:
@@ -260,5 +260,5 @@ def debug(server_sock):
     sys.exit(0)
 
 
-# if __name__=='__main__':
-#     heartbeat()
+if __name__=='__main__':
+    heartbeat()

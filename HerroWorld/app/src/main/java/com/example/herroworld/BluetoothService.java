@@ -29,10 +29,13 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 
 public class BluetoothService {
@@ -41,7 +44,7 @@ public class BluetoothService {
     public final static int NO_ERROR = 0;
     public final static int BLUETOOTH_ADAPTER_NULL = -1;
     public final static int BLUETOOTH_NOT_ENABLED = -2;
-    private final String FILE_PATH;
+    private final String DECKLIST_FILE_NAME;
     private final String IMAGE_DIR;
 
     private Activity parent_activity = null;
@@ -51,7 +54,7 @@ public class BluetoothService {
     private ConnectThread make_conn_thread = null;
     private ConnectedThread manage_conn_thread = null;
 
-    public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity, String file_path, String image_dir) {
+    public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity, String file_name, String image_dir) {
         parent_activity = activity;
         mmAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mmAdapter != null && checkBluetoothEnabled() == NO_ERROR) {
@@ -70,11 +73,26 @@ public class BluetoothService {
             }
         }
         handler = msg_handler;
-        FILE_PATH = file_path;
-        IMAGE_DIR = image_dir;
 
         // Creates a new file directory for images
-        File img_dir = parent_activity.getDir(IMAGE_DIR, Context.MODE_PRIVATE);
+        File directory = parent_activity.getFilesDir();
+//        DECKLIST_FILE_NAME = directory.getAbsolutePath() + "/" + file_name;
+        DECKLIST_FILE_NAME = file_name;
+        File new_img_dir = new File(directory, image_dir);
+        IMAGE_DIR = image_dir; //new_img_dir.getAbsolutePath();
+
+//        String test_contents = "Yo Bro wassup";
+//        try  {
+//            FileOutputStream fos = parent_activity.openFileOutput(IMAGE_DIR + "/test.txt", Context.MODE_PRIVATE);
+//            fos.write(test_contents.getBytes());
+////            FileInputStream fis = parent_activity.openFileInput(IMAGE_DIR + "test.txt");
+////            byte buffer[] = new byte[(int) fis.available()];
+////            fis.read(buffer);
+////            String read = buffer.toString();
+//
+//        } catch (IOException ioe){
+//            ioe.printStackTrace();
+//        }
     }
 
     // Defines several constants used when transmitting messages between the
@@ -154,7 +172,7 @@ public class BluetoothService {
         // Message Structure
         private final int CMD_INDEX = 0;
         private final int REV_NUM_INDEX = 4;
-        private final int DECK_DATA_INDEX = 4;
+        private final int DECK_DATA_INDEX = 8;
 
         // Message Commands
         private final int CMD_HEARTBEAT = 0;
@@ -252,7 +270,7 @@ public class BluetoothService {
         }
 
         public Queue<String> getImageList() {
-//            File file = new File(FILE_PATH);
+//            File file = new File(DECKLIST_FILE_NAME);
             Queue<String> imageList = new LinkedList<String>();
             BufferedReader br = null;
             FileInputStream fis = null;
@@ -266,11 +284,15 @@ public class BluetoothService {
 //                    }
 //                }
 //                fis = new FileInputStream(file);
-                fis = parent_activity.openFileInput(FILE_PATH);
+                fis = parent_activity.openFileInput(DECKLIST_FILE_NAME);
                 byte buffer[] = new byte[fis.available()];
                 fis.read(buffer);
                 String jstr = new String(buffer, "UTF-8");
-                JSONObject jobj = new JSONObject(jstr);
+                Pattern pattern = Pattern.compile("\\{(.*?)\\}", Pattern.DOTALL);
+                Matcher matcher = pattern.matcher(jstr);
+                matcher.find();
+                jstr = matcher.group();
+                JSONObject jobj = (JSONObject) new JSONTokener(jstr).nextValue();
                 JSONArray deck = jobj.getJSONArray("deckList");
                 JSONArray inPlay = jobj.getJSONArray("inPlayList");
                 JSONArray discard = jobj.getJSONArray("discardList");
@@ -300,18 +322,17 @@ public class BluetoothService {
             return imageList;
         }
 
-        public void writeToFile(byte data[], String file_name) {
+        public void writeToFile(byte data[], String fileName) {
             File file = null;
             FileOutputStream fos = null;
             try {
 
-                file = new File(file_name);
-//                fos = new FileOutputStream(file);
-                fos = parent_activity.openFileOutput(file_name, Context.MODE_PRIVATE);
-
+                file = new File(parent_activity.getFilesDir(), fileName);
                 if (!file.exists()) {
                     file.createNewFile();
                 }
+                fos = new FileOutputStream(file);
+//                fos = parent_activity.openFileOutput(fileName, Context.MODE_PRIVATE);
 
                 fos.write(data);
                 fos.flush();
@@ -334,12 +355,16 @@ public class BluetoothService {
         public void receiveDeck(byte data[]) {
             switch (state) {
                 case RECEIVING_FILE:
-                    writeToFile(data, FILE_PATH);
-                    getImageList();
+                    writeToFile(data, DECKLIST_FILE_NAME);
+                    image_queue = getImageList();
                     state = RECEIVING_IMAGE;
                     break;
                 case RECEIVING_IMAGE:
-                    writeToFile(data, IMAGE_DIR + image_queue.remove());
+                    if (image_queue.size() > 0) {
+                        // TODO: Put the images in the image directory?
+                        writeToFile(data, image_queue.remove());
+                        // TODO: After this function runs, it closes the connection?
+                    }
                     break;
                 default:
                     // TODO: Some kind of error handling.
@@ -404,11 +429,11 @@ public class BluetoothService {
             prev_rev_num = cur_rev_num;
             // TODO: Read new revision number from deck object, get deck lists
             image_queue = getImageList(); // temporary solution
-//            File file = new File(FILE_PATH);
+//            File file = new File(DECKLIST_FILE_NAME);
             FileInputStream fis = null;
 
             try {
-                fis = parent_activity.openFileInput(FILE_PATH);
+                fis = parent_activity.openFileInput(DECKLIST_FILE_NAME);
                 staged_deck = new byte[(int) fis.available()];
                 fis.read(staged_deck);
             } catch (IOException ioe) {
