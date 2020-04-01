@@ -5,6 +5,12 @@ import requests
 import argparse
 from PIL import Image
 
+"""
+This file was pretty much just for early testing and playing around with
+the scryfall database to flash magic cards, so I'm not going to comment this
+as it is not necessary int he final version.  It is not used in flash_loop
+"""
+
 CARD_DATABASE = 'scryfall-default-cards.json'
 
 def __download_card_image_greedy(cardname):

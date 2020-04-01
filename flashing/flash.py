@@ -51,6 +51,7 @@ class ImageFlasher:
         self.__power_up()
 
     def __setup_non_spi_pins(self):
+        """Perform setup (modes and pull downs) for all the non-spi pins"""
         # Set IO modes
         self.pi.set_mode(self.DATA_COMMAND_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.RESET_PIN, pigpio.OUTPUT)
