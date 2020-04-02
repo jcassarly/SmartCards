@@ -23,6 +23,7 @@
     <string name="create_card_title_text">New Card</string>
     <string name="create_card_hint_text">Card Name</string>
     <string name="create_card_upload_text">Upload Image</string>
+    <string name="create_card_button_text">Add</string>
 
 
     <string name="large_text">
