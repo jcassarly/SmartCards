@@ -10,7 +10,7 @@ import image_loader
 from led_status import LEDStatus
 from flash import ImageFlasher
 from clear_mode import ClearMode
-from DeckManager import Deck
+import DeckManager
 
 REREAD_DELAY = 0.5 # s
 
@@ -39,7 +39,7 @@ def deck_loader():
             cards.append(os.path.join(DeckManager.IMAGE_DIR, cardname))
 
     # return the cards in the deck folder or an empty deck if the folder did not exist
-    return Deck(cards)
+    return DeckManager.Deck(cards)
 
 def flash_blank_image(deck, display_id, flasher):
     """Flashes a blank image to the display
@@ -190,7 +190,7 @@ def flash_loop(deck, deck_lock):
 
 def main():
     """Main loop for the Pi side of the SmartCards Application"""
-    deck = DeckManager.load_deck()
+    deck = DeckManager.load_deck(DeckManager.DECK_LIST)
     deck_lock = threading.Lock()
 
     # spawn the bluetooth update process with deck
