@@ -1,13 +1,13 @@
 package com.example.herroworld;
 
-import java.net.URI;
+import android.net.Uri;
 
 public class PlayingCard {
 
     private String name;
-    private URI imageAddress;
+    private Uri imageAddress;
 
-    public PlayingCard(String name, URI imageAddress){
+    public PlayingCard(String name, Uri imageAddress){
         this.name = name;
         this.imageAddress = imageAddress;
     }
@@ -16,7 +16,7 @@ public class PlayingCard {
         return name;
     }
 
-    public URI getImageAddress() {
+    public Uri getImageAddress() {
         return imageAddress;
     }
 
@@ -24,7 +24,7 @@ public class PlayingCard {
         name = name;
     }
 
-    public void setImageAddress(URI imageAddress) {
+    public void setImageAddress(Uri imageAddress) {
         this.imageAddress = imageAddress;
     }
 }
