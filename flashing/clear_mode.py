@@ -5,6 +5,7 @@ from led_status import LEDStatus
 class ClearMode():
     '''Class to handle monitoring the Clear Mode button and update the LED with the status'''
 
+    CLEAR_MODE_OUTPUT = 26 # gpio 26, pin 37
     CLEAR_MODE_INPUT = 13 # gpio 13, pin 33
 
     DEBOUNCE_DELAY = 0.05
@@ -15,6 +16,10 @@ class ClearMode():
         # Set up the input pin
         self.pi = pigpio.pi()
         self.pi.set_pull_up_down(self.CLEAR_MODE_INPUT, pigpio.PUD_DOWN)
+
+        # set up the output pin that just stays high to set the button correctly
+        self.pi.set_mode(self.CLEAR_MODE_OUTPUT, pigpio.OUTPUT)
+        self.pi.write(self.CLEAR_MODE_OUTPUT, True)
 
         # Need to set clear mode to false and have that shown on the LED
         self.__clear_mode = True
