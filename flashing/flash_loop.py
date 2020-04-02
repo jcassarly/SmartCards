@@ -22,6 +22,10 @@ def deck_loader():
     file that is used by the to/from files as it will make sure everything is
     properly formatted and not entry errors occur.
 
+    :returns:
+        a Deck object containing the cards in the DeckManager.IAMGE_DIR
+        directory
+
     """
 
     cards = []
@@ -38,6 +42,18 @@ def deck_loader():
     return Deck(cards)
 
 def flash_blank_image(deck, display_id, flasher):
+    """Flashes a blank image to the display
+
+    The card on the display specified by display_id is discarded from play
+
+    :param Deck deck:
+        the deck management object to draw/discard cards from
+    :param int display_id:
+        the ID of the display to flash to
+    :param ImageFlasher flasher:
+        an ImageFlasher object used to flash the drawn card to the display
+
+    """
     print("Flashing Blank")
     # move card on display to discard
     deck.discard_from_play(display_id)
@@ -47,6 +63,18 @@ def flash_blank_image(deck, display_id, flasher):
     flasher.transmit_data(blank.epaper_array)
 
 def flash_next_image(deck, display_id, flasher):
+    """Draws the next card in the deck and flashes it to the display
+
+    The card on the display specified by display_id is discarded from play
+
+    :param Deck deck:
+        the deck management object to draw/discard cards from
+    :param int display_id:
+        the ID of the display to flash to
+    :param ImageFlasher flasher:
+        an ImageFlasher object used to flash the drawn card to the display
+
+    """
     # move card on the display to discard
     # "draw" a card (moving the next card into play)
     image_path = deck.draw(display_id)
@@ -57,6 +85,29 @@ def flash_next_image(deck, display_id, flasher):
     flasher.transmit_data(image.epaper_array)
 
 def flash_display(display_id, deck, deck_lock, is_in_clear_mode, flasher):
+    """Thread safe method to perform the next flashing action on the display_id display
+
+    There are 3 possible actions
+    1. Draw a card and flash it to the device (discards the card on the display
+       from play and then puts the draw card on)
+    2. Blank out the card because clear mode is on (discards the card on the
+       display from play)
+    3. Nothing because the deck is empty (and clear mode is off)
+
+    :param int display_id:
+        the ID of the display to flash to (if the deck is not empty)
+    :param Deck deck:
+        the deck management object to draw/discard cards from
+    :param Lock deck_lock:
+        a thread lock to acquire until flashing is complete (released afterwards)
+    :param bool is_in_clear_mode:
+        boolean value to indicate whether the device is in clear mode (True if
+        in clear mode, false otherwise)
+    :param ImageFlasher flasher:
+        an ImageFlasher object used to flash the drawn card or blank image to the
+        display
+
+    """
     # acquire the lock on the deck
     deck_lock.acquire()
 
@@ -78,6 +129,13 @@ def flash_display(display_id, deck, deck_lock, is_in_clear_mode, flasher):
     deck_lock.release()
 
 def flash_setup():
+    """Performs the initialization of variables needed for the flashing loop.
+
+    :returns:
+        a tuple with the led_status, clear_mode_monitor, flasher, identifier, and
+        current_display_id needed for the operation of the flash loop
+
+    """
     led_status = LEDStatus()
     clear_mode_monitor = ClearMode(led_status)
     flasher = ImageFlasher(led_status)
