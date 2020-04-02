@@ -37,6 +37,9 @@ class ImageFlasher:
     RESET_DELAY = 0.1 # sec
 
     READY_WAIT_TIMEOUT = 1 # sec
+    FAST_READY_THRESHOLD = 1 # sec
+
+    REFRESH_WAIT = 5 # sec
 
     def __init__(self, led_status):
         self.led_status = led_status
@@ -45,10 +48,6 @@ class ImageFlasher:
         self.spi_handle = self.pi.spi_open(self.SPI_CHANNEL, self.SPI_BAUD, self.SPI_FLAGS)
 
         self.__setup_non_spi_pins()
-
-        self.__reset_display()
-
-        self.__power_up()
 
     def __setup_non_spi_pins(self):
         """Perform setup (modes and pull downs) for all the non-spi pins"""
@@ -132,10 +131,24 @@ class ImageFlasher:
         :param bytearray data: an array of bytes to display on the ePaper display
 
         """
+        # need to reset and power up every time a display is plugged in because the new
+        # display needs to be set up to be updated
+        self.__reset_display()
+        self.__power_up()
+
         self.__write_command(transmission_command(data))
         self.__write_command(Command.REFRESH)
 
+        start_wait = time.time()
+
         self.__wait_until_ready(use_timeout=False)
+
+        # if the elapsed time is too small for the amount of time a refresh takes
+        # (refresh typically takes about 5 sec), blink the LED for that time in
+        # order to ensure that the display is fully flashed before doing anything else
+        elapsed = time.time() - start_wait
+        if elapsed < self.FAST_READY_THRESHOLD:
+            self.led_status.blink_for_time(self.REFRESH_WAIT)
 
         self.led_status.update_flash_status(True)
 
