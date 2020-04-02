@@ -10,7 +10,14 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class EditDeck extends AppCompatActivity {
+
+    private static List<PlayingCard> deck = new ArrayList<>();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +35,12 @@ public class EditDeck extends AppCompatActivity {
             }
         });
     }
+
+
+    public static void addCardToDeck(PlayingCard card){
+        deck.add(card);
+    }
+
 
     @Override
     public void finish() {
