@@ -1,7 +1,7 @@
 import os
 import json
 import threading
-from random import randint
+import random
 
 IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'deck')
 DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.json')
@@ -11,12 +11,17 @@ def load_deck(file_path):
 	deck.fromFile(file_path)
 	return deck
 
-class Deck:
-	#def draw(self):
-	#	n = randint(0, len(deckList)-1)
-	#	inPlayList.append(deckList.pop(n))
-	#	return inPlayList[len(inPlayList)-1]
+# shuffle
+# add to end (top of the deck)
+# add to index
+# remove
+	# from exact index
+	# remove end (top of the deck) - NOTE: this is just the draw function
+# move card around in deck list
+# move card from discard to deck list
+# move card from deck to discard
 
+class Deck:
 	def __init__(self, imageList):
 		self.deckList = []
 		self.inPlayList = [None, None, None, None, None, None]
@@ -83,27 +88,47 @@ class Deck:
 		else:
 			self.__init__([])
 
-	def draw(self):
+	def shuffle(self):
+		random.shuffle(self.deckList)
+
+	def add_to_top(self, card):
+		self.deckList.append(card)
+
+	def insert(self, index, card):
+		self.deckList.insert(index, card)
+
+	def remove_from_index(self, index):
+		return self.deckList.pop(index)
+
+	def move_card_in_deck(self, start_index, end_index):
+		self.insert(end_index, self.deckList.pop(start_index))
+
+	def move_card_to_discard(self, index):
+		self.discardList.append(self.remove_from_index(index))
+
+	def discard_top_of_deck(self):
+		self.discardList.append(self.remove_from_top())
+
+	def return_to_deck(self, discard_index, deck_index):
+		"""Move card from discard to deck"""
+		self.insert(deck_index, self.discardList.pop(discard_index))
+
+	def return_to_top(self, discard_index):
+		self.add_to_top(self.discardList.pop(discard_index))
+
+	def remove_from_top(self):
 		return self.deckList.pop()
 
-	def discardCard(self, display_id):
+	def discard_from_play(self, display_id):
 		if (self.inPlayList[display_id] is not None):
 			self.discardList.append(self.inPlayList[display_id])
 			self.inPlayList[display_id] = None
 
-	def moveCard(self, display_id): # move into discard and get a new one into play
-		self.discardCard(display_id)
-		drawnCard = self.draw()
+	def draw(self, display_id): # move into discard and get a new one into play
+		self.discard_from_play(display_id)
+		drawnCard = self.remove_from_top()
 		self.inPlayList[display_id] = drawnCard
 		return drawnCard
-
-	def returnToDeck(self):
-		for x in discardList:
-			self.deckList.append(self.discardList.pop(self.discardList.index(x)))
-		for x in inPlayList:
-			self.deckList.append(self.inPlayList.pop(self.inPlayList.index(x)))
-		for x in range(0,6):
-			self.inPlayList.append(0)
 
 	def is_empty(self):
 		return self.deckList == []

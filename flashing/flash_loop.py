@@ -20,7 +20,7 @@ def deck_loader():
 
     Note that this function is probably only useful for setting up the JSON
     file that is used by the to/from files as it will make sure everything is
-    properly formatted and not entry errors occur
+    properly formatted and not entry errors occur.
 
     """
 
@@ -40,7 +40,7 @@ def deck_loader():
 def flash_blank_image(deck, display_id, flasher):
     print("Flashing Blank")
     # move card on display to discard
-    deck.discardCard(display_id)
+    deck.discard_from_play(display_id)
 
     # flash a blank card to the display
     blank = DisplayConversion(None)
@@ -49,7 +49,7 @@ def flash_blank_image(deck, display_id, flasher):
 def flash_next_image(deck, display_id, flasher):
     # move card on the display to discard
     # "draw" a card (moving the next card into play)
-    image_path = deck.moveCard(display_id)
+    image_path = deck.draw(display_id)
 
     # flash the new card
     print("Flashing Image")
