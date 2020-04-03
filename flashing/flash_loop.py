@@ -186,6 +186,11 @@ def flash_loop(deck, deck_lock):
             else:
                 print("Display was disconnected too early")
 
+        # when the display is disconnected, turn off the flash status LED
+        elif current_display_id != DisplayIdentification.NO_DISPLAY \
+             and new_display_id == DisplayIdentification.NO_DISPLAY:
+            led_status.update_flash_status(False)
+
         current_display_id = new_display_id
 
 def main():

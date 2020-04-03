@@ -30,6 +30,7 @@ class ImageFlasher:
     SPI_BAUD    = 2000000
     SPI_CHANNEL = 0  # CE is on pin 8
 
+    POWER_PIN = 19 # gpio 19, pin 35
     DATA_COMMAND_PIN = 4 # gpio 4, pin 7
     RESET_PIN = 5 # gpio 5, pin 29
     READY_PIN = 6 # gpio 6, pin 31
@@ -52,12 +53,23 @@ class ImageFlasher:
     def __setup_non_spi_pins(self):
         """Perform setup (modes and pull downs) for all the non-spi pins"""
         # Set IO modes
+        self.pi.set_mode(self.POWER_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.DATA_COMMAND_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.RESET_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.READY_PIN, pigpio.INPUT)
 
+        self.__set_power(False)
+
         # put a pull down on the ready
         self.pi.set_pull_up_down(self.READY_PIN, pigpio.PUD_UP)
+
+    def __set_power(self, power_value):
+        """Applies or turns off 3.3V power to the ePaper Display
+
+        :param bool power_value: True to apply power, False to turn off power
+
+        """
+        self.pi.write(self.POWER_PIN, power_value)
 
     def __reset_display(self):
         """Toggles the reset pin to reset the display."""
@@ -131,6 +143,8 @@ class ImageFlasher:
         :param bytearray data: an array of bytes to display on the ePaper display
 
         """
+        self.__set_power(True)
+
         # need to reset and power up every time a display is plugged in because the new
         # display needs to be set up to be updated
         self.__reset_display()
@@ -151,6 +165,8 @@ class ImageFlasher:
             self.led_status.blink_for_time(self.REFRESH_WAIT)
 
         self.led_status.update_flash_status(True)
+
+        self.__set_power(False)
 
 if __name__ == '__main__':
     start_time = time.time()
