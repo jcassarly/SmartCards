@@ -60,7 +60,7 @@ def readFile():
 
         """ new implementation for json """
         json_dict = json.load(phil)
-        revision_number = json_dict['revnumber']
+        revision_number = json_dict['rev_number']
         image_names = json_dict['deckList'] + json_dict['inPlayList'] + json_dict['discardList']
 
     return revision_number, image_names
