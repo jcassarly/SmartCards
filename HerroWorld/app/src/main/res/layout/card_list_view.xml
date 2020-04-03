@@ -22,18 +22,15 @@
             android:id="@+id/cardPreviewText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/cardPreviewImageView"
-            android:layout_alignRight="@+id/cardPreviewImageView"
-            android:layout_alignBottom="@+id/cardPreviewImageView"
             android:layout_alignParentTop="true"
-            android:layout_marginEnd="0dp"
-            android:layout_centerInParent="true"
-            android:layout_marginRight="0dp"
-            android:layout_marginBottom="71dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="100dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:textSize="24sp"
             android:textStyle="bold">
 
         </TextView>
-
 
 
     </RelativeLayout>
