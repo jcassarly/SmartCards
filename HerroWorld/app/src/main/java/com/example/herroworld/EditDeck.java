@@ -11,6 +11,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,8 @@ public class EditDeck extends AppCompatActivity {
 
     EditText testOutput;
 
+    ListView deckListView;
+
 
 
     @Override
@@ -31,6 +34,8 @@ public class EditDeck extends AppCompatActivity {
         setContentView(R.layout.activity_edit_deck);
 
         testOutput = (EditText) findViewById(R.id.TestOutput);
+        deckListView = (ListView) findViewById(R.id.EditDeckListView);
+
     }
 
 
@@ -48,6 +53,8 @@ public class EditDeck extends AppCompatActivity {
             sb.append("\n");
         }
         testOutput.setText(sb);
+        CardListView cardListView = new CardListView(this,deck);
+        deckListView.setAdapter(cardListView);
     }
 
 
