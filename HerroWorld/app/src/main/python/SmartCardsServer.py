@@ -2,11 +2,15 @@
 import bluetooth
 import threading
 import sys
+import json
 
 
 shota_phone = "4C:DD:31:C9:92:05"
 HOST_MAC = "B4:69:21:BE:FA:A9"
 UUID = "b5c65192-1d67-471f-8147-0d0e8904efaa"
+FILE_PATH = "decklist.json"
+IMAGE_DIR = "./images/"
+ENCODING = "utf-8"
 
 # states
 SEND_HEARTBEAT = 0
@@ -32,9 +36,6 @@ class Placeholder():
     def getDecklist(self):
         return self.deck
 
-    def unpackDecklist(self, data):
-        self.updateSharedMemory(data)
-
     def updateSharedMemory(self, data):
         new_deck = []
         for index in range(0, len(data), 4):
@@ -46,25 +47,114 @@ global_placeholder = Placeholder()
 def printDebugInfo(action, state, command, payload):
     print("{0} in state: {1}\n    Command: {2}\n    Payload: {3}".format(action, state, command, payload))
 
+def readFile():
+    revision_number = -1
+    image_names = []
+    with open(FILE_PATH) as phil:
+        """ old implementation for a text file"""
+        # for line in phil:
+        #     if "revnumber" in line:
+        #         num_list = [int(word) for word in line.split() if word.isdigit()][0] # maybe need to add error checking for if there's more than 1 num?
+        #     elif "]" not in line and '[' not in line:
+        #         image_names.append(line)
+
+        """ new implementation for json """
+        json_dict = json.load(phil)
+        revision_number = json_dict['rev_number']
+        image_names = json_dict['deckList'] + json_dict['inPlayList'] + json_dict['discardList']
+
+    return revision_number, image_names
+
+def checkDeckAck(client_sock):
+    ack = client_sock.recv(1024)
+    return True #TODO add acutal error checking
+
+def sendDeck(client_sock):
+    # deck_manager.toFile()
+    revision_number, image_names = readFile()
+    command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
+    byte_rev_num = revision_number.to_bytes(4, byteorder="big")
+    init_packet = command + byte_rev_num
+    client_sock.send(init_packet)
+
+    # wait for response
+    checkDeckAck(client_sock)
+
+    payload = b''
+    # send contents of deck file
+    with open(FILE_PATH, 'rb') as phil:
+        payload = init_packet + phil.read()
+        client_sock.send(command + payload)
+
+    # wait for acknowledgement
+    checkDeckAck(client_sock)
+    
+    # send images
+    for image_name in image_names:
+        with open(IMAGE_DIR + image_name, 'rb') as image:
+            payload = init_packet + image.read()
+            client_sock.send(command + payload)
+            checkDeckAck(client_sock)
+
+    # send indication we're done
+    client_sock.send(init_packet)
+
+def receiveDeck(client_sock):
+    # receive the data for the file
+    data = client_sock.recv()
+    command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
+    byte_rev_num = global_placeholder.getRevision().to_bytes(4, byteorder="big")
+    response = command + byte_rev_num
+
+    # write the contents of the deck as a file
+    with open(FILE_PATH, 'wb') as phil:
+        data = client_sock.recv()
+        inc_cmd = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting command
+        if inc_cmd == CMD_UNLOCKED:
+        # inc_rev_num = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting revision number
+            phil.write(data[8:])
+            client_sock.send(response)
+        else:
+            print("Error! Incorrect command when expecting new deck from app.\nCommand: {}".format(inc_cmd))
+
+    # Need to run fromFile() here? Also need to set the new revision number?
+    
+    # receive the images of the deck
+    revision_number, image_names = readFile()
+    
+    for image_name in image_names:
+        with open(IMAGE_DIR + image_name, 'wb') as image:
+            data = client_sock.recv()
+            # Do I need error checking here?
+            image.write(data[8:])
+            client_sock.send(response)
+
+    # final packet should just be command and revision number, need error checking?
+    data = client_sock.recv()
+
 def runStateMachineSend(state, client_sock):
     command = b'\x00'
     payload = b'\x00'
     if state == SEND_HEARTBEAT:
         command = CMD_HEARTBEAT.to_bytes(4, byteorder="big")
         payload = global_placeholder.getRevision().to_bytes(4, byteorder="big")
-        printDebugInfo("Sending", state, command, payload)
+        # printDebugInfo("Sending", state, command, payload)
+        client_sock.send(command + payload)
     elif state == COMPARE_REVISIONS:
         if global_placeholder.getLockState():
             command = CMD_LOCKED.to_bytes(4, byteorder="big")
             payload = global_placeholder.getRevision().to_bytes(4, byteorder="big")
             printDebugInfo("Sending", state, command, payload)
+            client_sock.send(command + payload)
         else:
-            command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
-            payload = bytes(global_placeholder.getDecklist())
+            # command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
+            # deck.toFile() needs to be run at some point
+            # payload = bytes(global_placeholder.getDecklist())
+            sendDeck(client_sock)
             printDebugInfo("Sending", state, command, payload)
             # state will exit to SEND_HEARTBEAT after receiving new decklist
 
-    client_sock.send(command + payload)
+    # client_sock.send(command + payload)
     return state
 
 def runStateMachineRecv(state, client_sock):
@@ -73,19 +163,19 @@ def runStateMachineRecv(state, client_sock):
     new_rev = int.from_bytes(data[4:8], byteorder="big") # get revision number
     if state == SEND_HEARTBEAT:
         # TODO: error check command
-        printDebugInfo("Receiving", state, command, new_rev)
+        # printDebugInfo("Receiving", state, command, new_rev)
         if new_rev != global_placeholder.getRevision():
             state = COMPARE_REVISIONS
     elif state == COMPARE_REVISIONS:
         printDebugInfo("Receiving", state, command, new_rev)
         # TODO: Error check command
         if global_placeholder.getLockState():
-            pass
+            state = SEND_HEARTBEAT
             # TODO: error check that the returned revision number is correct
         else:
             global_placeholder.rev_num = new_rev
-            global_placeholder.unpackDecklist(data[8:])
-        state = SEND_HEARTBEAT
+            receiveDeck(client_sock)
+        
 
     return state, new_rev
 
