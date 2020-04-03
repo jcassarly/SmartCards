@@ -45,7 +45,8 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if(v == imageUpload){
-            Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            //Would like to get back to ACTION_PICK because it only gives you the image selector which is nicer, yet the URI permissions expire
+            Intent galleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(galleryIntent, RESULT_LOAD_IMAGE);
         }
         else if(v == uploadButton) {

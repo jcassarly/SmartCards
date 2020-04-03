@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -18,36 +19,41 @@ import com.example.herroworld.R;
 
 import java.util.List;
 
-public class CardListView extends ArrayAdapter<String> {
+public class CardListView extends BaseAdapter {
 
     private Activity context;
     private List<PlayingCard> deck;
 
 
-    public CardListView(Activity context, List<PlayingCard> deck) {
-        super(context, R.layout.card_list_view);
 
+    public CardListView(Activity context, List<PlayingCard> deck) {
         this.context = context;
         this.deck = deck;
 
     }
 
 
+    @Override
+    public int getCount() {
+        return deck.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return null;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return 0;
+    }
+
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        View singleListTile = convertView;
-        ViewHolder viewHolder = null;
+        View singleListTile = context.getLayoutInflater().inflate(R.layout.card_list_view,null);
+        ViewHolder viewHolder = new ViewHolder(singleListTile);
 
-        if(singleListTile == null){
-            LayoutInflater layoutInflater = context.getLayoutInflater();
-            singleListTile = layoutInflater.inflate(R.layout.card_list_view,null);
-            viewHolder = new ViewHolder(singleListTile);
-            singleListTile.setTag(viewHolder);
-        }
-        else {
-            viewHolder = (ViewHolder) singleListTile.getTag();
-        }
 
         viewHolder.cardFace.setImageURI(deck.get(position).getImageAddress());
         viewHolder.cardName.setText(deck.get(position).getName());

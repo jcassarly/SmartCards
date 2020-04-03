@@ -8,6 +8,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.MutableLiveData;
 
 import android.view.View;
 import android.widget.EditText;
@@ -22,10 +23,9 @@ public class EditDeck extends AppCompatActivity {
 
     private static List<PlayingCard> deck = new ArrayList<>();
 
-    EditText testOutput;
-
     ListView deckListView;
 
+    CardListView cardListView;
 
 
     @Override
@@ -33,9 +33,9 @@ public class EditDeck extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_deck);
 
-        testOutput = (EditText) findViewById(R.id.TestOutput);
         deckListView = (ListView) findViewById(R.id.EditDeckListView);
-
+        cardListView = new CardListView(this,deck);
+        deckListView.setAdapter(cardListView);
     }
 
 
@@ -47,14 +47,7 @@ public class EditDeck extends AppCompatActivity {
     }
 
     private void updateDeck(){
-        StringBuffer sb = new StringBuffer();
-        for (PlayingCard card : deck) {
-            sb.append(card.getName());
-            sb.append("\n");
-        }
-        testOutput.setText(sb);
-        CardListView cardListView = new CardListView(this,deck);
-        deckListView.setAdapter(cardListView);
+        cardListView.notifyDataSetChanged();
     }
 
 
