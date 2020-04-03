@@ -1,0 +1,40 @@
+@startuml
+
+title Pi Flowchart 
+
+start
+
+if (Pi Has Existing Decklist?) then (no)
+  :Wait for Bluetooth Connection Established;
+  while (Decklist received?) is (no)
+    :Request Decklist;
+  endwhile (yes)
+  else (yes)
+endif
+
+:Load Decklist in;
+
+:Spawn Bluetooth and Flashing processes;
+note left: Bluetooth process in separate diagram
+
+:__Begin Flashing Process__;
+repeat
+:Wait for display insertion;
+note left: Id goes from 0 to !0
+:Acquire lock on deck;
+if (Clear Mode?) then (yes)
+    :Move card on display to "Discard";
+    :Flash blank card and blink status;
+    :Wait for display to finish refreshing;
+else if (Deck empty?) then (yes)
+    :Indicate EMPTY status;
+else (No)
+    :Move card on display to "Discard";
+    :Move next card in deck to "In Play";
+    :Flash new "In Play" card and blink status;
+    :Wait for display to finish refreshing;
+endif
+:Stop blinking and turn on DONE LED;
+repeat while (release lock on deck)
+
+@enduml

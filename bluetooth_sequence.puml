@@ -1,0 +1,37 @@
+@startuml
+
+title Pi and App Bluetooth Connection
+
+database Pi
+actor App
+
+alt Connection does not exist
+    App -> Pi: Establish Connection
+    Pi -> App: Send current decklist, ask if override
+    App -> Pi: Override response
+    alt Yes Override
+        App -> Pi: Send decklist
+        Pi -> Pi: Load received decklist
+    end
+end 
+
+loop Poll Deck changes
+    Pi -> App: Heartbeat message with current Deck revision number
+    
+    App ->  Pi: Heartbeat response
+    alt New Deck Revision Number
+        alt Currently Locked
+            Pi -> App: Tell App to wait
+        else Currently Unlocked
+            Pi -> App: Green light to send new Deck List
+            App -> Pi: Begin sending new deck list
+            ... Deck list packets ...
+            App -> Pi: Finish sending new deck list
+        end
+        
+    else Same Deck Revision Number
+    end
+    
+end
+
+@enduml
