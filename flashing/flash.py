@@ -37,7 +37,8 @@ class ImageFlasher:
 
     RESET_DELAY = 0.1 # sec
 
-    READY_WAIT_TIMEOUT = 1 # sec
+    POWER_UP_TIMEOUT = 1 # sec
+    DATA_TRANSFER_TIMEOUT = 10 # sec
     FAST_READY_THRESHOLD = 1 # sec
 
     REFRESH_WAIT = 5 # sec
@@ -84,7 +85,7 @@ class ImageFlasher:
         self.__write_command(Command.POWER_SETTING)
         self.__write_command(Command.POWER_ON)
 
-        self.__wait_until_ready()
+        self.__wait_until_ready(self.POWER_UP_TIMEOUT)
 
         self.__write_command(Command.PANEL_SETTING)
 
@@ -101,17 +102,16 @@ class ImageFlasher:
         """
         return self.pi.read(self.READY_PIN) == 0
 
-    def __wait_until_ready(self, use_timeout=True):
+    def __wait_until_ready(self, timeout):
         """Waits until the display is ready, blinking the status LED during this period.
 
-        :param bool use_timeout:
-            True if the READY_WAIT_TIMEOUT should be used, otherwise
-            the pi will wait indefinitely for the ready pin to go low
+        :param bool timeout:
+            timeout that overrides the __is_ready not returning true so we can avoid
+            an infinite wait
         :returns:
             whether True if the ready pin went low, false if the blinking timed out
 
         """
-        timeout = self.READY_WAIT_TIMEOUT if use_timeout else None
         return self.led_status.blink_until(self.__is_ready, timeout=timeout)
 
     def __put_in_command_mode(self):
@@ -155,7 +155,8 @@ class ImageFlasher:
 
         start_wait = time.time()
 
-        self.__wait_until_ready(use_timeout=False)
+        if not self.__wait_until_ready(self.DATA_TRANSFER_TIMEOUT):
+            print("Transfer Timed out: Ready pin never said the transfer was done")
 
         # if the elapsed time is too small for the amount of time a refresh takes
         # (refresh typically takes about 5 sec), blink the LED for that time in
