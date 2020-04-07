@@ -21,6 +21,10 @@ CMD_HEARTBEAT = 0
 CMD_LOCKED = 1
 CMD_UNLOCKED = 2
 
+# constants
+DEFAULT_BUF_SIZE = 1024
+IMG_BUF_SIZE = 100000
+
 class Placeholder():
     def __init__(self):
         self.locked = True
@@ -66,7 +70,7 @@ def readFile():
     return revision_number, image_names
 
 def checkDeckAck(client_sock):
-    ack = client_sock.recv(1024)
+    ack = client_sock.recv(DEFAULT_BUF_SIZE)
     return True #TODO add acutal error checking
 
 def sendDeck(client_sock):
@@ -75,6 +79,7 @@ def sendDeck(client_sock):
     command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
     byte_rev_num = revision_number.to_bytes(4, byteorder="big")
     init_packet = command + byte_rev_num
+    print("Sending deck start: {}".format(init_packet)) # TODO: REMOVE AFTER DEBUGGING
     client_sock.send(init_packet)
 
     # wait for response
@@ -84,7 +89,8 @@ def sendDeck(client_sock):
     # send contents of deck file
     with open(FILE_PATH, 'rb') as phil:
         payload = init_packet + phil.read()
-        client_sock.send(command + payload)
+        print("Sending File {}".format(payload[0:8])) # TODO: REMOVE AFTER DEBUGGING
+        client_sock.send(payload)
 
     # wait for acknowledgement
     checkDeckAck(client_sock)
@@ -93,25 +99,30 @@ def sendDeck(client_sock):
     for image_name in image_names:
         with open(IMAGE_DIR + image_name, 'rb') as image:
             payload = init_packet + image.read()
-            client_sock.send(command + payload)
+            print("Sending Image {}".format(image_name)) # TODO: REMOVE AFTER DEBUGGING
+            print("    Payload: {}".format(payload[0:8]))
+            client_sock.send(payload)
             checkDeckAck(client_sock)
 
     # send indication we're done
+    print("Sending finish packet: {}".format(init_packet))
     client_sock.send(init_packet)
+    return COMPARE_REVISIONS
 
 def receiveDeck(client_sock):
     # receive the data for the file
-    data = client_sock.recv()
+    data = client_sock.recv(IMG_BUF_SIZE)
     command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
     byte_rev_num = global_placeholder.getRevision().to_bytes(4, byteorder="big")
     response = command + byte_rev_num
 
     # write the contents of the deck as a file
     with open(FILE_PATH, 'wb') as phil:
-        data = client_sock.recv()
+        # data = client_sock.recv(IMG_BUF_SIZE)
         inc_cmd = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting command
+        inc_rev_num = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting revision number
+        print("Receiving file. Cmd: {}, Rev: {}".format(inc_cmd, inc_rev_num))
         if inc_cmd == CMD_UNLOCKED:
-        # inc_rev_num = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting revision number
             phil.write(data[8:])
             client_sock.send(response)
         else:
@@ -123,14 +134,19 @@ def receiveDeck(client_sock):
     revision_number, image_names = readFile()
     
     for image_name in image_names:
+        data = client_sock.recv(IMG_BUF_SIZE)
+        inc_cmd = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting command
+        inc_rev_num = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting revision number
+        print("Receiving Image: {}. Cmd: {}, Rev: {}".format(image_name, inc_cmd, inc_rev_num))
         with open(IMAGE_DIR + image_name, 'wb') as image:
-            data = client_sock.recv()
             # Do I need error checking here?
             image.write(data[8:])
             client_sock.send(response)
 
     # final packet should just be command and revision number, need error checking?
-    data = client_sock.recv()
+    print("finished receiving.")
+    data = client_sock.recv(DEFAULT_BUF_SIZE)
+    return SEND_HEARTBEAT
 
 def runStateMachineSend(state, client_sock):
     command = b'\x00'
@@ -158,7 +174,7 @@ def runStateMachineSend(state, client_sock):
     return state
 
 def runStateMachineRecv(state, client_sock):
-    data = client_sock.recv(1024)
+    data = client_sock.recv(DEFAULT_BUF_SIZE)
     command = int.from_bytes(data[0:4], byteorder="big")
     new_rev = int.from_bytes(data[4:8], byteorder="big") # get revision number
     if state == SEND_HEARTBEAT:
@@ -174,7 +190,7 @@ def runStateMachineRecv(state, client_sock):
             # TODO: error check that the returned revision number is correct
         else:
             global_placeholder.rev_num = new_rev
-            receiveDeck(client_sock)
+            state = receiveDeck(client_sock)
         
 
     return state, new_rev
@@ -217,7 +233,7 @@ def heartbeat():
                     state = runStateMachineSend(state, client_sock)
                     state, new_rev = runStateMachineRecv(state, client_sock)
                     rev_num = new_rev
-                    # data = client_sock.recv(1024)
+                    # data = client_sock.recv(DEFAULT_BUF_SIZE)
                     # print("received [{}]".format(data))
                 except OSError:
                     Connected = False

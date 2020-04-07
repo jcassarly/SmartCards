@@ -182,7 +182,7 @@ public class BluetoothService {
         // if there's an error in the command
         private final int ERROR_IN_CMD = -1;
 
-        private final int BUFFER_SIZE = 1024;
+        private final int BUFFER_SIZE = 100000;
 
         // Deck Revision numbers
         private int cur_rev_num = 0;
@@ -458,7 +458,7 @@ public class BluetoothService {
 
                 try {
 //                    fis = new FileInputStream(file);
-                    fis = parent_activity.openFileInput(IMAGE_DIR + image_name);
+                    fis = parent_activity.openFileInput(image_name);
                     sendBuffer = new byte[(int) fis.available()];
                     fis.read(sendBuffer);
                 } catch(IOException ioe) {
@@ -510,17 +510,22 @@ public class BluetoothService {
      * @param msg
      */
     public void send(String msg) {
-//        manage_conn_thread.write(msg.getBytes());
-        int serverState = manage_conn_thread.getServerState();
-        if (serverState == ConnectedThread.WAIT_RESPONSE) {
-//            Random randy = new Random();
-//            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
-            manage_conn_thread.stageMerge();
-        } else if(serverState == ConnectedThread.MERGING) {
-            manage_conn_thread.merge();
-        }
-
+////        manage_conn_thread.write(msg.getBytes());
+//        int serverState = manage_conn_thread.getServerState();
+//        if (serverState == ConnectedThread.WAIT_RESPONSE) {
+////            Random randy = new Random();
+////            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
+//            manage_conn_thread.stageMerge();
+//        } else if(serverState == ConnectedThread.MERGING) {
+//            manage_conn_thread.merge();
+//        }
+        manage_conn_thread.merge();
     }
+
+    public void debug() {
+        manage_conn_thread.stageMerge();
+    }
+
 
     public int getRevisionNumber(byte[] buffer) {
         return ByteBuffer.wrap(buffer).getInt(0);

@@ -230,6 +230,7 @@ public class MainActivity extends AppCompatActivity {
 //            System.out.println("UUID: " + uuid.toString());
 //        }
 //        txtVw.setText(message);
+        bluetooth_service.debug();
     }
 
 
