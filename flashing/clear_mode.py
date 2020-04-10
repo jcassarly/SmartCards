@@ -70,6 +70,7 @@ class ClearMode():
             previous = current
 
 if __name__ == "__main__":
+    # Test code for verifying Clear Mode Status
     led_status = LEDStatus()
     test = ClearMode(led_status)
     test.report_input_changes()

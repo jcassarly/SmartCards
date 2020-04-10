@@ -278,29 +278,3 @@ class Deck:
 
         """
         return self.deckList == []
-
-
-if __name__ == '__main__':
-    deck = Deck(['deck/test', 'deck/hi', 'deck/yeet'])
-    #deck.toFile('testfile')
-
-    print(deck.deckList)
-    print(deck.inPlayList)
-    print(deck.discardList)
-    print(deck.rev_number)
-
-    deck.moveCard(2)
-    deck.moveCard(4)
-
-    deck.update_rev_number()
-    print(deck.deckList)
-    print(deck.inPlayList)
-    print(deck.discardList)
-    print(deck.rev_number)
-
-    deck.fromFile('testfile')
-
-    print(deck.deckList)
-    print(deck.inPlayList)
-    print(deck.discardList)
-    print(deck.rev_number)

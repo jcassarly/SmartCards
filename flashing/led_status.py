@@ -129,3 +129,4 @@ class LEDStatus:
         self.update_flash_status(False)
         self.update_clear_mode_status(False)
         self.update_deck_empty_status(False)
+        self.update_flash_error_status(False)

@@ -172,32 +172,3 @@ class ImageFlasher:
         self.__set_power(False)
 
         return has_no_tranfer_error
-
-if __name__ == '__main__':
-    start_time = time.time()
-
-    image_array = image_loader.image_cli()
-
-    print("Download Elapsed: {}".format(time.time() - start_time))
-
-    if image_array or image_array is None:
-        start_time = time.time()
-
-        led_status = LEDStatus()
-        image = DisplayConversion(image_array)
-
-        print("Conversion Elapsed: {}".format(time.time() - start_time))
-
-        start_time = time.time()
-
-        flasher = ImageFlasher(led_status)
-        flasher.transmit_data(image.epaper_array)
-        # TODO: integrate the display ID with the deck management
-
-        elapsed = time.time() - start_time
-        print("Flash Elapsed: {}".format(elapsed))
-
-        if elapsed < 1:
-            led_status.blink_for_time(5)
-
-        led_status.turn_status_leds_off()
