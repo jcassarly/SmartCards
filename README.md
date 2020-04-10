@@ -41,10 +41,10 @@
 |35|GPIO 19|Display Power/VCC|
 |36|GPIO 16|NC|
 |37|GPIO 26|Clear Mode Button Output/VCC|
-|38|GPIO 20|NC|
+|38|GPIO 20|Flash Error Status|
 |39|GND|LED Ground|
 |40|GPIO 21|NC|
 
-# App Enviroment 
-Make sure to create `PYTHON` enviroment variable with the value that is the path to your python.exe. Must be at least V3.8. 
+# App Enviroment
+Make sure to create `PYTHON` enviroment variable with the value that is the path to your python.exe. Must be at least V3.8.
 

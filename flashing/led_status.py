@@ -6,6 +6,7 @@ class LEDStatus:
     FLASH_STATUS_PIN = 24 # gpio 24, pin 18
     CLEAR_MODE_STATUS_PIN = 25 # gpio 25, pin 22
     DECK_EMPTY_STATUS_PIN = 12 # gpio 12, pin 32
+    FLASH_ERROR_STATUS_PIN = 20 # gpio 20, pin 38
 
     BLINK_INTERVAL = 0.25 # sec
 
@@ -19,6 +20,7 @@ class LEDStatus:
         self.pi.set_mode(self.FLASH_STATUS_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.CLEAR_MODE_STATUS_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.DECK_EMPTY_STATUS_PIN, pigpio.OUTPUT)
+        self.pi.set_mode(self.FLASH_ERROR_STATUS_PIN, pigpio.OUTPUT)
 
         self.pi.write(self.RUNNING_LED_PIN, 1)
         self.update_flash_status(False)
@@ -112,6 +114,14 @@ class LEDStatus:
 
         """
         self.__update_status(self.DECK_EMPTY_STATUS_PIN, new_status)
+
+    def update_flash_error_status(self, new_status):
+        """Updates the FLASH_ERROR_STATUS_PIN to the new_status value
+
+        :param bool new_status: True to set the pin to HIGH, False to set it to LOW
+
+        """
+        self.__update_status(self.FLASH_ERROR_STATUS_PIN, new_status)
 
     def turn_status_leds_off(self):
         """Writes a low value to all of the pins managed by LED_STATUS"""

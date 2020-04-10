@@ -141,6 +141,7 @@ class ImageFlasher:
         """Transmits image data to the display and refreshes the display.
 
         :param bytearray data: an array of bytes to display on the ePaper display
+        :returns: True if the data was transferred successfully, false otherwise
 
         """
         self.__set_power(True)
@@ -155,8 +156,9 @@ class ImageFlasher:
 
         start_wait = time.time()
 
-        if not self.__wait_until_ready(self.DATA_TRANSFER_TIMEOUT):
-            print("Transfer Timed out: Ready pin never said the transfer was done")
+        # update the error status LED if the data transfer timed out
+        has_no_tranfer_error = self.__wait_until_ready(self.DATA_TRANSFER_TIMEOUT)
+        self.led_status.update_flash_error_status(not has_no_tranfer_error)
 
         # if the elapsed time is too small for the amount of time a refresh takes
         # (refresh typically takes about 5 sec), blink the LED for that time in
@@ -168,6 +170,8 @@ class ImageFlasher:
         self.led_status.update_flash_status(True)
 
         self.__set_power(False)
+
+        return has_no_tranfer_error
 
 if __name__ == '__main__':
     start_time = time.time()

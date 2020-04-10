@@ -60,11 +60,12 @@ def flash_blank_image(deck, display_id, flasher):
 
     # flash a blank card to the display
     blank = DisplayConversion(None)
-    flasher.transmit_data(blank.epaper_array)
+    was_success = flasher.transmit_data(blank.epaper_array)
 
-    # undo the discard
-    #deck.return_to_top(len(deck.discardList) - 1)
-    #deck.draw(display_id)
+    if not was_success:
+        # undo the discard
+        deck.return_to_top(len(deck.discardList) - 1)
+        deck.draw(display_id)
 
 def flash_next_image(deck, display_id, flasher):
     """Draws the next card in the deck and flashes it to the display
@@ -86,13 +87,14 @@ def flash_next_image(deck, display_id, flasher):
     # flash the new card
     print("Flashing Image")
     image = DisplayConversion(image_path)
-    flasher.transmit_data(image.epaper_array)
+    was_success = flasher.transmit_data(image.epaper_array)
 
-    # undo the draw
-    #deck.discard_from_play(display_id)
-    #deck.return_to_top(len(deck.discardList) - 1)
-    #deck.return_to_top(len(deck.discardList) - 1)
-    #deck.draw(display_id)
+    if not was_success:
+        # undo the draw
+        deck.discard_from_play(display_id)
+        deck.return_to_top(len(deck.discardList) - 1)
+        deck.return_to_top(len(deck.discardList) - 1)
+        deck.draw(display_id)
 
 def flash_display(display_id, deck, deck_lock, is_in_clear_mode, flasher):
     """Thread safe method to perform the next flashing action on the display_id display
