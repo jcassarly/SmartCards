@@ -5,8 +5,8 @@ class LEDStatus:
     RUNNING_LED_PIN = 23 # gpio 23, pin 16
     FLASH_STATUS_PIN = 24 # gpio 24, pin 18
     CLEAR_MODE_STATUS_PIN = 25 # gpio 25, pin 22
-    DECK_EMPTY_STATUS_PIN = 12 # gpio 12, pin 32
-    FLASH_ERROR_STATUS_PIN = 20 # gpio 20, pin 38
+    FLASH_ERROR_STATUS_PIN = 12 # gpio 12, pin 32
+    DECK_EMPTY_STATUS_PIN = 20 # gpio 20, pin 38
 
     BLINK_INTERVAL = 0.25 # sec
 
