@@ -8,7 +8,7 @@ class ClearMode():
     CLEAR_MODE_OUTPUT = 26 # gpio 26, pin 37
     CLEAR_MODE_INPUT = 13 # gpio 13, pin 33
 
-    DEBOUNCE_DELAY = 0.05
+    DEBOUNCE_DELAY = 0.1
 
     def __init__(self, led_status):
         self.led_status = led_status

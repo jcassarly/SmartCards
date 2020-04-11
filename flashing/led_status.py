@@ -22,8 +22,8 @@ class LEDStatus:
         self.pi.set_mode(self.DECK_EMPTY_STATUS_PIN, pigpio.OUTPUT)
         self.pi.set_mode(self.FLASH_ERROR_STATUS_PIN, pigpio.OUTPUT)
 
+        self.turn_status_leds_off()
         self.pi.write(self.RUNNING_LED_PIN, 1)
-        self.update_flash_status(False)
 
     def blink_until(self, wait_function, timeout=None):
         """Blink the FLASH_STATUS_PIN until a timeout or wait_function returns true
