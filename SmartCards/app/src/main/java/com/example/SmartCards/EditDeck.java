@@ -3,12 +3,15 @@ package com.example.SmartCards;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class EditDeck extends AppCompatActivity {
@@ -28,10 +31,12 @@ public class EditDeck extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_deck);
 
-       //deckListView = (ListView) findViewById(R.id.EditDeckListView);
         deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
         cardListAdapter = new CardListAdapter(this,deck);
         deckListView.setAdapter(cardListAdapter);
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(deckListView);
     }
 
 
@@ -44,7 +49,7 @@ public class EditDeck extends AppCompatActivity {
 
     public void clearDeck(View view){
         deck.clear();
-        updateDeck();
+        updateDeckDisplay();
     }
 
     public void completeEditDeck(View view){
@@ -52,7 +57,7 @@ public class EditDeck extends AppCompatActivity {
         finish();
     }
 
-    private void updateDeck(){
+    private void updateDeckDisplay(){
         cardListAdapter.notifyDataSetChanged();
     }
 
@@ -64,9 +69,30 @@ public class EditDeck extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RESULT_ADD_CARD && resultCode == RESULT_OK){
-            updateDeck();
+            updateDeckDisplay();
         }
     }
+
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
+            ItemTouchHelper.DOWN | ItemTouchHelper.START | ItemTouchHelper.END, 0) {
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
+                              @NonNull RecyclerView.ViewHolder target) {
+
+            int fromPosition = viewHolder.getAdapterPosition();
+            int toPosition = target.getAdapterPosition();
+
+            Collections.swap(deck, fromPosition, toPosition);
+
+            recyclerView.getAdapter().notifyItemMoved(fromPosition,toPosition);
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+
+        }
+    };
 
 
 
