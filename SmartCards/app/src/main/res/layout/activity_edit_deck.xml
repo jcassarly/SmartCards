@@ -75,14 +75,14 @@
             android:orientation="vertical" />
     </ScrollView>
 
-    <ListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/EditDeckListView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:background="@color/colorMagBlue"
-        android:headerDividersEnabled="false"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="@+id/scrollCardView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/scrollCardView"

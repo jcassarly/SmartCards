@@ -4,9 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.View;
-import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +17,10 @@ public class EditDeck extends AppCompatActivity {
 
     private static List<PlayingCard> deck = new ArrayList<>();
 
-    ListView deckListView;
+    //ListView deckListView;
+    RecyclerView deckListView;
 
-    CardListView cardListView;
+    CardListAdapter cardListAdapter;
 
 
     @Override
@@ -27,9 +28,10 @@ public class EditDeck extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_deck);
 
-        deckListView = (ListView) findViewById(R.id.EditDeckListView);
-        cardListView = new CardListView(this,deck);
-        deckListView.setAdapter(cardListView);
+       //deckListView = (ListView) findViewById(R.id.EditDeckListView);
+        deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
+        cardListAdapter = new CardListAdapter(this,deck);
+        deckListView.setAdapter(cardListAdapter);
     }
 
 
@@ -51,7 +53,7 @@ public class EditDeck extends AppCompatActivity {
     }
 
     private void updateDeck(){
-        cardListView.notifyDataSetChanged();
+        cardListAdapter.notifyDataSetChanged();
     }
 
 
