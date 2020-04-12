@@ -24,7 +24,7 @@
     <string name="create_card_hint_text">Card Name</string>
     <string name="create_card_upload_text">Upload Image</string>
     <string name="create_card_button_text">Add</string>
-
+    <string name="title_activity_add_card">AddCard</string>
 
     <string name="large_text">
         "Material is the metaphor.\n\n"
@@ -115,7 +115,12 @@
         "For example, position the FAB to one side of stream of a cards so the FAB won’t interfere "
         "when a user tries to pick up one of cards.\n\n"
     </string>
-    <string name="title_activity_add_card">AddCard</string>
+
+    <!--Edit deck -->
+    <string name="edit_deck_done_button_text">Complete</string>
+    <string name="edit_deck_title_text">Edit Deck</string>
+    <string name="edit_deck_add_button_text">New Card</string>
+    <string name="edit_deck_clear_button_text">Remove All</string>
 
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>

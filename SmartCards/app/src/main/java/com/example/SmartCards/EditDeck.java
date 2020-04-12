@@ -40,6 +40,16 @@ public class EditDeck extends AppCompatActivity {
         setResult(RESULT_OK, addNewCardIntent);
     }
 
+    public void clearDeck(View view){
+        deck.clear();
+        updateDeck();
+    }
+
+    public void completeEditDeck(View view){
+        //Convert list deck to the deck manager
+        finish();
+    }
+
     private void updateDeck(){
         cardListView.notifyDataSetChanged();
     }
