@@ -35,6 +35,7 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.cardFace.setImageURI(deck.get(position).getImageAddress());
+        holder.cardNumber.setText(Integer.toString(position+1));
         holder.cardName.setText(deck.get(position).getName());
     }
 
@@ -44,12 +45,13 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
-        TextView cardName;
+        TextView cardName, cardNumber;
         ImageView cardFace;
 
         ViewHolder(View v) {
             super(v);
             cardName = (TextView) v.findViewById(R.id.cardPreviewText);
+            cardNumber = (TextView) v.findViewById(R.id.cardNumberText);
             cardFace = (ImageView) v.findViewById(R.id.cardPreviewImageView);
         }
     }
