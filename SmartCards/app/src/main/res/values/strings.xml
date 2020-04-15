@@ -130,6 +130,8 @@
     <string name="edit_deck_title_text">Edit Deck</string>
     <string name="edit_deck_add_button_text">New Card</string>
     <string name="edit_deck_clear_button_text">Remove All</string>
+    <string name="edit_deck_name_title_text">Name</string>
+    <string name="edit_deck_name_hint_text">Deck Name...</string>
 
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>

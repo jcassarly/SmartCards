@@ -1,6 +1,7 @@
 package com.example.SmartCards;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -9,7 +10,9 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.preference.PreferenceManager;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,12 +23,16 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     private static final int RESULT_ADD_CARD = 5;
     private static final int RESULT_EDIT_CARD = 4;
 
+    public static final String SHARED_PREFS = "sharedPrefs";
+    public static final String DECK_NAME = "deckName";
+
     public static List<PlayingCard> deck = new ArrayList<>();
 
     RecyclerView deckListView;
 
     CardListAdapter cardListAdapter;
 
+    TextView deckName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +40,8 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         setContentView(R.layout.activity_edit_deck);
 
         deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
+        deckName = (TextView) findViewById(R.id.editDeckNameInputText);
+
         cardListAdapter = new CardListAdapter(this,deck, this);
         deckListView.setAdapter(cardListAdapter);
 
@@ -41,6 +50,9 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         deckListView.addItemDecoration(divider);
+
+        loadDeckName();
+
     }
 
 
@@ -56,8 +68,21 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         updateDeckDisplay();
     }
 
+    public void saveDeckName(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(DECK_NAME, deckName.getText().toString());
+        editor.apply();
+    }
+
+    public void loadDeckName(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        deckName.setText(sharedPreferences.getString(DECK_NAME,""));
+    }
+
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
+        saveDeckName();
         finish();
     }
 
