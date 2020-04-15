@@ -137,5 +137,9 @@
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
 
+    <!-- Bluetooth Data -->
+    <string name="UUID">b5c65192-1d67-471f-8147-0d0e8904efaa</string>
+    <string name="connect_button">Connect</string>
+
 
 </resources>

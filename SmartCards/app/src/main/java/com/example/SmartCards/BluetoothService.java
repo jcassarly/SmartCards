@@ -4,23 +4,29 @@ import android.app.Activity;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import androidx.core.content.res.TypedArrayUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -75,18 +81,6 @@ public class BluetoothService {
         File new_img_dir = new File(directory, image_dir);
         IMAGE_DIR = image_dir; //new_img_dir.getAbsolutePath();
 
-//        String test_contents = "Yo Bro wassup";
-//        try  {
-//            FileOutputStream fos = parent_activity.openFileOutput(IMAGE_DIR + "/test.txt", Context.MODE_PRIVATE);
-//            fos.write(test_contents.getBytes());
-////            FileInputStream fis = parent_activity.openFileInput(IMAGE_DIR + "test.txt");
-////            byte buffer[] = new byte[(int) fis.available()];
-////            fis.read(buffer);
-////            String read = buffer.toString();
-//
-//        } catch (IOException ioe){
-//            ioe.printStackTrace();
-//        }
     }
 
     // Defines several constants used when transmitting messages between the
@@ -176,7 +170,7 @@ public class BluetoothService {
         // if there's an error in the command
         private final int ERROR_IN_CMD = -1;
 
-        private final int BUFFER_SIZE = 1024;
+        private final int BUFFER_SIZE = 100000;
 
         // Deck Revision numbers
         private int cur_rev_num = 0;
@@ -388,8 +382,10 @@ public class BluetoothService {
                             state = RECEIVING_FILE;
                         } else if (state == RECEIVING_IMAGE) {
                             state = MERGING;
+                            send_response = false;
                         } else if (state == MERGING) {
                             sendImage();
+                            send_response = false;
                         } else {
                             command_error = true;
                         }
@@ -444,7 +440,7 @@ public class BluetoothService {
         }
 
         private void sendImage() {
-            byte sendBuffer[];
+            byte fileBuffer[];
             if (!image_queue.isEmpty()) {
                 String image_name = image_queue.remove();
 //                File file = new File(IMAGE_DIR + image_name);
@@ -452,9 +448,13 @@ public class BluetoothService {
 
                 try {
 //                    fis = new FileInputStream(file);
-                    fis = parent_activity.openFileInput(IMAGE_DIR + image_name);
-                    sendBuffer = new byte[(int) fis.available()];
-                    fis.read(sendBuffer);
+                    fis = parent_activity.openFileInput(image_name);
+                    fileBuffer = new byte[(int) fis.available()];
+                    ByteBuffer sendBuffer = ByteBuffer.allocate(Integer.BYTES * 2 + fis.available());
+                    sendBuffer.putInt(CMD_UNLOCKED).putInt(cur_rev_num);
+                    fis.read(fileBuffer);
+                    sendBuffer.put(fileBuffer);
+                    write(sendBuffer.array());
                 } catch(IOException ioe) {
                     ioe.printStackTrace();
                 } finally {
@@ -501,20 +501,24 @@ public class BluetoothService {
 
     /**
      * This function stages a new deck for sending to the pi
-     * @param msg
      */
-    public void send(String msg) {
-//        manage_conn_thread.write(msg.getBytes());
-        int serverState = manage_conn_thread.getServerState();
-        if (serverState == ConnectedThread.WAIT_RESPONSE) {
-//            Random randy = new Random();
-//            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
-            manage_conn_thread.stageMerge();
-        } else if(serverState == ConnectedThread.MERGING) {
-            manage_conn_thread.merge();
-        }
-
+    public void merge() {
+////        manage_conn_thread.write(msg.getBytes());
+//        int serverState = manage_conn_thread.getServerState();
+//        if (serverState == ConnectedThread.WAIT_RESPONSE) {
+////            Random randy = new Random();
+////            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
+//            manage_conn_thread.stageMerge();
+//        } else if(serverState == ConnectedThread.MERGING) {
+//            manage_conn_thread.merge();
+//        }
+        manage_conn_thread.merge();
     }
+
+    public void stageMerge() {
+        manage_conn_thread.stageMerge();
+    }
+
 
     public int getRevisionNumber(byte[] buffer) {
         return ByteBuffer.wrap(buffer).getInt(0);

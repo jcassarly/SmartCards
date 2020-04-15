@@ -227,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
     public void sendBluetooth(View view) {
         EditText blueMsg = (EditText) findViewById(R.id.bluemsg);
         String message = blueMsg.getText().toString();
-        bluetooth_service.send(message);
+        //bluetooth_service.send(message);
     }
 
 }
