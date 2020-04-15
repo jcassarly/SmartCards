@@ -17,9 +17,10 @@ import java.util.List;
 public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCardListener {
 
     private static final int RESULT_ADD_CARD = 5;
+    private static final int RESULT_EDIT_CARD = 4;
 
     public static List<PlayingCard> deck = new ArrayList<>();
-    
+
     RecyclerView deckListView;
 
     CardListAdapter cardListAdapter;
@@ -67,7 +68,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == RESULT_ADD_CARD && resultCode == RESULT_OK){
+        if(requestCode == RESULT_ADD_CARD || requestCode == RESULT_EDIT_CARD && resultCode == RESULT_OK){
             updateDeckDisplay();
         }
     }
@@ -108,7 +109,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         Bundle extras = new Bundle();
         extras.putInt("position", position);
         editCardIntent.putExtras(extras);
-        startActivityForResult(editCardIntent, RESULT_ADD_CARD);
+        startActivityForResult(editCardIntent, RESULT_EDIT_CARD);
         setResult(RESULT_OK, editCardIntent);
     }
 }

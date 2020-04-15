@@ -25,12 +25,10 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
 
     boolean isImageUploaded;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_card);
-
 
         imageUpload = (ImageView) findViewById(R.id.imageUpload);
         uploadedCardName = (EditText) findViewById(R.id.editCardNameField);
@@ -44,12 +42,10 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
         isImageUploaded = true;
 
         card = EditDeck.deck.get(getIntent().getExtras().getInt("position"));
+
         uploadedURI = card.getImageAddress();
         imageUpload.setImageURI(uploadedURI);
         uploadedCardName.setText(card.getName());
-
-
-
     }
 
     @Override
@@ -71,6 +67,11 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
                 this.finish();
             }
         }
+        else if(v == deleteCardButton) {
+            EditDeck.deck.remove(card);
+            setResult(RESULT_OK);
+            finish();
+        }
     }
 
     //Called when an image is selected from the gallery
@@ -83,7 +84,6 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
             isImageUploaded = true;
         }
     }
-
 
     @Override
     public void finish(){
