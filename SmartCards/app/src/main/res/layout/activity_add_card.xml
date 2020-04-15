@@ -7,7 +7,7 @@
     tools:context=".AddCard">
 
     <TextView
-        android:id="@+id/addCardHeader"
+        android:id="@+id/editCardHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -20,7 +20,7 @@
         tools:text="@string/create_card_title_text" />
 
     <EditText
-        android:id="@+id/cardNameField"
+        android:id="@+id/editCardNameField"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -51,7 +51,7 @@
         android:layout_marginTop="32dp"
         android:text="@string/create_card_hint_text"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/addCardHeader" />
+        app:layout_constraintTop_toBottomOf="@+id/editCardHeader" />
 
     <TextView
         android:id="@+id/nameSubhead2"
@@ -62,10 +62,10 @@
         android:layout_marginTop="32dp"
         android:text="@string/create_card_upload_text"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardNameField" />
+        app:layout_constraintTop_toBottomOf="@+id/editCardNameField" />
 
     <Button
-        android:id="@+id/AddCardButton"
+        android:id="@+id/editCardButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"

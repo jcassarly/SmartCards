@@ -116,6 +116,15 @@
         "when a user tries to pick up one of cards.\n\n"
     </string>
 
+    <!-- Edit Card screen -->
+    <string name="edit_card_title_text">Edit Card</string>
+    <string name="edit_card_hint_text">Card Name</string>
+    <string name="edit_card_upload_text">Upload Image</string>
+    <string name="edit_card_button_text">Confirm Changes</string>
+    <string name="edit_card_delete_button_text">Delete Card</string>
+    <string name="title_activity_edit_card">OOOOOOOOOOOOOOOOOOOOO</string>
+
+
     <!--Edit deck -->
     <string name="edit_deck_done_button_text">Complete</string>
     <string name="edit_deck_title_text">Edit Deck</string>

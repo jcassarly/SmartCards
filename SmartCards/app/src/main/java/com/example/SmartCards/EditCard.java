@@ -13,14 +13,15 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-public class AddCard extends AppCompatActivity implements View.OnClickListener {
+public class EditCard extends AppCompatActivity implements View.OnClickListener {
 
     private static final int RESULT_LOAD_IMAGE = 1;
 
     ImageView imageUpload;
     EditText uploadedCardName;
-    Button uploadButton;
+    Button editCardButton,deleteCardButton;
     Uri uploadedURI;
+    PlayingCard card;
 
     boolean isImageUploaded;
 
@@ -28,16 +29,27 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_card);
+        setContentView(R.layout.activity_edit_card);
+
 
         imageUpload = (ImageView) findViewById(R.id.imageUpload);
         uploadedCardName = (EditText) findViewById(R.id.editCardNameField);
-        uploadButton = (Button) findViewById(R.id.editCardButton);
+        editCardButton = (Button) findViewById(R.id.editCardButton);
+        deleteCardButton = (Button) findViewById(R.id.deleteCardButton);
 
         imageUpload.setOnClickListener(this);
-        uploadButton.setOnClickListener(this);
+        editCardButton.setOnClickListener(this);
+        deleteCardButton.setOnClickListener(this);
 
-        isImageUploaded = false;
+        isImageUploaded = true;
+
+        card = EditDeck.deck.get(getIntent().getExtras().getInt("position"));
+        uploadedURI = card.getImageAddress();
+        imageUpload.setImageURI(uploadedURI);
+        uploadedCardName.setText(card.getName());
+
+
+
     }
 
     @Override
@@ -47,14 +59,14 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
             Intent galleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(galleryIntent, RESULT_LOAD_IMAGE);
         }
-        else if(v == uploadButton) {
-            if(!isImageUploaded || uploadedCardName.getText().toString() == null){
+        else if(v == editCardButton) {
+            if(!isImageUploaded || uploadedCardName.getText().toString() == ""){
                 Toast error = Toast.makeText(getApplicationContext(), "please add name and image", Toast.LENGTH_SHORT);
                 error.show();
             }
             else {
-                PlayingCard newCard = new PlayingCard(uploadedCardName.getText().toString(), uploadedURI);
-                EditDeck.addCardToDeck(newCard);
+                card.setName(uploadedCardName.getText().toString());
+                card.setImageAddress(uploadedURI);
                 setResult(RESULT_OK);
                 this.finish();
             }

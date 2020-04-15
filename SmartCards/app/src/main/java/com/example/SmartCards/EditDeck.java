@@ -14,13 +14,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class EditDeck extends AppCompatActivity {
+public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCardListener {
 
     private static final int RESULT_ADD_CARD = 5;
 
-    private static List<PlayingCard> deck = new ArrayList<>();
-
-    //ListView deckListView;
+    public static List<PlayingCard> deck = new ArrayList<>();
+    
     RecyclerView deckListView;
 
     CardListAdapter cardListAdapter;
@@ -32,7 +31,7 @@ public class EditDeck extends AppCompatActivity {
         setContentView(R.layout.activity_edit_deck);
 
         deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
-        cardListAdapter = new CardListAdapter(this,deck);
+        cardListAdapter = new CardListAdapter(this,deck, this);
         deckListView.setAdapter(cardListAdapter);
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
@@ -101,5 +100,15 @@ public class EditDeck extends AppCompatActivity {
     public void finish() {
         super.finish();
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void onCardClick(int position) {
+        Intent editCardIntent = new Intent(this, EditCard.class);
+        Bundle extras = new Bundle();
+        extras.putInt("position", position);
+        editCardIntent.putExtras(extras);
+        startActivityForResult(editCardIntent, RESULT_ADD_CARD);
+        setResult(RESULT_OK, editCardIntent);
     }
 }
