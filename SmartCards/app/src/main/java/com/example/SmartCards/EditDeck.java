@@ -85,6 +85,9 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
             Collections.swap(deck, fromPosition, toPosition);
 
             recyclerView.getAdapter().notifyItemMoved(fromPosition,toPosition);
+            //Note, `this` was added to the payload to make the default fade animation not play
+            recyclerView.getAdapter().notifyItemChanged(fromPosition, this);
+            recyclerView.getAdapter().notifyItemChanged(toPosition, this);
             return false;
         }
 
