@@ -132,5 +132,11 @@
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
 
+    <!--Play screen -->
+    <string name="play_screen_title">Playing</string>
+    <string name="exit_game_button_text">Exit Game</string>
+    <string name="play_screen_deck_text">Deck</string>
+    <string name="play_screen_in_play_text">In Play</string>
+    <string name="play_screen_discard_text">Discarded</string>
 
 </resources>
