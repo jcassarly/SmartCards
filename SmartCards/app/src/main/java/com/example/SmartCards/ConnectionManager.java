@@ -77,7 +77,6 @@ public class ConnectionManager extends Thread {
     private final InputStream mmInStream;
     private final OutputStream mmOutStream;
     private ByteBuffer mmBuffer; // mmBuffer store for the stream
-    private byte staged_deck[] = null;
     private Activity parent_activity;
 
     public ConnectionManager(BluetoothSocket socket, Activity parent_activity, String deck_file_name) {
@@ -397,7 +396,6 @@ public class ConnectionManager extends Thread {
     }
 
     private String getMsgStr(byte[] msg, int start, int end) {
-        // Because of little endian
         byte msgCopy[] = Arrays.copyOfRange(msg, start, end);
         String parsed_string;
         try {
@@ -422,40 +420,13 @@ public class ConnectionManager extends Thread {
         write(send_bytes.array());
     }
 
-    public void stageMerge() {
+    /**
+     * temporary method for updating deck.
+     * @param new_rev_num
+     */
+    public void updateDeck(int new_rev_num) {
         prev_rev_num = cur_rev_num;
-        // TODO: Read new revision number from deck object, get deck lists
-        image_queue = getImageList(); // temporary solution
-//            File file = new File(DECKLIST_FILE_NAME);
-        FileInputStream fis = null;
-
-        try {
-            fis = parent_activity.openFileInput(DECKLIST_FILE_NAME);
-            staged_deck = new byte[(int) fis.available()];
-            fis.read(staged_deck);
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        } finally {
-            try {
-                if (fis != null) {
-                    fis.close();
-                }
-            } catch (IOException ioe) {
-                System.out.println("Error in closing filestream reading from deck file.");
-            }
-        }
-    }
-
-
-    public void merge() {
-        if (state == MERGING) {
-            ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2 + staged_deck.length);
-            send_bytes.putInt(CMD_UNLOCKED).putInt(cur_rev_num);
-            send_bytes.put(staged_deck);
-            write(send_bytes.array());
-        } else {
-            System.out.println("Not ready to merge yet!");
-        }
+        cur_rev_num = new_rev_num;
     }
 
 

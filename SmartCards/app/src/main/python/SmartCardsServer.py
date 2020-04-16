@@ -8,22 +8,39 @@ import json
 shota_phone = "4C:DD:31:C9:92:05"
 HOST_MAC = "B4:69:21:BE:FA:A9"
 UUID = "b5c65192-1d67-471f-8147-0d0e8904efaa"
-FILE_PATH = "decklist.json"
-IMAGE_DIR = "./images/"
+FILE_NAME = "decklist.json"
+DECK_DIR = "./deck/"
 ENCODING = "utf-8"
 
 # states
-SEND_HEARTBEAT = 0
-COMPARE_REVISIONS = 1
+STATE_WAIT_RESP = 0
+STATE_SEND_FILE = 1
+STATE_RECV_FILE = 2
 
 # commands
 CMD_HEARTBEAT = 0
 CMD_LOCKED = 1
 CMD_UNLOCKED = 2
+CMD_DECK_START = 3
+CMD_DECK_END = 4
+CMD_ACK = 5
+CMD_SEND_START = 6
+CMD_SEND_DATA = 7
+CMD_SEND_END = 8
+
+# message structure
+INDEX_CMD = 0
+INDEX_REV_NUM = 4
+INDEX_FILE_SIZE = 4
+INDEX_FILE_NAME = 8
+INDEX_FILE_DATA = 4
 
 # constants
-DEFAULT_BUF_SIZE = 1024
-IMG_BUF_SIZE = 100000
+BUFFER_SIZE = 251
+
+# global placeholder lock states
+LOCKED = 1
+UNLOCKED = 0
 
 class Placeholder():
     def __init__(self):
@@ -51,10 +68,10 @@ global_placeholder = Placeholder()
 def printDebugInfo(action, state, command, payload):
     print("{0} in state: {1}\n    Command: {2}\n    Payload: {3}".format(action, state, command, payload))
 
-def readFile():
-    revision_number = -1
-    image_names = []
-    with open(FILE_PATH) as phil:
+def getFileTransferList():
+    # revision_number = -1
+    file_names = [FILE_NAME]
+    with open(DECK_DIR + FILE_NAME) as phil:
         """ old implementation for a text file"""
         # for line in phil:
         #     if "revnumber" in line:
@@ -64,194 +81,185 @@ def readFile():
 
         """ new implementation for json """
         json_dict = json.load(phil)
-        revision_number = json_dict['rev_number']
-        image_names = json_dict['deckList'] + json_dict['inPlayList'] + json_dict['discardList']
+        # revision_number = json_dict['rev_number']
+        file_names = file_names + json_dict['deckList'] + json_dict['inPlayList'] + json_dict['discardList']
 
-    return revision_number, image_names
+    return file_names
 
-def checkDeckAck(client_sock):
-    ack = client_sock.recv(DEFAULT_BUF_SIZE)
-    return True #TODO add acutal error checking
+def getFileBytes(file_path):
+    data = None
+    with open(file_path, 'rb') as phil:
+        data = phil.read()
+    return data
 
-def sendDeck(client_sock):
-    # deck_manager.toFile()
-    revision_number, image_names = readFile()
-    command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
-    byte_rev_num = revision_number.to_bytes(4, byteorder="big")
-    init_packet = command + byte_rev_num
-    print("Sending deck start: {}".format(init_packet)) # TODO: REMOVE AFTER DEBUGGING
-    client_sock.send(init_packet)
+def writeFileBytes(file_path, data):
+    with open(file_path, 'wb') as phil:
+        phil.write(data)
 
-    # wait for response
-    checkDeckAck(client_sock)
+def bytesToInt(data, index):
+    return int.from_bytes(data[index:index+4], byteorder="big")
 
-    payload = b''
-    # send contents of deck file
-    with open(FILE_PATH, 'rb') as phil:
-        payload = init_packet + phil.read()
-        print("Sending File {}".format(payload[0:8])) # TODO: REMOVE AFTER DEBUGGING
-        client_sock.send(payload)
+def intToBytes(integer):
+    return integer.to_bytes(4, byteorder="big")
 
-    # wait for acknowledgement
-    checkDeckAck(client_sock)
-    
-    # send images
-    for image_name in image_names:
-        with open(IMAGE_DIR + image_name, 'rb') as image:
-            payload = init_packet + image.read()
-            print("Sending Image {}".format(image_name)) # TODO: REMOVE AFTER DEBUGGING
-            print("    Payload: {}".format(payload[0:8]))
-            client_sock.send(payload)
-            checkDeckAck(client_sock)
+class SmartCardsServer:
+    def __init__(self, uuid, deck_file, deck_dir):
+        self.uuid = uuid
+        self.deck_file = deck_file
+        self.deck_dir = deck_dir
+        self.server_sock = None
+        self.conn_sock = None
+        self.state = STATE_WAIT_RESP
+        self.send_file_buffer = None
+        self.send_file_queue = None
+        self.recv_file_buffer = None
+        self.recv_file_name = None
+        print("init done")
 
-    # send indication we're done
-    print("Sending finish packet: {}".format(init_packet))
-    client_sock.send(init_packet)
-    return COMPARE_REVISIONS
+    def serverSetup(self):
+        self.server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+        self.server_sock.bind(("",bluetooth.PORT_ANY))
+        self.server_sock.listen(1)
 
-def receiveDeck(client_sock):
-    # receive the data for the file
-    print("Waiting to receive deck")
-    data = client_sock.recv(IMG_BUF_SIZE)
-    command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
-    byte_rev_num = global_placeholder.getRevision().to_bytes(4, byteorder="big")
-    response = command + byte_rev_num
+        bluetooth.advertise_service(
+            self.server_sock,
+            "SmartCards Bluetooth Server",
+            self.uuid,
+            service_classes=[UUID, bluetooth.SERIAL_PORT_CLASS],
+            profiles=[bluetooth.SERIAL_PORT_PROFILE])
 
-    # write the contents of the deck as a file
-    with open(FILE_PATH, 'wb') as phil:
-        # data = client_sock.recv(IMG_BUF_SIZE)
-        inc_cmd = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting command
-        inc_rev_num = int.from_bytes(data[4:8], byteorder="big") # I should make a method for getting revision number
-        print("Receiving file. Cmd: {}, Rev: {}".format(inc_cmd, inc_rev_num))
-        if inc_cmd == CMD_UNLOCKED:
-            phil.write(data[8:])
-            client_sock.send(response)
-        else:
-            print("Error! Incorrect command when expecting new deck from app.\nCommand: {}".format(inc_cmd))
+        port = self.server_sock.getsockname()
+        print("\nlistening on port {}".format(port))
 
-    # Need to run fromFile() here? Also need to set the new revision number?
-    
-    # receive the images of the deck
-    revision_number, image_names = readFile()
-    
-    inc_rev_num = -1
-    for image_name in image_names:
-        data = client_sock.recv(IMG_BUF_SIZE)
-        inc_cmd = int.from_bytes(data[0:4], byteorder="big") # I should make a method for getting command
-        inc_rev_num = int.from_bytes(data[4:8], byteorder="big") # I should make a method for getting revision number
-        print("Receiving Image: {}. Bytes: {}, Cmd: {}, Rev: {}".format(image_name, len(data), inc_cmd, inc_rev_num))
-        with open(IMAGE_DIR + image_name, 'wb') as image:
-            # Do I need error checking here?
-            image.write(data[8:])
-            client_sock.send(response)
 
-    # final packet should just be command and revision number, need error checking?
-    print("finished receiving.")
-    data = client_sock.recv(DEFAULT_BUF_SIZE)
-    return SEND_HEARTBEAT, inc_rev_num
+    def sendCmdAndRev(self, command):
+        cmd_bytes = intToBytes(command)
+        rev_bytes = intToBytes(global_placeholder.getRevision())
+        self.conn_sock.send(cmd_bytes + rev_bytes)
 
-def runStateMachineSend(state, client_sock):
-    command = b'\x00'
-    payload = b'\x00'
-    if state == SEND_HEARTBEAT:
-        command = CMD_HEARTBEAT.to_bytes(4, byteorder="big")
-        payload = global_placeholder.getRevision().to_bytes(4, byteorder="big")
-        # printDebugInfo("Sending", state, command, payload)
-        client_sock.send(command + payload)
-    elif state == COMPARE_REVISIONS:
-        if global_placeholder.getLockState():
-            command = CMD_LOCKED.to_bytes(4, byteorder="big")
-            payload = global_placeholder.getRevision().to_bytes(4, byteorder="big")
-            printDebugInfo("Sending", state, command, payload)
-            client_sock.send(command + payload)
-        else:
-            # command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
-            # deck.toFile() needs to be run at some point
-            # payload = bytes(global_placeholder.getDecklist())
-            sendDeck(client_sock)
-            # printDebugInfo("Sending", state, command, payload)
-            # state will exit to SEND_HEARTBEAT after receiving new decklist
+    def readSendFile(self):
+        with open(self.deck_dir + self.send_file_queue, 'rb') as phil:
+            self.send_file_buffer = phil.read()
 
-    # client_sock.send(command + payload)
-    return state
+    def parseCmdWaitResp(self, command, data):
+        if command == CMD_HEARTBEAT:
+            app_rev_num = bytesToInt(data, INDEX_REV_NUM)
+            # check if difference in revisions
+            if global_placeholder.getRevision() == app_rev_num:
+                # no difference, continue heartbeats
+                send_command = CMD_HEARTBEAT
+            elif global_placeholder.getLockState() == LOCKED:
+                # difference but currently flashing, wait until flash done
+                send_command = CMD_LOCKED
+            else:
+                # difference in revisions, indicate need to send deck data
+                send_command = CMD_UNLOCKED
+            self.sendCmdAndRev(send_command)
+        elif command == CMD_LOCKED:
+            # app has reverted, continue heartbeats
+            self.sendCmdAndRev(CMD_HEARTBEAT)
+        elif command == CMD_UNLOCKED:
+            # switch to send files state
+            self.state = STATE_SEND_FILE
+            # send the command to start sending the deck
+            self.send_file_queue = getFileTransferList()
+            self.send_file_buffer = None
+            self.sendCmdAndRev(CMD_DECK_START)
 
-def runStateMachineRecv(state, client_sock):
-    if state == SEND_HEARTBEAT:
-        # TODO: error check command
-        data = client_sock.recv(DEFAULT_BUF_SIZE)
-        # command = int.from_bytes(data[0:4], byteorder="big")
-        new_rev = int.from_bytes(data[4:8], byteorder="big") # get revision number
-        # printDebugInfo("Receiving", state, command, new_rev)
-        if new_rev != global_placeholder.getRevision():
-            state = COMPARE_REVISIONS
-    elif state == COMPARE_REVISIONS:
-        # printDebugInfo("Receiving", state, command, new_rev)
-        # TODO: Error check command
-        if global_placeholder.getLockState():
-            data = client_sock.recv(DEFAULT_BUF_SIZE)
-            new_rev = int.from_bytes(data[4:8], byteorder="big") # get revision number
-            state = SEND_HEARTBEAT
-            # TODO: error check that the returned revision number is correct
-        else:
-            # global_placeholder.rev_num = new_rev
-            state, new_rev = receiveDeck(client_sock)
+    def parseCmdSendFile(self, command, data):
+        # expected response while sending files should always just be an acknowledgement
+        if command == CMD_ACK:
+            # if there is no file send in progress
+            if self.send_file_buffer == None:
+                # if there are still files to send, load the next one
+                if len(self.send_file_queue) > 0:
+                    self.readSendFile()
+                else:
+                    # There are no more files to send, prepare to receive app's deck
+                    self.state = STATE_RECV_FILE
+                    # tell the app we are finished sending the deck
+                    self.sendCmdAndRev(CMD_DECK_END)
+           
+            # file is currently being sent
+            else:
+                # if the file is done sending
+                if len(self.send_file_buffer) > 0:
+                    self.send_file_buffer == None
+                    self.sendCmdAndRev(CMD_SEND_END)
+                else:
+                    send_buffer = self.send_file_buffer[:BUFFER_SIZE]
+                    self.send_file_buffer = self.send_file_buffer[BUFFER_SIZE:]
+                    self.conn_sock.send(send_buffer)
+
+    def parseCmdRecvFile(self, command, data):
+        response_cmd = CMD_ACK
+        if command == CMD_DECK_START:
+            self.recv_file_buffer = None
+            self.recv_file_name = None
+        elif command == CMD_SEND_START:
+            # TODO: should I save the number of incoming bytes somewhere?
+            self.recv_file_buffer = []
+            self.recv_file_name = data[INDEX_FILE_NAME :].decode("utf-8")
+        elif command == CMD_SEND_DATA:
+            self.recv_file_buffer += data[INDEX_FILE_DATA :]
+        elif command == CMD_SEND_END:
+            with open(self.deck_dir + self.recv_file_name, 'wb') as phil:
+                phil.write(self.recv_file_buffer)
+            
+            self.recv_file_buffer = None
+            self.recv_file_name = None
+        elif command == CMD_DECK_END:
+            # app has sent all the deck data, return to heartbeat state
+            self.state = STATE_WAIT_RESP
+            response_cmd = CMD_HEARTBEAT
         
+        self.sendCmdAndRev(response_cmd)
 
-    return state, new_rev
+    def runStateMachine(self, data):
+        command = bytesToInt(data, INDEX_CMD)
+        if self.state == STATE_WAIT_RESP:
+            self.parseCmdWaitResp(command, data)
+        elif self.state == STATE_SEND_FILE:
+            self.parseCmdSendFile(command, data)
+        elif self.state == STATE_RECV_FILE:
+            self.parseCmdRecvFile(command, data)
+        else:
+            pass # TODO: Error checking
 
+    def heartbeat(self):
+        self.serverSetup()
 
-def serverSetup():
-    server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-    server_sock.bind(("",bluetooth.PORT_ANY))
-    server_sock.listen(1)
+        input_thread = threading.Thread(target=debug, args=((self.server_sock, )))
+        input_thread.start()
+        
+        # Accepting = True
+        while True:
+            try:
+                print("Accepting new connections")
+                client_sock,address = self.server_sock.accept()
+                print("Accepted connection from {}".format(address))
+                self._conn_sock = client_sock
 
-    bluetooth.advertise_service(
-        server_sock,
-        "SmartCards Bluetooth Server",
-        UUID,
-        service_classes=[UUID, bluetooth.SERIAL_PORT_CLASS],
-        profiles=[bluetooth.SERIAL_PORT_PROFILE])
+                Connected = True
+                while Connected:
+                    try:
+                        data = self.conn_sock.recv(BUFFER_SIZE)
+                        self.runStateMachine()
+                        # data = client_sock.recv(DEFAULT_BUF_SIZE)
+                        # print("received [{}]".format(data))
+                    except OSError:
+                        Connected = False
+                        print("Connection with {} interrupted.".format(address))
+                    
+                self._conn_sock.close()
 
-    port = server_sock.getsockname()
-    print("\nlistening on port {}".format(port))
+            except OSError:
+                print('Server socket errored or closed')
+                break
 
-    return server_sock
-
-def heartbeat():
-    server_sock = serverSetup()
-
-    input_thread = threading.Thread(target=debug, args=((server_sock, )))
-    input_thread.start()
-    
-    # Accepting = True
-    while True:
-        try:
-            print("Accepting new connections")
-            client_sock,address = server_sock.accept()
-            print("Accepted connection from {}".format(address))
-
-            Connected = True
-            state = SEND_HEARTBEAT
-            while Connected:
-                try:
-                    state = runStateMachineSend(state, client_sock)
-                    state, new_rev = runStateMachineRecv(state, client_sock)
-                    rev_num = new_rev
-                    # data = client_sock.recv(DEFAULT_BUF_SIZE)
-                    # print("received [{}]".format(data))
-                except OSError:
-                    Connected = False
-                    print("Connection with {} interrupted.".format(address))
-                
-            client_sock.close()
-
-        except OSError:
-            print('Server socket errored or closed')
-            break
-
-    print("Server shutting down")
-    server_sock.close()
-    sys.exit(0)
+        print("Server shutting down")
+        self.server_sock.close()
+        sys.exit(0)
 
 
 def debug(server_sock):
@@ -275,10 +283,11 @@ def debug(server_sock):
             else:
                 global_placeholder.rev_num = int(cmd)
         except:
-            print('Invalid Command: {}'.format(in_val))
+            print('Invalid Command: {}'.format(cmd))
 
     sys.exit(0)
 
 
 if __name__=='__main__':
-    heartbeat()
+    server = SmartCardsServer(UUID, FILE_NAME, DECK_DIR)
+    server.heartbeat()
