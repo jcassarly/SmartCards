@@ -367,7 +367,20 @@ public class BluetoothService {
                         readSendFile();
 
                         // send start packet
-                        sendCmdAndRev(CMD_DECK_START);
+                        String file_name = send_file_queue.peek();
+                        byte file_name_bytes[];
+                        try {
+                            file_name_bytes = file_name.getBytes("UTF-8");
+                        } catch (UnsupportedEncodingException uee) {
+                            file_name_bytes = file_name.getBytes();
+                        }
+                        ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2 + file_name_bytes.length);
+                        int size = send_file_buffer.capacity();
+                        send_bytes.putInt(CMD_SEND_START).putInt(size);
+                        send_bytes.put(file_name_bytes);
+                        write(send_bytes.array());
+
+
                     }
 
                     // There are no more files to send
@@ -394,7 +407,7 @@ public class BluetoothService {
                     else if (file_buffer_position < file_buffer_length && file_buffer_position > 0) {
                         // send data packet
                         // These packets only have command + payload
-                        int end_index = Math.min(send_file_buffer.position() + BUFFER_SIZE, file_buffer_length);
+                        int end_index = Math.min(send_file_buffer.position() + BUFFER_SIZE - Integer.BYTES, file_buffer_length);
                         int length = end_index - file_buffer_position;
                         ByteBuffer send_data = ByteBuffer.allocate(Integer.BYTES + length);
                         send_data.putInt(CMD_SEND_DATA);

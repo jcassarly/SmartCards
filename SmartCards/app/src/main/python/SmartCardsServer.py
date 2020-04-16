@@ -44,7 +44,7 @@ UNLOCKED = 0
 
 class Placeholder():
     def __init__(self):
-        self.locked = True
+        self.locked = UNLOCKED
         self.rev_num = 0
         self.deck = [num for num in range(5)]
 
@@ -114,7 +114,6 @@ class SmartCardsServer:
         self.send_file_queue = None
         self.recv_file_buffer = None
         self.recv_file_name = None
-        print("init done")
 
     def serverSetup(self):
         self.server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
@@ -138,7 +137,9 @@ class SmartCardsServer:
         self.conn_sock.send(cmd_bytes + rev_bytes)
 
     def readSendFile(self):
-        with open(self.deck_dir + self.send_file_queue[0], 'rb') as phil:
+        file_name = self.deck_dir + self.send_file_queue[0]
+        print("reading send file: {}".format(file_name))
+        with open(file_name, 'rb') as phil:
             self.send_file_buffer = phil.read()
 
     def parseCmdWaitResp(self, command, data):
@@ -163,18 +164,27 @@ class SmartCardsServer:
             self.state = STATE_SEND_FILE
             # send the command to start sending the deck
             self.send_file_queue = getFileTransferList()
+            print("file queue: {}".format(self.send_file_queue))
             self.send_file_buffer = None
             self.sendCmdAndRev(CMD_DECK_START)
 
     def parseCmdSendFile(self, command, data):
+        # print("Send File Buffer: \n{}".format(self.send_file_buffer))
         # expected response while sending files should always just be an acknowledgement
         if command == CMD_ACK:
             # if there is no file send in progress
             if self.send_file_buffer == None:
                 # if there are still files to send, load the next one
                 if len(self.send_file_queue) > 0:
+                    print("Begin Send Deck")
                     self.readSendFile()
+                    cmd = intToBytes(CMD_SEND_START)
+                    size = intToBytes(len(self.send_file_buffer))
+                    name = self.send_file_queue[0].encode('utf-8')
+                    print("sending cmd: {}, size: {}, name: {}".format(cmd, size, name))
+                    self.conn_sock.send(cmd + size + name)
                 else:
+                    print("Deck Send Finished, begin receiving")
                     # There are no more files to send, prepare to receive app's deck
                     self.state = STATE_RECV_FILE
                     # tell the app we are finished sending the deck
@@ -183,14 +193,18 @@ class SmartCardsServer:
             # file is currently being sent
             else:
                 # if the file is done sending
-                if len(self.send_file_buffer) > 0:
-                    self.send_file_buffer == None
+                if len(self.send_file_buffer) == 0:
+                    print("{} is done sending.".format(self.send_file_queue[0]))
+                    self.send_file_buffer = None
                     self.send_file_queue.pop(0)
                     self.sendCmdAndRev(CMD_SEND_END)
                 else:
-                    send_buffer = self.send_file_buffer[:BUFFER_SIZE]
-                    self.send_file_buffer = self.send_file_buffer[BUFFER_SIZE:]
-                    self.conn_sock.send(send_buffer)
+                    # print("Sending {} data".format(self.send_file_queue[0]))
+                    cmd = intToBytes(CMD_SEND_DATA)
+                    payload_length = BUFFER_SIZE - len(cmd)
+                    send_buffer = self.send_file_buffer[:payload_length]
+                    self.send_file_buffer = self.send_file_buffer[payload_length:]
+                    self.conn_sock.send(cmd + send_buffer)
 
     def parseCmdRecvFile(self, command, data):
         response_cmd = CMD_ACK
@@ -218,7 +232,7 @@ class SmartCardsServer:
 
     def runStateMachine(self, data):
         command = bytesToInt(data, INDEX_CMD)
-        print("Received Command: {}".format(command))
+        print("Received Command: {} in state: {}".format(command, self.state))
         if self.state == STATE_WAIT_RESP:
             self.parseCmdWaitResp(command, data)
         elif self.state == STATE_SEND_FILE:
@@ -253,6 +267,7 @@ class SmartCardsServer:
                         # print("received [{}]".format(data))
                     except OSError:
                         Connected = False
+                        self.conn_sock.close()
                         print("Connection with {} interrupted.".format(address))
                     
                 self.conn_sock.close()
