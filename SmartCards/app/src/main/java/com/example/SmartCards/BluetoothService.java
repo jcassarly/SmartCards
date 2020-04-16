@@ -404,7 +404,7 @@ public class BluetoothService {
                     }
 
                     // The file is not done, send the next packet
-                    else if (file_buffer_position < file_buffer_length && file_buffer_position > 0) {
+                    else if (file_buffer_position < file_buffer_length && file_buffer_position >= 0) {
                         // send data packet
                         // These packets only have command + payload
                         int end_index = Math.min(send_file_buffer.position() + BUFFER_SIZE - Integer.BYTES, file_buffer_length);

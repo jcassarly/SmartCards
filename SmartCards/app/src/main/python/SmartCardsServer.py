@@ -164,7 +164,7 @@ class SmartCardsServer:
             self.state = STATE_SEND_FILE
             # send the command to start sending the deck
             self.send_file_queue = getFileTransferList()
-            print("file queue: {}".format(self.send_file_queue))
+            print("Send file queue: {}".format(self.send_file_queue))
             self.send_file_buffer = None
             self.sendCmdAndRev(CMD_DECK_START)
 
@@ -209,22 +209,26 @@ class SmartCardsServer:
     def parseCmdRecvFile(self, command, data):
         response_cmd = CMD_ACK
         if command == CMD_DECK_START:
+            print("Starting to receive deck")
             self.recv_file_buffer = None
             self.recv_file_name = None
         elif command == CMD_SEND_START:
             # TODO: should I save the number of incoming bytes somewhere?
-            self.recv_file_buffer = []
+            self.recv_file_buffer = bytearray()
             self.recv_file_name = data[INDEX_FILE_NAME :].decode("utf-8")
+            print("Starting to receive file: {}".format(self.recv_file_name))
         elif command == CMD_SEND_DATA:
             self.recv_file_buffer += data[INDEX_FILE_DATA :]
         elif command == CMD_SEND_END:
             with open(self.deck_dir + self.recv_file_name, 'wb') as phil:
                 phil.write(self.recv_file_buffer)
-            
+
+            print("Finished Receiving and writing File: {}".format(self.recv_file_name))
             self.recv_file_buffer = None
             self.recv_file_name = None
         elif command == CMD_DECK_END:
             # app has sent all the deck data, return to heartbeat state
+            print("Finished receiving Deck. Returning to heartbeat state")
             self.state = STATE_WAIT_RESP
             response_cmd = CMD_HEARTBEAT
         
@@ -232,7 +236,7 @@ class SmartCardsServer:
 
     def runStateMachine(self, data):
         command = bytesToInt(data, INDEX_CMD)
-        print("Received Command: {} in state: {}".format(command, self.state))
+        # print("Received Command: {} in state: {}".format(command, self.state))
         if self.state == STATE_WAIT_RESP:
             self.parseCmdWaitResp(command, data)
         elif self.state == STATE_SEND_FILE:
@@ -260,7 +264,7 @@ class SmartCardsServer:
                 Connected = True
                 while Connected:
                     try:
-                        print("Waiting for data")
+                        # print("Waiting for data")
                         data = self.conn_sock.recv(BUFFER_SIZE)
                         self.runStateMachine(data)
                         # data = client_sock.recv(DEFAULT_BUF_SIZE)
