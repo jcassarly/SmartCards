@@ -260,6 +260,7 @@ public class ConnectionManager extends Thread {
                 // The file is done sending
                 if (file_buffer_position == file_buffer_length) {
                     send_file_buffer = null;
+                    send_file_queue.remove();
                     // send end file packet
                     sendCmdAndRev(CMD_SEND_END);
                 }

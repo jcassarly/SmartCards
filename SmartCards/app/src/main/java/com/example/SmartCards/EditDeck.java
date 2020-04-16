@@ -56,8 +56,7 @@ public class EditDeck extends AppCompatActivity {
         //Convert list deck to the deck manager
         // TODO: Finish what actually goes into the merge here
         if (LandingPageActivity.bluetooth_service != null) {
-            LandingPageActivity.bluetooth_service.stageMerge();
-            LandingPageActivity.bluetooth_service.merge();
+            LandingPageActivity.bluetooth_service.updateDeck(1);
         }
         finish(); // TODO: Put bluetooth sync stuff here.
     }

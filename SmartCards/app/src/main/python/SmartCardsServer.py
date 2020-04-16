@@ -138,7 +138,7 @@ class SmartCardsServer:
         self.conn_sock.send(cmd_bytes + rev_bytes)
 
     def readSendFile(self):
-        with open(self.deck_dir + self.send_file_queue, 'rb') as phil:
+        with open(self.deck_dir + self.send_file_queue[0], 'rb') as phil:
             self.send_file_buffer = phil.read()
 
     def parseCmdWaitResp(self, command, data):
@@ -185,6 +185,7 @@ class SmartCardsServer:
                 # if the file is done sending
                 if len(self.send_file_buffer) > 0:
                     self.send_file_buffer == None
+                    self.send_file_queue.pop(0)
                     self.sendCmdAndRev(CMD_SEND_END)
                 else:
                     send_buffer = self.send_file_buffer[:BUFFER_SIZE]
@@ -217,6 +218,7 @@ class SmartCardsServer:
 
     def runStateMachine(self, data):
         command = bytesToInt(data, INDEX_CMD)
+        print("Received Command: {}".format(command))
         if self.state == STATE_WAIT_RESP:
             self.parseCmdWaitResp(command, data)
         elif self.state == STATE_SEND_FILE:
@@ -236,25 +238,33 @@ class SmartCardsServer:
         while True:
             try:
                 print("Accepting new connections")
-                client_sock,address = self.server_sock.accept()
+                self.conn_sock,address = self.server_sock.accept()
                 print("Accepted connection from {}".format(address))
-                self._conn_sock = client_sock
+                # self._conn_sock = client_sock
 
+                self.sendCmdAndRev(CMD_HEARTBEAT)
                 Connected = True
                 while Connected:
                     try:
+                        print("Waiting for data")
                         data = self.conn_sock.recv(BUFFER_SIZE)
-                        self.runStateMachine()
+                        self.runStateMachine(data)
                         # data = client_sock.recv(DEFAULT_BUF_SIZE)
                         # print("received [{}]".format(data))
                     except OSError:
                         Connected = False
                         print("Connection with {} interrupted.".format(address))
                     
-                self._conn_sock.close()
+                self.conn_sock.close()
 
             except OSError:
-                print('Server socket errored or closed')
+                print('Server socket errored or closed. Resetting Server')
+                self.state = STATE_WAIT_RESP
+                self.recv_file_buffer = None
+                self.recv_file_name = None
+                self.send_file_buffer = None
+                self.send_file_queue = None
+                self.conn_sock.close()
                 break
 
         print("Server shutting down")
