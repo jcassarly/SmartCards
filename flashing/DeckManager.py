@@ -159,6 +159,20 @@ class Deck:
         """Shuffle the order of the deck list"""
         random.shuffle(self.deckList)
 
+    def restart(self):
+        """Resets the deck to have all the cards in play and discard shuffled back into the deck"""
+        for card in self.inPlayList:
+            if card is not None:
+                self.deckList.append(card)
+
+        self.shuffle_in_discard()
+
+    def shuffle_in_discard(self):
+        """Shuffles all the discarded cards back into the deck"""
+        self.deckList = self.deckList + self.discardList
+        self.discardList = []
+        self.shuffle()
+
     def add_to_top(self, card):
         """Add the card (a filepath to the image) to the top of the deck list
 
