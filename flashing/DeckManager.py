@@ -55,6 +55,11 @@ class Deck:
         return hash((tuple(self.deckList), tuple(self.inPlayList), tuple(self.discardList)))
 
     def __all_cards(self):
+        """Puts all the cards in the deck into a single list
+
+        :returns: a list with all the cards in the order: in play, deck, discard
+
+        """
         all_cards = []
 
         for card in self.inPlayList:
