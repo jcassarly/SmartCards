@@ -2,14 +2,16 @@ package com.example.SmartCards;
 
 import android.net.Uri;
 
-public class PlayingCard {
+import java.io.Serializable;
+
+public class PlayingCard implements Serializable {
 
     private String name;
-    private Uri imageAddress;
+    private String imageAddress;
 
     public PlayingCard(String name, Uri imageAddress){
         this.name = name;
-        this.imageAddress = imageAddress;
+        this.imageAddress = imageAddress.toString();
     }
 
     public String getName() {
@@ -17,7 +19,7 @@ public class PlayingCard {
     }
 
     public Uri getImageAddress() {
-        return imageAddress;
+        return Uri.parse(imageAddress);
     }
 
     public void setName(String name) {
@@ -25,6 +27,6 @@ public class PlayingCard {
     }
 
     public void setImageAddress(Uri imageAddress) {
-        this.imageAddress = imageAddress;
+        this.imageAddress = imageAddress.toString();
     }
 }
