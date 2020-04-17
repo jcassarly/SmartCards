@@ -21,7 +21,7 @@ public class PlayingCard {
     }
 
     public void setName(String name) {
-        name = name;
+        this.name = name;
     }
 
     public void setImageAddress(Uri imageAddress) {

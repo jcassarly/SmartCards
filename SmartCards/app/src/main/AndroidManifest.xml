@@ -38,6 +38,7 @@
             android:name="com.example.SmartCards.MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".EditCard" />
     </application>
 
 </manifest>

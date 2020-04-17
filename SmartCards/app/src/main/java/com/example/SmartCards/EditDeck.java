@@ -1,35 +1,58 @@
 package com.example.SmartCards;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.preference.PreferenceManager;
 import android.view.View;
-import android.widget.ListView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class EditDeck extends AppCompatActivity {
+public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCardListener {
 
     private static final int RESULT_ADD_CARD = 5;
+    private static final int RESULT_EDIT_CARD = 4;
 
-    private static List<PlayingCard> deck = new ArrayList<>();
+    public static final String SHARED_PREFS = "sharedPrefs";
+    public static final String DECK_NAME = "deckName";
 
-    ListView deckListView;
+    public static List<PlayingCard> deck = new ArrayList<>();
 
-    CardListView cardListView;
+    RecyclerView deckListView;
 
+    CardListAdapter cardListAdapter;
+
+    TextView deckName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_deck);
 
-        deckListView = (ListView) findViewById(R.id.EditDeckListView);
-        cardListView = new CardListView(this,deck);
-        deckListView.setAdapter(cardListView);
+        deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
+        deckName = (TextView) findViewById(R.id.editDeckNameInputText);
+
+        cardListAdapter = new CardListAdapter(this,deck, this);
+        deckListView.setAdapter(cardListAdapter);
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(deckListView);
+
+        RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
+        deckListView.addItemDecoration(divider);
+
+        loadDeckName();
+
     }
 
 
@@ -40,8 +63,31 @@ public class EditDeck extends AppCompatActivity {
         setResult(RESULT_OK, addNewCardIntent);
     }
 
-    private void updateDeck(){
-        cardListView.notifyDataSetChanged();
+    public void clearDeck(View view){
+        deck.clear();
+        updateDeckDisplay();
+    }
+
+    public void saveDeckName(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(DECK_NAME, deckName.getText().toString());
+        editor.apply();
+    }
+
+    public void loadDeckName(){
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        deckName.setText(sharedPreferences.getString(DECK_NAME,""));
+    }
+
+    public void completeEditDeck(View view){
+        //Convert list deck to the deck manager
+        saveDeckName();
+        finish();
+    }
+
+    private void updateDeckDisplay(){
+        cardListAdapter.notifyDataSetChanged();
     }
 
 
@@ -51,10 +97,34 @@ public class EditDeck extends AppCompatActivity {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == RESULT_ADD_CARD && resultCode == RESULT_OK){
-            updateDeck();
+        if(requestCode == RESULT_ADD_CARD || requestCode == RESULT_EDIT_CARD && resultCode == RESULT_OK){
+            updateDeckDisplay();
         }
     }
+
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
+            ItemTouchHelper.DOWN, 0) {
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
+                              @NonNull RecyclerView.ViewHolder target) {
+
+            int fromPosition = viewHolder.getAdapterPosition();
+            int toPosition = target.getAdapterPosition();
+
+            Collections.swap(deck, fromPosition, toPosition);
+
+            recyclerView.getAdapter().notifyItemMoved(fromPosition,toPosition);
+            //Note, `this` was added to the payload to make the default fade animation not play
+            recyclerView.getAdapter().notifyItemChanged(fromPosition, this);
+            recyclerView.getAdapter().notifyItemChanged(toPosition, this);
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+
+        }
+    };
 
 
 
@@ -63,5 +133,15 @@ public class EditDeck extends AppCompatActivity {
     public void finish() {
         super.finish();
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void onCardClick(int position) {
+        Intent editCardIntent = new Intent(this, EditCard.class);
+        Bundle extras = new Bundle();
+        extras.putInt("position", position);
+        editCardIntent.putExtras(extras);
+        startActivityForResult(editCardIntent, RESULT_EDIT_CARD);
+        setResult(RESULT_OK, editCardIntent);
     }
 }
