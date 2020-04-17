@@ -54,6 +54,26 @@ class Deck:
         """
         return hash((tuple(self.deckList), tuple(self.inPlayList), tuple(self.discardList)))
 
+    def __all_cards(self):
+        all_cards = []
+
+        for card in self.inPlayList:
+            if card is not None:
+                all_cards.append(card)
+
+        all_cards = all_cards + self.deckList + self.discardList
+
+        return all_cards
+
+    def __iter__(self):
+        """Iterate over all the cards in the deck (in the order of those inplay, in the deck, then discard)
+
+        :returns: the next card (yields)
+
+        """
+        for card in self.__all_cards():
+            yield card
+
     def update_rev_number(self):
         """Hashes this DeckManager and stores the value into rev_number"""
         self.rev_number = self.__hash__()
@@ -161,11 +181,11 @@ class Deck:
 
     def restart(self):
         """Resets the deck to have all the cards in play and discard shuffled back into the deck"""
-        for card in self.inPlayList:
-            if card is not None:
-                self.deckList.append(card)
+        self.deckList = self.__all_cards()
 
-        self.shuffle_in_discard()
+        self.discardList = []
+        self.inPlayList = [None, None, None, None, None, None]
+        self.shuffle()
 
     def shuffle_in_discard(self):
         """Shuffles all the discarded cards back into the deck"""
