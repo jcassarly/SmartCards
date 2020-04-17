@@ -4,25 +4,34 @@ import android.app.Activity;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import androidx.core.content.res.TypedArrayUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +55,7 @@ public class BluetoothService {
     private BluetoothAdapter mmAdapter;
     private BluetoothDevice mmDevice = null;
     private ConnectThread make_conn_thread = null;
-    private ConnectedThread manage_conn_thread = null;
+    private ConnectionManager manage_conn_thread = null;
 
     public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity, String file_name, String image_dir) {
         parent_activity = activity;
@@ -75,18 +84,6 @@ public class BluetoothService {
         File new_img_dir = new File(directory, image_dir);
         IMAGE_DIR = image_dir; //new_img_dir.getAbsolutePath();
 
-//        String test_contents = "Yo Bro wassup";
-//        try  {
-//            FileOutputStream fos = parent_activity.openFileOutput(IMAGE_DIR + "/test.txt", Context.MODE_PRIVATE);
-//            fos.write(test_contents.getBytes());
-////            FileInputStream fis = parent_activity.openFileInput(IMAGE_DIR + "test.txt");
-////            byte buffer[] = new byte[(int) fis.available()];
-////            fis.read(buffer);
-////            String read = buffer.toString();
-//
-//        } catch (IOException ioe){
-//            ioe.printStackTrace();
-//        }
     }
 
     // Defines several constants used when transmitting messages between the
@@ -140,8 +137,10 @@ public class BluetoothService {
             // The connection attempt succeeded. Perform work associated with
             // the connection in a separate thread.
 //            manageMyConnectedSocket(mmSocket);
-            manage_conn_thread = new ConnectedThread(mmSocket);
+            manage_conn_thread = new ConnectionManager(mmSocket, parent_activity, DECKLIST_FILE_NAME);
             manage_conn_thread.start();
+//            Thread mng_thread = new Thread(manage_conn_thread);
+//            mng_thread.start();
 
         }
 
@@ -155,43 +154,69 @@ public class BluetoothService {
         }
     }
 
-    private class ConnectedThread extends Thread {
-        // Heartbeat states
-        public static final int WAIT_RESPONSE = 0;
-        public static final int MERGING = 1;
-        public static final int RECEIVING_FILE = 2;
-        public static final int RECEIVING_IMAGE = 3;
-        private int state = WAIT_RESPONSE;
+    private class ConnectionManager extends Thread {
+        // Message Types
+        private final static int MSG_QUERY = 1;
+        private final static int MSG_RECV_FILE = 2;
+        private final static int MSG_ERROR = 3;
 
-        // Message Structure
-        private final int CMD_INDEX = 0;
-        private final int REV_NUM_INDEX = 4;
-        private final int DECK_DATA_INDEX = 8;
+        // Query Codes
+        private final static int QUERY_JSON = 1;
+        private final static int QUERY_IMAGE = 2;
+        private final static int QUERY_OVERRIDE = 3;
+        private final static int QUERY_LOCK = 4;
+        private final static int QUERY_UNLOCK = 5;
 
-        // Message Commands
-        private final int CMD_HEARTBEAT = 0;
-        private final int CMD_LOCKED = 1;
-        private final int CMD_UNLOCKED = 2;
+        // Receive File Codes
+        private final static int RECV_FILE_OK = 1;
+        private final static int RECV_FILE_ERR = 2;
+        private final static int RECV_FILE_BEGIN = 3;
+        private final static int RECV_FILE_END = 4;
 
-        // if there's an error in the command
-        private final int ERROR_IN_CMD = -1;
+        // Error Codes
+        private final static int ERROR_BUSY = 2;
+        private final static int ERROR_RECEIVE = 3;
+        private final static int ERROR_MISMATCH = 4;
+        private final static int ERROR_UNKNOWN = 5;
 
-        private final int BUFFER_SIZE = 1024;
+        // Indexes of data locations in correctly formatted messages
+//        private final static int INDEX_PACKET_SIZE = 0;
+        private final static int INDEX_TYPE = 0;
+        private final static int INDEX_CODE = INDEX_TYPE + 4;
+        private final static int INDEX_FILE_SIZE = INDEX_CODE + 4;
+        private final static int INDEX_NAME_SIZE = INDEX_FILE_SIZE + 4;
+        private final static int INDEX_NAME = INDEX_NAME_SIZE + 4;
+
+        private final static int STATE_QUERY = 1;
+        private final static int STATE_RECEIVE = 2;
+        private int state = STATE_QUERY;
+
+        // Bluetooth packet size
+        private final int BUFFER_SIZE = 50000;
+        private final int INT_SIZE = 4;
+
+        public static final String TAG = "BLUETOOTH_MANAGER";
 
         // Deck Revision numbers
         private int cur_rev_num = 0;
-        private int cur_pi_rev_num = 0;
-        private int prev_rev_num = 0;
 
-        private Queue<String> image_queue;
+        // File Transfer members
+        private ByteBuffer cur_packet = null;
+        private LinkedBlockingQueue<byte[]> file_queue = null;
+        private ByteBuffer send_file_buffer = null;
+        private ByteBuffer recv_file_buffer = null;
+        private String recv_file_name;
+        private Queue<String> send_file_queue;
+
+        private final String DECKLIST_FILE_NAME;
 
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
         private ByteBuffer mmBuffer; // mmBuffer store for the stream
-        private byte staged_deck[];
+        private Activity parent_activity;
 
-        public ConnectedThread(BluetoothSocket socket) {
+        public ConnectionManager(BluetoothSocket socket, Activity parent_activity, String deck_file_name) {
             mmSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
@@ -212,10 +237,13 @@ public class BluetoothService {
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
             mmBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+            this.parent_activity = parent_activity;
+            send_file_queue = new LinkedList<String>();
+            file_queue = new LinkedBlockingQueue<>();
+            DECKLIST_FILE_NAME = deck_file_name;
         }
 
         public void run() {
-//            mmBuffer = new byte[1024];
             int numBytes; // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs.
@@ -225,8 +253,11 @@ public class BluetoothService {
                     numBytes = mmInStream.read(mmBuffer.array());
                     byte msgCopy[] = Arrays.copyOfRange(mmBuffer.array(), 0, numBytes);
                     Arrays.fill(mmBuffer.array(), 0, numBytes, (byte)0);
-                    runStateMachine(msgCopy, numBytes);
+                    ByteBuffer data = ByteBuffer.wrap(msgCopy);
 
+                    while (data.hasRemaining()) {
+                        processPackets(data);
+                    }
                     // Send the obtained bytes to the UI activity.
 //                    Message readMsg = handler.obtainMessage(
 //                            MessageConstants.MESSAGE_READ, numBytes, -1,
@@ -253,82 +284,95 @@ public class BluetoothService {
                 Log.e(TAG, "Error occurred when sending data", e);
 
                 // Send a failure message back to the activity.
-                Message writeErrorMsg =
-                        handler.obtainMessage(MessageConstants.MESSAGE_TOAST);
-                Bundle bundle = new Bundle();
-                bundle.putString("toast",
-                        "Couldn't send data to the other device");
-                writeErrorMsg.setData(bundle);
-                handler.sendMessage(writeErrorMsg);
+//            Message writeErrorMsg =
+//                    handler.obtainMessage(BluetoothService.MessageConstants.MESSAGE_TOAST);
+//            Bundle bundle = new Bundle();
+//            bundle.putString("toast",
+//                    "Couldn't send data to the other device");
+//            writeErrorMsg.setData(bundle);
+//            handler.sendMessage(writeErrorMsg);
             }
         }
 
-        public Queue<String> getImageList() {
-//            File file = new File(DECKLIST_FILE_NAME);
-            Queue<String> imageList = new LinkedList<String>();
-            BufferedReader br = null;
-            FileInputStream fis = null;
-
-            try {
-//                br = new BufferedReader(new FileReader(file));
-//                String imageName;
-//                while((imageName = br.readLine()) != null) {
-//                    if (!imageName.contains("[") && !imageName.contains("]")) {
-//                        imageList.add(imageName);
-//                    }
-//                }
-//                fis = new FileInputStream(file);
-                fis = parent_activity.openFileInput(DECKLIST_FILE_NAME);
-                byte buffer[] = new byte[fis.available()];
-                fis.read(buffer);
-                String jstr = new String(buffer, "UTF-8");
-                Pattern pattern = Pattern.compile("\\{(.*?)\\}", Pattern.DOTALL);
-                Matcher matcher = pattern.matcher(jstr);
-                matcher.find();
-                jstr = matcher.group();
-                JSONObject jobj = (JSONObject) new JSONTokener(jstr).nextValue();
-                JSONArray deck = jobj.getJSONArray("deckList");
-                JSONArray inPlay = jobj.getJSONArray("inPlayList");
-                JSONArray discard = jobj.getJSONArray("discardList");
-
-                JSONArray lists[] = {deck, inPlay, discard};
-                for (int list_index = 0; list_index < lists.length; list_index++) {
-                    JSONArray current = lists[list_index];
-                    for (int arr_index = 0; arr_index < current.length(); arr_index++) {
-                        imageList.add(current.getString(arr_index));
-                    }
-                }
-
-            } catch (IOException ioe) {
-                // TODO: Some proper error handling
-                ioe.printStackTrace();
-            } catch(JSONException je) {
-                je.printStackTrace();
-            } finally {
-                try {
-                    if (fis != null) {
-                        fis.close();
-                    }
-                } catch (IOException ioe) {
-                    System.out.println("Error in closing the image name stream");
-                }
-            }
-            return imageList;
+        private void send(byte data[]) {
+            int packet_size = data.length;
+            ByteBuffer send_bytes = ByteBuffer.allocate(packet_size + INT_SIZE);
+            send_bytes.putInt(packet_size);
+            send_bytes.put(data);
+            write(send_bytes.array());
         }
 
-        public void writeToFile(byte data[], String fileName) {
-            File file = null;
+        private void processPackets(ByteBuffer data) {
+            // If there is no packet currently being assembled, prepare the next one
+            if (cur_packet == null) {
+                int packet_size = data.getInt();
+                cur_packet = ByteBuffer.allocate(packet_size);
+            }
+
+            // Find out how many bytes of the data buffer to put in it
+            if (cur_packet.hasRemaining()) {
+                int cur_remaining = cur_packet.remaining();
+                if (data.remaining() < cur_remaining) {
+                    cur_packet.put(data);
+                } else {
+//                    byte temp[] = new byte[cur_remaining];
+                    data.get(cur_packet.array(),cur_packet.arrayOffset() + cur_packet.position(),cur_remaining);
+//                    data.get(temp);
+//                    cur_packet.put(temp);
+                    // Parse individual packet
+                    parsePacket(cur_packet.array());
+                    cur_packet = null;
+                }
+            }
+        }
+
+        private void sendInt(int msgInt) {
+            ByteBuffer send_bytes = ByteBuffer.allocate(INT_SIZE);
+            send_bytes.putInt(msgInt);
+            write(send_bytes.array());
+        }
+
+        private void parsePacket(byte msg[]) {
+            if (state == STATE_QUERY) {
+                parseResponse(msg);
+            } else if (state == STATE_RECEIVE) {
+                file_queue.add(msg);
+//                send(msg);
+                state = STATE_QUERY;
+            }
+        }
+
+        private void parseResponse(byte msg[]) {
+            int msgType = getMsgInt(msg, INDEX_TYPE);
+            int msgCode = getMsgInt(msg, INDEX_CODE);
+            switch (msgType) {
+                case MSG_RECV_FILE:
+                    if (msgCode == RECV_FILE_BEGIN) {
+                        state = STATE_RECEIVE;
+                    } else if (msgCode == RECV_FILE_END) {
+                        state = STATE_QUERY;
+                    }
+                    break;
+                case MSG_QUERY:
+                    // TODO: Respond to ui with query result
+                    break;
+                case MSG_ERROR:
+                    // TODO: Respond to ui with error
+                    break;
+            }
+        }
+
+        public void receiveFile(String file_name) {
+            // TODO: remove this line, just for testing
+            byte file_data[] = file_queue.poll();
             FileOutputStream fos = null;
             try {
-
-                file = new File(parent_activity.getFilesDir(), fileName);
+                File file = new File(parent_activity.getFilesDir(), file_name);
                 if (!file.exists()) {
                     file.createNewFile();
                 }
                 fos = new FileOutputStream(file);
-//                fos = parent_activity.openFileOutput(fileName, Context.MODE_PRIVATE);
-
-                fos.write(data);
+                fos.write(file_data);
                 fos.flush();
             } catch (IOException ioe) {
                 // TODO: Some proper error handling
@@ -343,94 +387,18 @@ public class BluetoothService {
                     System.out.println("Error in closing the stream");
                 }
             }
-
+            sendFile(file_name);
         }
 
-        public void receiveDeck(byte data[]) {
-            switch (state) {
-                case RECEIVING_FILE:
-                    writeToFile(data, DECKLIST_FILE_NAME);
-                    image_queue = getImageList();
-                    state = RECEIVING_IMAGE;
-                    break;
-                case RECEIVING_IMAGE:
-                    if (image_queue.size() > 0) {
-                        // TODO: Put the images in the image directory?
-                        writeToFile(data, image_queue.remove());
-                        // TODO: After this function runs, it closes the connection?
-                    }
-                    break;
-                default:
-                    // TODO: Some kind of error handling.
-            }
-        }
-
-        public int runStateMachine(byte msg[], int numBytes) {
-            boolean command_error = false;
-            boolean send_response = true;
-            int command = getMsgInt(msg, CMD_INDEX);
-            switch (command) {
-                case CMD_HEARTBEAT:
-                    // Update the pi's revision number and send our current revision number
-                    cur_pi_rev_num = getMsgInt(msg, REV_NUM_INDEX);
-                    break;
-                case CMD_LOCKED:
-                    // TODO: Revert deck back to revision from pi, save change log
-                    cur_rev_num = prev_rev_num;
-                    break;
-                case CMD_UNLOCKED:
-//                    Message readMsg = handler.obtainMessage(
-//                            MessageConstants.MESSAGE_READ, numBytes, -1,
-//                            msg);
-//                    readMsg.sendToTarget();
-                    if (numBytes == 8) { // 8 bytes is when received two integers: command and rev_num
-                        if (state == WAIT_RESPONSE) {
-                            state = RECEIVING_FILE;
-                        } else if (state == RECEIVING_IMAGE) {
-                            state = MERGING;
-                        } else if (state == MERGING) {
-                            sendImage();
-                        } else {
-                            command_error = true;
-                        }
-                    } else {
-                        byte data[] = Arrays.copyOfRange(msg, DECK_DATA_INDEX, numBytes);
-                        receiveDeck(data);
-                    }
-                    break;
-                default:
-                    command_error = true;
-                    break;
-            }
-
-            if (send_response && !command_error) {
-                ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2);
-                send_bytes.putInt(command).putInt(cur_rev_num);
-                write(send_bytes.array());
-            }
-
-            return command_error == false ? state : ERROR_IN_CMD;
-        }
-
-
-
-        private int getMsgInt(byte[] msg, int index) {
-            // Because of little endian
-            return ByteBuffer.wrap(msg).getInt(index);
-        }
-
-        public void stageMerge() {
-            prev_rev_num = cur_rev_num;
-            // TODO: Read new revision number from deck object, get deck lists
-            image_queue = getImageList(); // temporary solution
-//            File file = new File(DECKLIST_FILE_NAME);
+        public void sendFile(String file_name) {
             FileInputStream fis = null;
-
             try {
-                fis = parent_activity.openFileInput(DECKLIST_FILE_NAME);
-                staged_deck = new byte[(int) fis.available()];
-                fis.read(staged_deck);
+                fis = parent_activity.openFileInput(file_name);
+                byte file_buffer[] = new byte[fis.available()];
+                fis.read(file_buffer);
+                send(file_buffer);
             } catch (IOException ioe) {
+                // TODO: Some proper error handling
                 ioe.printStackTrace();
             } finally {
                 try {
@@ -438,50 +406,34 @@ public class BluetoothService {
                         fis.close();
                     }
                 } catch (IOException ioe) {
-                    System.out.println("Error in closing filestream reading from deck file.");
+                    // TODO: some more proper error handling
+                    System.out.println("Error in closing the stream");
                 }
             }
         }
 
-        private void sendImage() {
-            byte sendBuffer[];
-            if (!image_queue.isEmpty()) {
-                String image_name = image_queue.remove();
-//                File file = new File(IMAGE_DIR + image_name);
-                FileInputStream fis = null;
-
-                try {
-//                    fis = new FileInputStream(file);
-                    fis = parent_activity.openFileInput(IMAGE_DIR + image_name);
-                    sendBuffer = new byte[(int) fis.available()];
-                    fis.read(sendBuffer);
-                } catch(IOException ioe) {
-                    ioe.printStackTrace();
-                } finally {
-                    try {
-                        if (fis != null) {
-                            fis.close();
-                        }
-                    } catch (IOException ioe) {
-                        System.out.print("Error in closing image file input stream.");
-                    }
-                }
-            }
+        private int getMsgInt(byte[] msg, int index) {
+            // Because of little endian
+            return ByteBuffer.wrap(msg).getInt(index);
         }
 
-        public void merge() {
-            if (state == MERGING) {
-                ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2 + staged_deck.length);
-                send_bytes.putInt(CMD_UNLOCKED).putInt(cur_rev_num);
-                send_bytes.put(staged_deck);
-                write(send_bytes.array());
-            } else {
-                System.out.println("Not ready to merge yet!");
+        private String getMsgStr(byte[] msg, int start, int end) {
+            byte msgCopy[] = Arrays.copyOfRange(msg, start, end);
+            String parsed_string;
+            try {
+                parsed_string = new String(msgCopy, "UTF-8");
+            } catch (UnsupportedEncodingException uee) {
+                // TODO: Some proper error handling
+                uee.printStackTrace();
+                parsed_string = "";
             }
+            return parsed_string;
         }
 
-        public int getServerState() {
-            return state;
+        private byte[] getPayload(byte[] msg, int start) {
+            // Because of little endian
+            byte msgCopy[] = Arrays.copyOfRange(msg, start, msg.length);
+            return msgCopy;
         }
 
         // Call this method from the main activity to shut down the connection.
@@ -494,27 +446,40 @@ public class BluetoothService {
         }
     }
 
+
     public void connect(UUID uuid) {
         make_conn_thread = new ConnectThread(uuid);
         make_conn_thread.start();
     }
 
+    public void sendFile(String file_name) {
+        manage_conn_thread.sendFile(file_name);
+    }
+
+    public void receiveFile(String file_name) {
+        manage_conn_thread.receiveFile(file_name);
+    }
+
     /**
      * This function stages a new deck for sending to the pi
-     * @param msg
      */
-    public void send(String msg) {
-//        manage_conn_thread.write(msg.getBytes());
-        int serverState = manage_conn_thread.getServerState();
-        if (serverState == ConnectedThread.WAIT_RESPONSE) {
-//            Random randy = new Random();
-//            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
-            manage_conn_thread.stageMerge();
-        } else if(serverState == ConnectedThread.MERGING) {
-            manage_conn_thread.merge();
-        }
-
+    public void merge() {
+////        manage_conn_thread.write(msg.getBytes());
+//        int serverState = manage_conn_thread.getServerState();
+//        if (serverState == ConnectedThread.WAIT_RESPONSE) {
+////            Random randy = new Random();
+////            byte new_deck[] = ByteBuffer.allocate(INT_SIZE * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
+//            manage_conn_thread.stageMerge();
+//        } else if(serverState == ConnectedThread.MERGING) {
+//            manage_conn_thread.merge();
+//        }
+//        manage_conn_thread.merge();
     }
+
+    public void stageMerge() {
+//        manage_conn_thread.stageMerge();
+    }
+
 
     public int getRevisionNumber(byte[] buffer) {
         return ByteBuffer.wrap(buffer).getInt(0);
