@@ -30,6 +30,8 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -178,18 +180,20 @@ public class BluetoothService {
         private final static int ERROR_UNKNOWN = 5;
 
         // Indexes of data locations in correctly formatted messages
+//        private final static int INDEX_PACKET_SIZE = 0;
         private final static int INDEX_TYPE = 0;
-        private final static int INDEX_CODE = 4;
-        private final static int INDEX_FILE_SIZE = 8;
-        private final static int INDEX_NAME_SIZE = 12;
-        private final static int INDEX_NAME = 16;
+        private final static int INDEX_CODE = INDEX_TYPE + 4;
+        private final static int INDEX_FILE_SIZE = INDEX_CODE + 4;
+        private final static int INDEX_NAME_SIZE = INDEX_FILE_SIZE + 4;
+        private final static int INDEX_NAME = INDEX_NAME_SIZE + 4;
 
         private final static int STATE_QUERY = 1;
         private final static int STATE_RECEIVE = 2;
         private int state = STATE_QUERY;
 
         // Bluetooth packet size
-        private final int BUFFER_SIZE = 1024;
+        private final int BUFFER_SIZE = 50000;
+        private final int INT_SIZE = 4;
 
         public static final String TAG = "BLUETOOTH_MANAGER";
 
@@ -197,6 +201,8 @@ public class BluetoothService {
         private int cur_rev_num = 0;
 
         // File Transfer members
+        private ByteBuffer cur_packet = null;
+        private LinkedBlockingQueue<byte[]> file_queue = null;
         private ByteBuffer send_file_buffer = null;
         private ByteBuffer recv_file_buffer = null;
         private String recv_file_name;
@@ -233,6 +239,7 @@ public class BluetoothService {
             mmBuffer = ByteBuffer.allocate(BUFFER_SIZE);
             this.parent_activity = parent_activity;
             send_file_queue = new LinkedList<String>();
+            file_queue = new LinkedBlockingQueue<>();
             DECKLIST_FILE_NAME = deck_file_name;
         }
 
@@ -246,11 +253,10 @@ public class BluetoothService {
                     numBytes = mmInStream.read(mmBuffer.array());
                     byte msgCopy[] = Arrays.copyOfRange(mmBuffer.array(), 0, numBytes);
                     Arrays.fill(mmBuffer.array(), 0, numBytes, (byte)0);
+                    ByteBuffer data = ByteBuffer.wrap(msgCopy);
 
-                    if (state == STATE_RECEIVE) {
-                        receiveFile(msgCopy, numBytes);
-                    } else {
-                        parseMsg(msgCopy, numBytes);
+                    while (data.hasRemaining()) {
+                        processPackets(data);
                     }
                     // Send the obtained bytes to the UI activity.
 //                    Message readMsg = handler.obtainMessage(
@@ -288,66 +294,109 @@ public class BluetoothService {
             }
         }
 
+        private void send(byte data[]) {
+            int packet_size = data.length;
+            ByteBuffer send_bytes = ByteBuffer.allocate(packet_size + INT_SIZE);
+            send_bytes.putInt(packet_size);
+            send_bytes.put(data);
+            write(send_bytes.array());
+        }
+
+        private void processPackets(ByteBuffer data) {
+            // If there is no packet currently being assembled, prepare the next one
+            if (cur_packet == null) {
+                int packet_size = data.getInt();
+                cur_packet = ByteBuffer.allocate(packet_size);
+            }
+
+            // Find out how many bytes of the data buffer to put in it
+            if (cur_packet.hasRemaining()) {
+                int cur_remaining = cur_packet.remaining();
+                if (data.remaining() < cur_remaining) {
+                    cur_packet.put(data);
+                } else {
+//                    byte temp[] = new byte[cur_remaining];
+                    data.get(cur_packet.array(),cur_packet.arrayOffset() + cur_packet.position(),cur_remaining);
+//                    data.get(temp);
+//                    cur_packet.put(temp);
+                    // Parse individual packet
+                    parsePacket(cur_packet.array());
+                    cur_packet = null;
+                }
+            }
+        }
+
         private void sendInt(int msgInt) {
-            ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES);
+            ByteBuffer send_bytes = ByteBuffer.allocate(INT_SIZE);
             send_bytes.putInt(msgInt);
             write(send_bytes.array());
         }
 
-        private void parseMsg(byte msg[], int numBytes) {
+        private void parsePacket(byte msg[]) {
+            if (state == STATE_QUERY) {
+                parseResponse(msg);
+            } else if (state == STATE_RECEIVE) {
+                file_queue.add(msg);
+//                send(msg);
+                state = STATE_QUERY;
+            }
+        }
+
+        private void parseResponse(byte msg[]) {
             int msgType = getMsgInt(msg, INDEX_TYPE);
             int msgCode = getMsgInt(msg, INDEX_CODE);
             switch (msgType) {
                 case MSG_RECV_FILE:
-                    parseRecvFileMsg(msg, msgCode, numBytes);
-            }
-        }
-
-        private void parseRecvFileMsg(byte msg[], int code, int numBytes) {
-            switch (code) {
-                case RECV_FILE_BEGIN:
-                    state = STATE_RECEIVE;
-                    int file_size = getMsgInt(msg, INDEX_FILE_SIZE);
-                    int name_size = getMsgInt(msg, INDEX_NAME_SIZE);
-                    recv_file_name = getMsgStr(msg, INDEX_NAME, INDEX_NAME + name_size);
-                    recv_file_buffer = ByteBuffer.allocate(file_size);
-                    int buffer_pos = INDEX_NAME + name_size;
-                    if (numBytes > buffer_pos) {
-                        byte msgCopy[] = Arrays.copyOfRange(msg, buffer_pos, numBytes);
-                        receiveFile(msgCopy, numBytes - buffer_pos);
+                    if (msgCode == RECV_FILE_BEGIN) {
+                        state = STATE_RECEIVE;
+                    } else if (msgCode == RECV_FILE_END) {
+                        state = STATE_QUERY;
                     }
+                    break;
+                case MSG_QUERY:
+                    // TODO: Respond to ui with query result
+                    break;
+                case MSG_ERROR:
+                    // TODO: Respond to ui with error
+                    break;
             }
         }
 
-        private void receiveFile(byte data[], int numBytes) {
-            int buf_space = recv_file_buffer.capacity() - recv_file_buffer.position();
-            int length = Math.min(buf_space, numBytes);
-            recv_file_buffer.put(data, 0, length);
-
-            if (recv_file_buffer.position() == recv_file_buffer.capacity()) {
-                writeReceivedFile();
-                state = STATE_QUERY;
-                // If there is extra data in the message that does not go into the file
-                if (buf_space < numBytes) {
-                    parseMsg(Arrays.copyOfRange(data, buf_space, numBytes), numBytes - buf_space);
+        public void receiveFile(String file_name) {
+            // TODO: remove this line, just for testing
+            byte file_data[] = file_queue.poll();
+            FileOutputStream fos = null;
+            try {
+                File file = new File(parent_activity.getFilesDir(), file_name);
+                if (!file.exists()) {
+                    file.createNewFile();
                 }
-
-                // TODO: remove this line, just for testing
-                sendFile(recv_file_name);
+                fos = new FileOutputStream(file);
+                fos.write(file_data);
+                fos.flush();
+            } catch (IOException ioe) {
+                // TODO: Some proper error handling
+                ioe.printStackTrace();
+            } finally {
+                try {
+                    if (fos != null) {
+                        fos.close();
+                    }
+                } catch (IOException ioe) {
+                    // TODO: some more proper error handling
+                    System.out.println("Error in closing the stream");
+                }
             }
+            sendFile(file_name);
         }
 
         public void sendFile(String file_name) {
             FileInputStream fis = null;
             try {
                 fis = parent_activity.openFileInput(file_name);
-                int file_size = fis.available();
-                ByteBuffer send_buffer = ByteBuffer.allocate(Integer.BYTES + file_size);
-                send_buffer.putInt(file_size);
-                byte file_buffer[] = new byte[file_size];
+                byte file_buffer[] = new byte[fis.available()];
                 fis.read(file_buffer);
-                send_buffer.put(file_buffer);
-                write(send_buffer.array());
+                send(file_buffer);
             } catch (IOException ioe) {
                 // TODO: Some proper error handling
                 ioe.printStackTrace();
@@ -497,7 +546,7 @@ public class BluetoothService {
         }
 
         private void sendCmdAndRev(int command) {
-            ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2);
+            ByteBuffer send_bytes = ByteBuffer.allocate(INT_SIZE * 2);
             send_bytes.putInt(command).putInt(cur_rev_num);
             write(send_bytes.array());
         }
@@ -518,6 +567,14 @@ public class BluetoothService {
         make_conn_thread.start();
     }
 
+    public void sendFile(String file_name) {
+        manage_conn_thread.sendFile(file_name);
+    }
+
+    public void receiveFile(String file_name) {
+        manage_conn_thread.receiveFile(file_name);
+    }
+
     /**
      * This function stages a new deck for sending to the pi
      */
@@ -526,7 +583,7 @@ public class BluetoothService {
 //        int serverState = manage_conn_thread.getServerState();
 //        if (serverState == ConnectedThread.WAIT_RESPONSE) {
 ////            Random randy = new Random();
-////            byte new_deck[] = ByteBuffer.allocate(Integer.BYTES * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
+////            byte new_deck[] = ByteBuffer.allocate(INT_SIZE * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
 //            manage_conn_thread.stageMerge();
 //        } else if(serverState == ConnectedThread.MERGING) {
 //            manage_conn_thread.merge();
