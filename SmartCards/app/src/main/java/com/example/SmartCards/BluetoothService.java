@@ -460,31 +460,6 @@ public class BluetoothService {
         manage_conn_thread.receiveFile(file_name);
     }
 
-    /**
-     * This function stages a new deck for sending to the pi
-     */
-    public void merge() {
-////        manage_conn_thread.write(msg.getBytes());
-//        int serverState = manage_conn_thread.getServerState();
-//        if (serverState == ConnectedThread.WAIT_RESPONSE) {
-////            Random randy = new Random();
-////            byte new_deck[] = ByteBuffer.allocate(INT_SIZE * 5).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).putInt(randy.nextInt()).array();
-//            manage_conn_thread.stageMerge();
-//        } else if(serverState == ConnectedThread.MERGING) {
-//            manage_conn_thread.merge();
-//        }
-//        manage_conn_thread.merge();
-    }
-
-    public void stageMerge() {
-//        manage_conn_thread.stageMerge();
-    }
-
-
-    public int getRevisionNumber(byte[] buffer) {
-        return ByteBuffer.wrap(buffer).getInt(0);
-    }
-
     public int checkBluetoothEnabled() {
         // TODO: Add a way to detect if bluetooth access denied
         int return_code = NO_ERROR;
