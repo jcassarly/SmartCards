@@ -182,10 +182,14 @@ class Deck:
         """Remove the card in the deck at index from the DeckManager
 
         :param int index: the index of the card to remove
-        :returns: the card (filepath) of the card removed
+        :returns: the card (filepath) of the card removed (or None if the deck is empty)
 
         """
-        return self.deckList.pop(index)
+        if not self.is_empty():
+            return self.deckList.pop(index)
+
+        else:
+            return None
 
     def move_card_in_deck(self, start_index, end_index):
         """Moves the card at start_index in the deck to end_index
@@ -193,23 +197,50 @@ class Deck:
         If the end index is past the top of the deck, the card will be moved
         to the top of the deck
 
-        :param int start_index: the index of the original location of the card to move
-        :param int end_index: the index of the card to move's destination
+        :param int start_index:
+            the index of the original location of the card to move
+        :param int end_index:
+            the index of the card to move's destination
+        :returns:
+            True if the card was moved in the deck, False otherwise
+            (ie the deck list was empty)
 
         """
-        self.insert(end_index, self.deckList.pop(start_index))
+        has_cards = not self.is_empty()
+
+        if has_cards:
+            self.insert(end_index, self.deckList.pop(start_index))
+
+        return has_cards
 
     def move_card_to_discard(self, index):
         """Removes the card at the index from the deck and discards it
 
-        :param int index: the index of the card to move to the top of the discard list
+        :param int index:
+            the index of the card to move to the top of the discard list
+        :returns:
+            True if the card was moved to the discard, False otherwise
+            (ie the deck list was empty)
 
         """
-        self.discardList.append(self.remove_from_index(index))
+        removed = self.remove_from_index(index)
+
+        is_success = removed is not None
+
+        if is_success:
+            self.discardList.append(removed)
+
+        return is_success
 
     def discard_top_of_deck(self):
-        """Removes the top card of the deck and moves it to the top of the discard list"""
-        self.discardList.append(self.remove_from_top())
+        """Removes the top card of the deck and moves it to the top of the discard list
+
+        :returns:
+            True if the card was moved to the discard, False otherwise
+            (ie the deck list was empty)
+
+        """
+        self.move_card_to_discard(self.deck_len() - 1)
 
     def return_to_deck(self, discard_index, deck_index):
         """Move card at discard_index of the discard list to deck_index of the deck
@@ -218,25 +249,37 @@ class Deck:
             the index of the card in the discard list to return to the deck
         :param int deck_index:
             the index of the deck to insert the card
+        :returns:
+            True if the card was moved to the deck, False otherwise
+            (ie the discard list was empty)
 
         """
-        self.insert(deck_index, self.discardList.pop(discard_index))
+        has_cards = not self.is_discard_empty()
+
+        if has_cards:
+            self.insert(deck_index, self.discardList.pop(discard_index))
+
+        return has_cards
 
     def return_to_top(self, discard_index):
         """Returns the card at discard_index of the discard list to the top of the deck
 
-        :param int discard_index: the index of the card to return to the top of the deck
+        :param int discard_index:
+            the index of the card to return to the top of the deck
+        :returns:
+            True if the card was moved to the top of the deck, False otherwise
+            (ie the discard list was empty)
 
         """
-        self.add_to_top(self.discardList.pop(discard_index))
+        return self.return_to_deck(discard_index, self.deck_len())
 
     def remove_from_top(self):
         """Removes the top card of the deck from the DeckManager
 
-        :returns: the card removed
+        :returns: the card removed (or None if no card was removed because the deck was empty)
 
         """
-        return self.deckList.pop()
+        return self.remove_from_index(self.deck_len() - 1)
 
     def discard_from_play(self, display_id):
         """Discards the card on display_id from play
@@ -249,10 +292,17 @@ class Deck:
             the ID of the display to discard from play (should be integer in
             range 1-5 inclusive)
 
+        :returns:
+            True if the card was discarded, False otherwise (the display already
+            had no card on it, so no change was made)
+
         """
-        if (self.inPlayList[display_id] is not None):
+        display_has_card = self.inPlayList[display_id] is not None
+        if (display_has_card):
             self.discardList.append(self.inPlayList[display_id])
             self.inPlayList[display_id] = None
+
+        return display_has_card
 
     def draw(self, display_id): # move into discard and get a new one into play
         """Draws a card from the deck and puts it into play
@@ -264,12 +314,17 @@ class Deck:
         :param int display_id:
             the ID of the display to draw the next card into and discard whatever was
             previously in that spot (should be integer in range 1-5 inclusive)
+        :returns:
+            the card that was drawn (or None if the deck was empty)
 
         """
-        self.discard_from_play(display_id)
-        drawnCard = self.remove_from_top()
-        self.inPlayList[display_id] = drawnCard
-        return drawnCard
+        if not self.is_empty():
+            self.discard_from_play(display_id)
+            drawnCard = self.remove_from_top()
+            self.inPlayList[display_id] = drawnCard
+            return drawnCard
+        else:
+            return None
 
     def is_empty(self):
         """Determines if the deck is empty
@@ -278,3 +333,17 @@ class Deck:
 
         """
         return self.deckList == []
+
+    def is_discard_empty(self):
+        """Determines if the discard is empty
+
+        :returns: True if the discard list is an empty list, false otherwise
+
+        """
+        return self.discardList == []
+
+    def deck_len(self):
+        return len(self.deckList)
+
+    def discard_len(self):
+        return len(self.discardList)
