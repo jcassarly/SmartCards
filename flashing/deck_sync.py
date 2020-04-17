@@ -56,17 +56,14 @@ class DeckSynchronizer():
         next_state = SyncState.WAITING_FOR_QUERY
 
         if self.deck_lock.locked() and self.app_lock and query_code == QueryCode.UNLOCK:
-            print("Unlocking")
             self.deck_lock.release()
             self.app_lock = False
             self.connection.send_ack()
 
         elif self.deck_lock.locked():
-            print("Busy")
             next_state = SyncState.BUSY_ERROR
 
         elif query_code == QueryCode.UNLOCK and not self.app_lock:
-            print("We already Unlocked")
             # the deck is unlocked already, but this error is not really an issue
             self.connection.send_ack()
 
@@ -77,24 +74,20 @@ class DeckSynchronizer():
             next_state = SyncState.UNKNOWN_ERROR
 
         elif query_code == QueryCode.LOCK:
-            print("Locking")
             self.deck_lock.acquire()
             self.app_lock = True
             self.connection.send_ack()
 
         elif query_code == QueryCode.JSON:
-            print("Sending JSON")
             self.connection.send_file(DeckManager.DECK_LIST)
 
         elif query_code == QueryCode.IMAGE:
-            print("sending images")
             self.deck_lock.acquire()
             for card_path in self.deck:
                 self.connection.send_file(card_path)
             self.deck_lock.release()
 
         elif query_code == QueryCode.OVERRIDE:
-            print("Overriding")
             self.deck_lock.acquire()
 
             self.connection.send_ack()
@@ -141,8 +134,6 @@ class DeckSynchronizer():
             self.deck.fromFile(DeckManager.DECK_LIST)
 
             self.deck_lock.release()
-
-            print("State after Override: {}".format(next_state))
 
         return next_state
 
