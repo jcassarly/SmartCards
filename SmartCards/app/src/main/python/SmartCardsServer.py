@@ -70,7 +70,7 @@ def checkDeckAck(client_sock):
     return True #TODO add acutal error checking
 
 def sendDeck(client_sock):
-    # deck_manager.toFile()
+    # deck_manager.to_file()
     revision_number, image_names = readFile()
     command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
     byte_rev_num = revision_number.to_bytes(4, byteorder="big")
@@ -88,7 +88,7 @@ def sendDeck(client_sock):
 
     # wait for acknowledgement
     checkDeckAck(client_sock)
-    
+
     # send images
     for image_name in image_names:
         with open(IMAGE_DIR + image_name, 'rb') as image:
@@ -117,11 +117,11 @@ def receiveDeck(client_sock):
         else:
             print("Error! Incorrect command when expecting new deck from app.\nCommand: {}".format(inc_cmd))
 
-    # Need to run fromFile() here? Also need to set the new revision number?
-    
+    # Need to run from_file() here? Also need to set the new revision number?
+
     # receive the images of the deck
     revision_number, image_names = readFile()
-    
+
     for image_name in image_names:
         with open(IMAGE_DIR + image_name, 'wb') as image:
             data = client_sock.recv()
@@ -148,7 +148,7 @@ def runStateMachineSend(state, client_sock):
             client_sock.send(command + payload)
         else:
             # command = CMD_UNLOCKED.to_bytes(4, byteorder="big")
-            # deck.toFile() needs to be run at some point
+            # deck.to_file() needs to be run at some point
             # payload = bytes(global_placeholder.getDecklist())
             sendDeck(client_sock)
             printDebugInfo("Sending", state, command, payload)
@@ -175,7 +175,7 @@ def runStateMachineRecv(state, client_sock):
         else:
             global_placeholder.rev_num = new_rev
             receiveDeck(client_sock)
-        
+
 
     return state, new_rev
 
@@ -202,7 +202,7 @@ def heartbeat():
 
     input_thread = threading.Thread(target=debug, args=((server_sock, )))
     input_thread.start()
-    
+
     # Accepting = True
     while True:
         try:
@@ -222,7 +222,7 @@ def heartbeat():
                 except OSError:
                     Connected = False
                     print("Connection with {} interrupted.".format(address))
-                
+
             client_sock.close()
 
         except OSError:

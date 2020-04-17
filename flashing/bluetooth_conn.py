@@ -53,11 +53,11 @@ class BluetoothConn():
 
     def send_ack(self):
         """Sends Acknowledgement Packet"""
-        print("Sending ACK")
+        pass#print("Sending ACK")
 
     def send_err(self, code=0):
         """Send error code to the app"""
-        print("Sending Error {}".format(code))
+        pass#print("Sending Error {}".format(code))
 
     def send_file(self, file_path):
         """Sends the given file to the app"""
@@ -65,7 +65,7 @@ class BluetoothConn():
 
     def recv_query(self):
         """Returns type of query (JSON, IMAGE, OVERRIDE)"""
-        return self.queries.pop() if self.queries != [] else None
+        return QueryCode.UNLOCK #self.queries.pop() if self.queries != [] else None
 
     def recv_file(self, file_path):
         """Returns status (RECV_FILE_X)"""

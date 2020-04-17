@@ -14,7 +14,7 @@ def load_deck(file_path):
 
     """
     deck = Deck([])
-    deck.fromFile(file_path)
+    deck.from_file(file_path)
     return deck
 
 class Deck:
@@ -123,7 +123,7 @@ class Deck:
 
         return paths
 
-    def toFile(self, file_path):
+    def to_file(self, file_path):
         """Write this DeckManager object to the file specified by file_path
 
         The format of the JSON written to file_path is like the following example
@@ -154,13 +154,13 @@ class Deck:
                 'rev_number': self.rev_number
             }))
 
-    def fromFile(self, file_path):
+    def from_file(self, file_path):
         """Update this object with the JSON data at file_path
 
         If the file_path does no exist, the object is reinitialized to an empty deck
         and all other values are defaults
 
-        The format is the same as the toFile format
+        The format is the same as the to_file format
 
         The filenames in the JSON file should not have the IMAGE_DIR prefix. Those
         are added back by this method

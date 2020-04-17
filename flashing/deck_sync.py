@@ -121,7 +121,7 @@ class DeckSynchronizer():
 
                 # if the above for loop exits normally, then we failed 3 times to receive the file
                 if exit_code != RecvFileCode.OK:
-                    self.deck.toFile(DeckManager.DECK_LIST)  # revert to before the JSON
+                    self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
                     # TODO: consider reverting the images back to before override started
                     #       this would require temp storage
                     self.deck_lock.release()
@@ -131,7 +131,7 @@ class DeckSynchronizer():
                     self.connection.send_ack()
 
             # update the deck with the JSON file received since everything was received correctly
-            self.deck.fromFile(DeckManager.DECK_LIST)
+            self.deck.from_file(DeckManager.DECK_LIST)
 
             self.deck_lock.release()
 

@@ -138,7 +138,7 @@ def flash_display(display_id, deck, deck_lock, is_in_clear_mode, flasher):
         # do nothing because the status led is already set correctly
         pass
 
-    deck.toFile(DeckManager.DECK_LIST)
+    deck.to_file(DeckManager.DECK_LIST)
 
     # release the lock on the deck
     deck_lock.release()
