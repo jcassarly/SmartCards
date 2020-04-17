@@ -153,42 +153,48 @@ public class BluetoothService {
     }
 
     private class ConnectionManager extends Thread {
-        // States
-        public static final int STATE_WAIT_RESP = 0;
-        public static final int STATE_SEND_FILE = 1;
-        public static final int STATE_RECV_FILE = 2;
-        private int state = STATE_WAIT_RESP;
+        // Message Types
+        private final static int MSG_QUERY = 1;
+        private final static int MSG_RECV_FILE = 2;
+        private final static int MSG_ERROR = 3;
 
-        // Message Commands
-        private final int CMD_HEARTBEAT = 0;
-        private final int CMD_LOCKED = 1;
-        private final int CMD_UNLOCKED = 2;
-        private final int CMD_DECK_START = 3;
-        private final int CMD_DECK_END = 4;
-        private final int CMD_ACK = 5;
-        private final int CMD_SEND_START = 6;
-        private final int CMD_SEND_DATA = 7;
-        private final int CMD_SEND_END = 8;
+        // Query Codes
+        private final static int QUERY_JSON = 1;
+        private final static int QUERY_IMAGE = 2;
+        private final static int QUERY_OVERRIDE = 3;
+        private final static int QUERY_LOCK = 4;
+        private final static int QUERY_UNLOCK = 5;
 
-        // Message Structure
-        private final int INDEX_CMD = 0;
-        private final int INDEX_REV_NUM = 4;
-        private final int INDEX_FILE_SIZE = 4;
-        private final int INDEX_FILE_NAME = 8;
-        private final int INDEX_FILE_DATA = 4;
+        // Receive File Codes
+        private final static int RECV_FILE_OK = 1;
+        private final static int RECV_FILE_ERR = 2;
+        private final static int RECV_FILE_BEGIN = 3;
+        private final static int RECV_FILE_END = 4;
 
-        // if there's an error in the command
-        private final int ERROR_IN_CMD = -1;
+        // Error Codes
+        private final static int ERROR_BUSY = 2;
+        private final static int ERROR_RECEIVE = 3;
+        private final static int ERROR_MISMATCH = 4;
+        private final static int ERROR_UNKNOWN = 5;
+
+        // Indexes of data locations in correctly formatted messages
+        private final static int INDEX_TYPE = 0;
+        private final static int INDEX_CODE = 4;
+        private final static int INDEX_FILE_SIZE = 8;
+        private final static int INDEX_NAME_SIZE = 12;
+        private final static int INDEX_NAME = 16;
+
+        private final static int STATE_QUERY = 1;
+        private final static int STATE_RECEIVE = 2;
+        private int state = STATE_QUERY;
 
         // Bluetooth packet size
-        private final int BUFFER_SIZE = 251;
+        private final int BUFFER_SIZE = 1024;
 
         public static final String TAG = "BLUETOOTH_MANAGER";
 
         // Deck Revision numbers
         private int cur_rev_num = 0;
-        private int cur_pi_rev_num = 0;
-        private int prev_rev_num = 0;
 
         // File Transfer members
         private ByteBuffer send_file_buffer = null;
@@ -240,8 +246,12 @@ public class BluetoothService {
                     numBytes = mmInStream.read(mmBuffer.array());
                     byte msgCopy[] = Arrays.copyOfRange(mmBuffer.array(), 0, numBytes);
                     Arrays.fill(mmBuffer.array(), 0, numBytes, (byte)0);
-                    runStateMachine(msgCopy, numBytes);
 
+                    if (state == STATE_RECEIVE) {
+                        receiveFile(msgCopy, numBytes);
+                    } else {
+                        parseMsg(msgCopy, numBytes);
+                    }
                     // Send the obtained bytes to the UI activity.
 //                    Message readMsg = handler.obtainMessage(
 //                            MessageConstants.MESSAGE_READ, numBytes, -1,
@@ -278,145 +288,78 @@ public class BluetoothService {
             }
         }
 
-        private void runStateMachine(byte msg[], int numBytes) {
-            int command = getMsgInt(msg, INDEX_CMD);
-            switch(state) {
-                case STATE_WAIT_RESP:
-                    parseCmdWaitResp(command, msg, numBytes);
-                    break;
-                case STATE_RECV_FILE:
-                    parseCmdRecvFile(command, msg, numBytes);
-                    break;
-                case STATE_SEND_FILE:
-                    parseCmdSendFile(command, msg, numBytes);
-                    break;
-                default:
-                    System.err.print("State Error in Connection Management Thread!");
+        private void sendInt(int msgInt) {
+            ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES);
+            send_bytes.putInt(msgInt);
+            write(send_bytes.array());
+        }
+
+        private void parseMsg(byte msg[], int numBytes) {
+            int msgType = getMsgInt(msg, INDEX_TYPE);
+            int msgCode = getMsgInt(msg, INDEX_CODE);
+            switch (msgType) {
+                case MSG_RECV_FILE:
+                    parseRecvFileMsg(msg, msgCode, numBytes);
             }
         }
 
-        public void parseCmdWaitResp(int command, byte msg[], int numBytes) {
-            boolean command_error = false;
-            switch (command) {
-                case CMD_HEARTBEAT:
-                    // Update the pi's revision number and send our current revision number
-                    cur_pi_rev_num = getMsgInt(msg, INDEX_REV_NUM);
-                    break;
-                case CMD_LOCKED:
-                    // TODO: Revert deck back to revision from pi, save change log
-                    cur_rev_num = prev_rev_num;
-                    break;
-                case CMD_UNLOCKED:
-                    // Prepare to receive files from the Pi.
-                    state = STATE_RECV_FILE;
-                    break;
-                default:
-                    command_error = true;
-                    break;
-            }
-
-            if (!command_error) {
-                sendCmdAndRev(command);
-            } else {
-                // TODO: error handling response to pi. Maybe reset to heartbeat?
-            }
-        }
-
-        public void parseCmdRecvFile(int command, byte msg[], int numBytes) {
-            int response_cmd = CMD_ACK;
-            switch (command) {
-                case CMD_DECK_START:
-                    recv_file_buffer = null;
-                    recv_file_name = null;
-                    break;
-                case CMD_SEND_START:
-                    int file_length = getMsgInt(msg, INDEX_FILE_SIZE);
-                    recv_file_buffer = ByteBuffer.allocate(file_length);
-                    String file_name = getMsgStr(msg, INDEX_FILE_NAME, msg.length);
-                    recv_file_name = file_name;
-                    break;
-                case CMD_SEND_DATA:
-                    // In these packets, there will be no revision number. Only command + payload
-                    byte payload[] = getPayload(msg, INDEX_FILE_DATA);
-                    recv_file_buffer.put(payload);
-                    break;
-                case CMD_SEND_END:
-                    // Write to file
-                    writeReceivedFile();
-                    recv_file_name = null;
-                    recv_file_buffer = null;
-                    break;
-                case CMD_DECK_END:
-                    // Load the send_file_queue with new filenames
-                    fillFileQueue();
-                    state = STATE_SEND_FILE;
-                    response_cmd = CMD_DECK_START;
-                    break;
-            }
-            sendCmdAndRev(response_cmd);
-        }
-
-        public void parseCmdSendFile(int command, byte msg[], int numBytes) {
-            if (command == CMD_ACK) {
-                // There is no file send in progress
-                if (send_file_buffer == null) {
-
-                    // There are are still files to send
-                    if (send_file_queue.size() > 0) {
-                        // Load new file into buffer
-                        readSendFile();
-
-                        // send start packet
-                        String file_name = send_file_queue.peek();
-                        byte file_name_bytes[];
-                        try {
-                            file_name_bytes = file_name.getBytes("UTF-8");
-                        } catch (UnsupportedEncodingException uee) {
-                            file_name_bytes = file_name.getBytes();
-                        }
-                        ByteBuffer send_bytes = ByteBuffer.allocate(Integer.BYTES * 2 + file_name_bytes.length);
-                        int size = send_file_buffer.capacity();
-                        send_bytes.putInt(CMD_SEND_START).putInt(size);
-                        send_bytes.put(file_name_bytes);
-                        write(send_bytes.array());
-
-
+        private void parseRecvFileMsg(byte msg[], int code, int numBytes) {
+            switch (code) {
+                case RECV_FILE_BEGIN:
+                    state = STATE_RECEIVE;
+                    int file_size = getMsgInt(msg, INDEX_FILE_SIZE);
+                    int name_size = getMsgInt(msg, INDEX_NAME_SIZE);
+                    recv_file_name = getMsgStr(msg, INDEX_NAME, INDEX_NAME + name_size);
+                    recv_file_buffer = ByteBuffer.allocate(file_size);
+                    int buffer_pos = INDEX_NAME + name_size;
+                    if (numBytes > buffer_pos) {
+                        byte msgCopy[] = Arrays.copyOfRange(msg, buffer_pos, numBytes);
+                        receiveFile(msgCopy, numBytes - buffer_pos);
                     }
+            }
+        }
 
-                    // There are no more files to send
-                    else {
-                        // send end deck packet
-                        state = STATE_WAIT_RESP;
-                        sendCmdAndRev(CMD_DECK_END);
-                    }
+        private void receiveFile(byte data[], int numBytes) {
+            int buf_space = recv_file_buffer.capacity() - recv_file_buffer.position();
+            int length = Math.min(buf_space, numBytes);
+            recv_file_buffer.put(data, 0, length);
+
+            if (recv_file_buffer.position() == recv_file_buffer.capacity()) {
+                writeReceivedFile();
+                state = STATE_QUERY;
+                // If there is extra data in the message that does not go into the file
+                if (buf_space < numBytes) {
+                    parseMsg(Arrays.copyOfRange(data, buf_space, numBytes), numBytes - buf_space);
                 }
 
-                // A file is currently being sent
-                else {
-                    int file_buffer_length = send_file_buffer.array().length;
-                    int file_buffer_position = send_file_buffer.position();
-                    // The file is done sending
-                    if (file_buffer_position == file_buffer_length) {
-                        send_file_buffer = null;
-                        send_file_queue.remove();
-                        // send end file packet
-                        sendCmdAndRev(CMD_SEND_END);
-                    }
+                // TODO: remove this line, just for testing
+                sendFile(recv_file_name);
+            }
+        }
 
-                    // The file is not done, send the next packet
-                    else if (file_buffer_position < file_buffer_length && file_buffer_position >= 0) {
-                        // send data packet
-                        // These packets only have command + payload
-                        int end_index = Math.min(send_file_buffer.position() + BUFFER_SIZE - Integer.BYTES, file_buffer_length);
-                        int length = end_index - file_buffer_position;
-                        ByteBuffer send_data = ByteBuffer.allocate(Integer.BYTES + length);
-                        send_data.putInt(CMD_SEND_DATA);
-                        send_file_buffer.get(send_data.array(), Integer.BYTES, length);
-                        write(send_data.array());
+        public void sendFile(String file_name) {
+            FileInputStream fis = null;
+            try {
+                fis = parent_activity.openFileInput(file_name);
+                int file_size = fis.available();
+                ByteBuffer send_buffer = ByteBuffer.allocate(Integer.BYTES + file_size);
+                send_buffer.putInt(file_size);
+                byte file_buffer[] = new byte[file_size];
+                fis.read(file_buffer);
+                send_buffer.put(file_buffer);
+                write(send_buffer.array());
+            } catch (IOException ioe) {
+                // TODO: Some proper error handling
+                ioe.printStackTrace();
+            } finally {
+                try {
+                    if (fis != null) {
+                        fis.close();
                     }
+                } catch (IOException ioe) {
+                    // TODO: some more proper error handling
+                    System.out.println("Error in closing the stream");
                 }
-            } else {
-                // TODO: error handling response to pi.
             }
         }
 
@@ -559,16 +502,6 @@ public class BluetoothService {
             write(send_bytes.array());
         }
 
-        /**
-         * temporary method for updating deck.
-         * @param new_rev_num
-         */
-        public void updateDeck(int new_rev_num) {
-            prev_rev_num = cur_rev_num;
-            cur_rev_num = new_rev_num;
-        }
-
-
         // Call this method from the main activity to shut down the connection.
         public void cancel() {
             try {
@@ -583,10 +516,6 @@ public class BluetoothService {
     public void connect(UUID uuid) {
         make_conn_thread = new ConnectThread(uuid);
         make_conn_thread.start();
-    }
-
-    public void updateDeck(int new_rev_num) {
-        manage_conn_thread.updateDeck(new_rev_num);
     }
 
     /**
