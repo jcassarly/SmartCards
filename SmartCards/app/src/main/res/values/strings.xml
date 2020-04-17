@@ -122,7 +122,6 @@
     <string name="edit_card_upload_text">Upload Image</string>
     <string name="edit_card_button_text">Confirm Changes</string>
     <string name="edit_card_delete_button_text">Delete Card</string>
-    <string name="title_activity_edit_card">OOOOOOOOOOOOOOOOOOOOO</string>
 
 
     <!--Edit deck -->
@@ -154,5 +153,11 @@
     <string name="play_screen_deck_text">Deck</string>
     <string name="play_screen_in_play_text">In Play</string>
     <string name="play_screen_discard_text">Discarded</string>
+
+    <!-- Edit Game Screen -->
+    <string name="edit_game_back_text">Back</string>
+    <string name="edit_game_discard_text">Discard</string>
+    <string name="edit_game_in_play_text">In-Play</string>
+    <string name="edit_game_deck_text">Deck</string>
 
 </resources>
