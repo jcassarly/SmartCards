@@ -88,54 +88,59 @@ class DeckSynchronizer():
             self.deck_lock.release()
 
         elif query_code == QueryCode.OVERRIDE:
-            self.deck_lock.acquire()
-
-            self.connection.send_ack()
-
-            exit_code = self.connection.recv_file(DeckManager.DECK_LIST)
-
-            temp_deck = DeckManager.load_deck(DeckManager.DECK_LIST)
-
-            # TODO: handle erroneous exit code
-            if exit_code != RecvFileCode.OK:
-                self.deck_lock.release()
-                return SyncState.RECEIVE_ERROR
-
-            # TODO: verify the in play lists match and handle error
-            if temp_deck.inPlayList != self.deck.inPlayList:
-                self.deck_lock.release()
-                return SyncState.MISMATCH_ERROR
-
-            self.connection.send_ack()
-
-            for card_path in temp_deck:
-                # try to receive the file up to 3 times
-                for tries in range(0, 3):
-                    exit_code = self.connection.recv_file(card_path)
-
-                    # TODO: handle erroneous exit code
-                    if exit_code == RecvFileCode.OK:
-                        break
-
-                    self.send_receive_error()
-
-                # if the above for loop exits normally, then we failed 3 times to receive the file
-                if exit_code != RecvFileCode.OK:
-                    self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
-                    # TODO: consider reverting the images back to before override started
-                    #       this would require temp storage
-                    self.deck_lock.release()
-                    return SyncState.UNKNOWN_ERROR
-                # otherwise the above loop received the file, so ACK it
-                else:
-                    self.connection.send_ack()
-
-            # update the deck with the JSON file received since everything was received correctly
-            self.deck.from_file(DeckManager.DECK_LIST)
-
-            self.deck_lock.release()
+            next_state = self.override_files()
 
         return next_state
+
+    def override_files(self):
+        self.deck_lock.acquire()
+
+        self.connection.send_ack()
+
+        exit_code = self.connection.recv_file(DeckManager.DECK_LIST)
+
+        temp_deck = DeckManager.load_deck(DeckManager.DECK_LIST)
+
+        # handle erroneous exit code
+        if exit_code != RecvFileCode.OK:
+            self.deck_lock.release()
+            return SyncState.RECEIVE_ERROR
+
+        # verify the in play lists match and handle error
+        if temp_deck.inPlayList != self.deck.inPlayList:
+            self.deck_lock.release()
+            return SyncState.MISMATCH_ERROR
+
+        self.connection.send_ack()
+
+        for card_path in temp_deck:
+            # try to receive the file up to 3 times
+            for tries in range(0, 3):
+                exit_code = self.connection.recv_file(card_path)
+
+                # TODO: handle erroneous exit code
+                if exit_code == RecvFileCode.OK:
+                    break
+
+                self.send_receive_error()
+
+            # if the above for loop exits normally, then we failed 3 times to receive the file
+            if exit_code != RecvFileCode.OK:
+                self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
+                # TODO: consider reverting the images back to before override started
+                #       this would require temp storage
+                self.deck_lock.release()
+                return SyncState.UNKNOWN_ERROR
+            # otherwise the above loop received the file, so ACK it
+            else:
+                self.connection.send_ack()
+
+        # update the deck with the JSON file received since everything was received correctly
+        self.deck.from_file(DeckManager.DECK_LIST)
+
+        self.deck_lock.release()
+
+        return SyncState.WAITING_FOR_QUERY
 
     def wait_for_connection(self):
         self.connection.wait_for_connection()
