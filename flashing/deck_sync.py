@@ -4,7 +4,7 @@ import threading
 from bluetooth_conn import BluetoothConn, QueryCode, RecvFileCode, ErrorCode
 import DeckManager
 
-TEMP_IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'temp_deck')
+TEMP_DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'temp_deck.json')
 
 class SyncState():
     """Enum class for states of DeckSynchronizer"""
@@ -97,35 +97,42 @@ class DeckSynchronizer():
 
         self.connection.send_ack()
 
-        exit_code = self.connection.recv_file(DeckManager.DECK_LIST)
+        print("Receiving JSON")
+        exit_code = self.connection.recv_file(TEMP_DECK_LIST)
 
-        temp_deck = DeckManager.load_deck(DeckManager.DECK_LIST)
+        temp_deck = DeckManager.load_deck(TEMP_DECK_LIST)
 
         # handle erroneous exit code
         if exit_code != RecvFileCode.OK:
+            print("Recv Error: {}".format(exit_code))
             self.deck_lock.release()
             return SyncState.RECEIVE_ERROR
 
         # verify the in play lists match and handle error
-        if temp_deck.inPlayList != self.deck.inPlayList:
-            self.deck_lock.release()
-            return SyncState.MISMATCH_ERROR
+        #if temp_deck.inPlayList != self.deck.inPlayList:
+        #    print("Mismatch Error")
+        #    self.deck_lock.release()
+        #    return SyncState.MISMATCH_ERROR
 
         self.connection.send_ack()
 
         for card_path in temp_deck:
             # try to receive the file up to 3 times
             for tries in range(0, 3):
+                print("Receiving {}".format(card_path))
                 exit_code = self.connection.recv_file(card_path)
 
                 # TODO: handle erroneous exit code
                 if exit_code == RecvFileCode.OK:
+                    print("Received {}".format(card_path))
                     break
 
+                print("Error?")
                 self.send_receive_error()
 
             # if the above for loop exits normally, then we failed 3 times to receive the file
             if exit_code != RecvFileCode.OK:
+                print("Error?")
                 self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
                 # TODO: consider reverting the images back to before override started
                 #       this would require temp storage
@@ -133,10 +140,13 @@ class DeckSynchronizer():
                 return SyncState.UNKNOWN_ERROR
             # otherwise the above loop received the file, so ACK it
             else:
+                print("ACKING {}".format(card_path))
                 self.connection.send_ack()
 
+        print("Done Overriding")
         # update the deck with the JSON file received since everything was received correctly
-        self.deck.from_file(DeckManager.DECK_LIST)
+        self.deck.from_file(TEMP_DECK_LIST)
+        self.deck.to_file(DeckManager.DECK_LIST)
 
         self.deck_lock.release()
 

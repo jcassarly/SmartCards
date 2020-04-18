@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 public class Test extends AppCompatActivity {
 
@@ -23,13 +25,42 @@ public class Test extends AppCompatActivity {
 
     public void sendQuery(View view) {
         EditText codeView = (EditText) findViewById(R.id.code_input);
-        String filename = codeView.getText().toString();
-        LandingPageActivity.bluetooth_service.sendFile(filename);
-        //LandingPageActivity.bluetooth_service.sendQuery(code);
-        Pair<Integer, Integer> response = LandingPageActivity.bluetooth_service.receiveResponse();
+        //String filename = codeView.getText().toString();
+        //LandingPageActivity.bluetooth_service.sendFile(filename);
+        LandingPageActivity.bluetooth_service.sendQuery(3);
+        Pair<Integer, Integer> response= LandingPageActivity.bluetooth_service.receiveResponse();
+        String display_text = "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+
+        LandingPageActivity.bluetooth_service.sendFile("decklist.json");
+        response = LandingPageActivity.bluetooth_service.receiveResponse();
+        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+
+        LandingPageActivity.bluetooth_service.sendFile("orig_gary.jpg");
+        response = LandingPageActivity.bluetooth_service.receiveResponse();
+        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+
+        LandingPageActivity.bluetooth_service.sendFile("orig_bruce.png");
+        response = LandingPageActivity.bluetooth_service.receiveResponse();
+        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+
+        LandingPageActivity.bluetooth_service.sendFile("orig_murica.jpg");
+        response = LandingPageActivity.bluetooth_service.receiveResponse();
+        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+
+        //LandingPageActivity.bluetooth_service.receiveFile("decklist.json");
         TextView respView = (TextView) findViewById(R.id.json_view);
-        String display_text = "";
-        switch(response.first) {
+
+        /*File imgFile = new File(this.getFilesDir(), "test.json");
+        try {
+            Scanner s = new Scanner(imgFile);
+            while (s.hasNextLine())
+            {
+                display_text += s.nextLine() + "\n";
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        /*switch(response.first) {
             case 1:
                 display_text = "Query: ";
                 break;
@@ -43,7 +74,7 @@ public class Test extends AppCompatActivity {
                 display_text = "ACK";
                 break;
         }
-        display_text = display_text + response.second.toString();
+        display_text = display_text + response.second.toString();*/
         respView.setText(display_text);
     }
 
