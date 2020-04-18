@@ -14,7 +14,7 @@ def load_deck(file_path):
 
     """
     deck = Deck([])
-    deck.fromFile(file_path)
+    deck.from_file(file_path)
     return deck
 
 class Deck:
@@ -53,6 +53,31 @@ class Deck:
 
         """
         return hash((tuple(self.deckList), tuple(self.inPlayList), tuple(self.discardList)))
+
+    def __all_cards(self):
+        """Puts all the cards in the deck into a single list
+
+        :returns: a list with all the cards in the order: in play, deck, discard
+
+        """
+        all_cards = []
+
+        for card in self.inPlayList:
+            if card is not None:
+                all_cards.append(card)
+
+        all_cards = all_cards + self.deckList + self.discardList
+
+        return all_cards
+
+    def __iter__(self):
+        """Iterate over all the cards in the deck (in the order of those inplay, in the deck, then discard)
+
+        :returns: the next card (yields)
+
+        """
+        for card in self.__all_cards():
+            yield card
 
     def update_rev_number(self):
         """Hashes this DeckManager and stores the value into rev_number"""
@@ -98,7 +123,7 @@ class Deck:
 
         return paths
 
-    def toFile(self, file_path):
+    def to_file(self, file_path):
         """Write this DeckManager object to the file specified by file_path
 
         The format of the JSON written to file_path is like the following example
@@ -129,13 +154,13 @@ class Deck:
                 'rev_number': self.rev_number
             }))
 
-    def fromFile(self, file_path):
+    def from_file(self, file_path):
         """Update this object with the JSON data at file_path
 
         If the file_path does no exist, the object is reinitialized to an empty deck
         and all other values are defaults
 
-        The format is the same as the toFile format
+        The format is the same as the to_file format
 
         The filenames in the JSON file should not have the IMAGE_DIR prefix. Those
         are added back by this method
@@ -158,6 +183,20 @@ class Deck:
     def shuffle(self):
         """Shuffle the order of the deck list"""
         random.shuffle(self.deckList)
+
+    def restart(self):
+        """Resets the deck to have all the cards in play and discard shuffled back into the deck"""
+        self.deckList = self.__all_cards()
+
+        self.discardList = []
+        self.inPlayList = [None, None, None, None, None, None]
+        self.shuffle()
+
+    def shuffle_in_discard(self):
+        """Shuffles all the discarded cards back into the deck"""
+        self.deckList = self.deckList + self.discardList
+        self.discardList = []
+        self.shuffle()
 
     def add_to_top(self, card):
         """Add the card (a filepath to the image) to the top of the deck list
