@@ -69,6 +69,12 @@ public class LandingPageActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 
+    public void playGame(View view) {
+        Intent intent = new Intent(this, PlayActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
     public void connectBluetooth(View view) {
         bluetooth_service.connect(CONNECTION_UUID);
     }

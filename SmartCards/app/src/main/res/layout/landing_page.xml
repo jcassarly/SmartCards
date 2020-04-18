@@ -29,6 +29,7 @@
         android:layout_marginRight="16dp"
         android:layout_marginBottom="32dp"
         android:background="@color/colorMagRed"
+        android:onClick="playGame"
         android:text="@string/play_button_text"
         app:layout_constraintBottom_toTopOf="@+id/infoButton"
         app:layout_constraintEnd_toEndOf="parent"
