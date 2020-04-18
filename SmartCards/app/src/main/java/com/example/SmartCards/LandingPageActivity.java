@@ -1,11 +1,14 @@
 package com.example.SmartCards;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -16,6 +19,7 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -26,7 +30,7 @@ public class LandingPageActivity extends AppCompatActivity {
     // Bluetooth Connection Members
     public static UUID CONNECTION_UUID = null;
     public static final String DECKLIST_FILE_NAME = "decklist.json";
-    public static final String IMAGE_DIR = "images";
+    public static String IMAGE_DIR;
     public static String BLUETOOTH_DEVICE_NAME = "LAPTOP-COVRD6IN";
     public static ReceiveMsgHandler receive_msg_handler = null;
     public static BluetoothService bluetooth_service = null;
@@ -37,7 +41,7 @@ public class LandingPageActivity extends AppCompatActivity {
             super(Looper.getMainLooper());
         }
     };
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +49,8 @@ public class LandingPageActivity extends AppCompatActivity {
 
         // Set UUID for bluetooth connection.
         CONNECTION_UUID =  UUID.fromString(getString(R.string.UUID));
+
+        IMAGE_DIR = this.getDir("deck", this.MODE_PRIVATE).toString();
 
         // Setup bluetooth, do something if it fails?
         receive_msg_handler = new ReceiveMsgHandler();
@@ -55,6 +61,22 @@ public class LandingPageActivity extends AppCompatActivity {
                 this,
                 DECKLIST_FILE_NAME,
                 IMAGE_DIR);
+        //File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "YourAppDirectory");
+// Make the directory if it does not yet exist
+       //file.mkdirs();
+
+        //generateDirectory();
+
+
+    }
+
+    public void generateDirectory() {
+        try {
+            File dir = this.getDir("deck", this.MODE_PRIVATE); //Creating an internal dir;
+            File fileWithinMyDir = new File(dir, "myfile"); //Getting a file within the dir.
+            FileOutputStream out = new FileOutputStream(fileWithinMyDir); //Use the stream as usual to write into the file.
+        } catch (IOException e) {
+        }
     }
 
     public void openInfo(View view) {

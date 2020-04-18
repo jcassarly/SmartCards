@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -78,11 +79,13 @@ public class BluetoothService {
         handler = msg_handler;
 
         // Creates a new file directory for images
-        File directory = parent_activity.getFilesDir();
+        //File directory = parent_activity.getFilesDir();
 //        DECKLIST_FILE_NAME = directory.getAbsolutePath() + "/" + file_name;
         DECKLIST_FILE_NAME = file_name;
-        File new_img_dir = new File(directory, image_dir);
+        //File new_img_dir = new File(directory, image_dir);
         IMAGE_DIR = image_dir; //new_img_dir.getAbsolutePath();
+
+         //File internal_m1 = getDir("custom", 0);
 
     }
 
@@ -367,7 +370,7 @@ public class BluetoothService {
             byte file_data[] = file_queue.poll();
             FileOutputStream fos = null;
             try {
-                File file = new File(parent_activity.getFilesDir(), file_name);
+                File file = new File(IMAGE_DIR, file_name);
                 if (!file.exists()) {
                     file.createNewFile();
                 }
