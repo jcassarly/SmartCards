@@ -28,7 +28,7 @@ public class LandingPageActivity extends AppCompatActivity {
     public static UUID CONNECTION_UUID = null;
     public static final String DECKLIST_FILE_NAME = "decklist.json";
     public static final String IMAGE_DIR = "images";
-    public static String BLUETOOTH_DEVICE_NAME = "LAPTOP-COVRD6IN";
+    public static String BLUETOOTH_DEVICE_NAME = "raspberrypi";
     public static ReceiveMsgHandler receive_msg_handler = null;
     public static BluetoothService bluetooth_service = null;
 

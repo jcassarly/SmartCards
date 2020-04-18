@@ -23,8 +23,9 @@ public class Test extends AppCompatActivity {
 
     public void sendQuery(View view) {
         EditText codeView = (EditText) findViewById(R.id.code_input);
-        int code = Integer.valueOf(codeView.getText().toString());
-        LandingPageActivity.bluetooth_service.sendQuery(code);
+        String filename = codeView.getText().toString();
+        LandingPageActivity.bluetooth_service.sendFile(filename);
+        //LandingPageActivity.bluetooth_service.sendQuery(code);
         Pair<Integer, Integer> response = LandingPageActivity.bluetooth_service.receiveResponse();
         TextView respView = (TextView) findViewById(R.id.json_view);
         String display_text = "";
