@@ -38,12 +38,13 @@ class BluetoothConn():
     FILE_NAME = "decklist.json"
     DECK_DIR = "./deck/"
     ENCODING = "utf-8"
-    ACK = b'\xbe\xef\xca\xfe'
+    
     BUFFER_SIZE = 50000
 
     MSG_QUERY = 1
     MSG_RECV_FILE = 2
     MSG_ERROR = 3
+    MSG_ACK = b'\xbe\xef\xca\xfe'
 
     INDEX_TYPE = 0
     INDEX_CODE = 4
@@ -112,7 +113,7 @@ class BluetoothConn():
 
     def send_ack(self):
         print("sending ack")
-        self.send(ints_to_bytes([BluetoothConn.MSG_RECV_FILE, RecvFileCode.OK]))
+        self.send(BluetoothConn.MSG_ACK)
 
     def send_err(self, code=ErrorCode.UNKNOWN):
         # send an error code to the app?
@@ -136,7 +137,10 @@ class BluetoothConn():
     def recv_query(self):
         # returns type of query, an integer
         data = self.recv()
-        code = bytes_to_int(data, BluetoothConn.INDEX_TYPE)
+        if bytes_to_int(data, BluetoothConn.INDEX_TYPE) == BluetoothConn.MSG_QUERY:
+            code = bytes_to_int(data, BluetoothConn.INDEX_CODE)
+        else:
+            code = -1 # temp err handling
         return code
 
     def recv_file(self, file_dir, file_name):
@@ -173,5 +177,8 @@ if __name__=="__main__":
     # server.recv_file('./deck/', 'test2.json')
     # server.send_file('./deck/', 'decklist.json')
     # server.recv_file('./deck/', 'decklist2.json')
-    server.send_file('./deck/', 'moon.png')
-    server.recv_file('./deck/', 'moon2.png')
+    # server.send_file('./deck/', 'moon.png')
+    # server.recv_file('./deck/', 'moon2.png')
+    print("Received: {}".format(server.recv_query()))
+    # server.send_ack()
+    server.send_err(ErrorCode.BUSY)

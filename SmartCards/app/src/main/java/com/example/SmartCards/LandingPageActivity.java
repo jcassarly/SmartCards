@@ -16,6 +16,7 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -36,7 +37,9 @@ public class LandingPageActivity extends AppCompatActivity {
         public ReceiveMsgHandler() {
             super(Looper.getMainLooper());
         }
-    };
+    }
+
+    ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +47,7 @@ public class LandingPageActivity extends AppCompatActivity {
         setContentView(R.layout.landing_page);
 
         // Set UUID for bluetooth connection.
-        CONNECTION_UUID =  UUID.fromString(getString(R.string.UUID));
+        CONNECTION_UUID = UUID.fromString(getString(R.string.UUID));
 
         // Setup bluetooth, do something if it fails?
         receive_msg_handler = new ReceiveMsgHandler();
@@ -57,6 +60,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 IMAGE_DIR);
     }
 
+
     public void openInfo(View view) {
         Intent intent = new Intent(this, InfoActivity.class);
         startActivity(intent);
@@ -67,6 +71,11 @@ public class LandingPageActivity extends AppCompatActivity {
         Intent intent = new Intent(this, EditDeck.class);
         startActivity(intent);
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+    }
+
+    public void debug(View view) {
+        Intent intent = new Intent(this, Test.class);
+        startActivity(intent);
     }
 
     public void connectBluetooth(View view) {
