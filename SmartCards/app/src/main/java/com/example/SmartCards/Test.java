@@ -2,11 +2,16 @@ package com.example.SmartCards;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.File;
 
 public class Test extends AppCompatActivity {
 
@@ -40,6 +45,20 @@ public class Test extends AppCompatActivity {
         display_text = display_text + response.second.toString();
         respView.setText(display_text);
     }
+
+    /** Code for viewing an image **/
+//    public void viewImg(View view) {
+//        File imgFile = new File(this.getFilesDir(), file_name);
+//        if(imgFile.exists()){
+//
+//            Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+//
+//            ImageView myImage = (ImageView) findViewById(R.id.dbgImageView);
+//
+//            myImage.setImageBitmap(myBitmap);
+//
+//        }
+//    }
 
     @Override
     public void finish() {
