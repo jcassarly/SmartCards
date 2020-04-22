@@ -53,7 +53,7 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
                 error.show();
             }
             else {
-                PlayingCard newCard = new PlayingCard(uploadedCardName.getText().toString(), uploadedURI);
+                PlayingCard newCard = new PlayingCard(this, uploadedCardName.getText().toString(), uploadedURI);
                 EditDeck.addCardToDeck(newCard);
                 setResult(RESULT_OK);
                 this.finish();

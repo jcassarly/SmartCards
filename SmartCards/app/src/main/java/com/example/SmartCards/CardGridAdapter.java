@@ -50,7 +50,7 @@ public class CardGridAdapter extends BaseAdapter {
         TextView cardGridText = convertView.findViewById(R.id.cardGridNameText);
 
         cardGridImageView.setImageURI(subdeck.get(position).getImageAddress());
-        cardGridText.setText(subdeck.get(position).getName());
+        cardGridText.setText(subdeck.get(position).getCardName());
 
         return convertView;
     }

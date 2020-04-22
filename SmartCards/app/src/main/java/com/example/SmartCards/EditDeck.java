@@ -2,9 +2,11 @@ package com.example.SmartCards;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -14,9 +16,11 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCardListener {
 
@@ -25,6 +29,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     public static final String SHARED_PREFS = "sharedPrefs";
     public static final String DECK_NAME = "deckName";
+    public static final String IS_DECK_IN_MEMORY = "isDeckInMemory";
 
     public static List<PlayingCard> deck = new ArrayList<>();
 
@@ -34,6 +39,8 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     TextView deckName;
 
+    public static DeckManager deckManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +49,9 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
         deckName = (TextView) findViewById(R.id.editDeckNameInputText);
 
+        loadFromMemoryIfPossible();
+
+        //Populate RecyclerView
         cardListAdapter = new CardListAdapter(this,deck, this);
         deckListView.setAdapter(cardListAdapter);
 
@@ -50,9 +60,26 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         deckListView.addItemDecoration(divider);
+    }
 
-        loadDeckName();
+    private void loadFromMemoryIfPossible(){
+        if(deckManager == null){
+            deckManager = new DeckManager(this);
+        }
 
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+
+        try {
+            if (sharedPreferences.getBoolean(IS_DECK_IN_MEMORY, false)) {
+                deckManager.loadDeckFromMemory();
+                deck = new ArrayList(deckManager.getDeck());
+                loadDeckName();
+            } else {
+              deck = new ArrayList<>();
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
 
@@ -64,6 +91,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     }
 
     public void clearDeck(View view){
+        deckManager.clearDeckFromMemory();
         deck.clear();
         updateDeckDisplay();
     }
@@ -80,8 +108,10 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckName.setText(sharedPreferences.getString(DECK_NAME,""));
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
+        deckManager.saveDeck(deck);
         saveDeckName();
         finish();
     }

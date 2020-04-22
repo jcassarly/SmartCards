@@ -10,8 +10,6 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +42,7 @@ public class EditGame extends AppCompatActivity {
         cardGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(getApplicationContext(), "You clicked the card named "+ subdeck.get(position).getName(),
+                Toast.makeText(getApplicationContext(), "You clicked the card named "+ subdeck.get(position).getCardName(),
                         Toast.LENGTH_SHORT).show();
             }
         });

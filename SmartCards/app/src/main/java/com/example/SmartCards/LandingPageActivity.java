@@ -19,6 +19,7 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
@@ -50,7 +51,10 @@ public class LandingPageActivity extends AppCompatActivity {
         // Set UUID for bluetooth connection.
         CONNECTION_UUID =  UUID.fromString(getString(R.string.UUID));
 
-        IMAGE_DIR = this.getDir("deck", this.MODE_PRIVATE).toString();
+        File dir = this.getDir("deck", this.MODE_PRIVATE);
+        IMAGE_DIR = dir.toString();
+        //File testFile = new File(dir, "ThisisaTest");
+
 
         // Setup bluetooth, do something if it fails?
         receive_msg_handler = new ReceiveMsgHandler();
