@@ -31,8 +31,8 @@ public class LandingPageActivity extends AppCompatActivity {
     // Bluetooth Connection Members
     public static UUID CONNECTION_UUID = null;
     public static final String DECKLIST_FILE_NAME = "decklist.json";
-    public static String IMAGE_DIR;
-    public static String BLUETOOTH_DEVICE_NAME = "LAPTOP-COVRD6IN";
+    public static String IMAGE_DIR = "images";
+    public static String BLUETOOTH_DEVICE_NAME = "raspberrypi";
     public static ReceiveMsgHandler receive_msg_handler = null;
     public static BluetoothService bluetooth_service = null;
 
@@ -49,7 +49,7 @@ public class LandingPageActivity extends AppCompatActivity {
         setContentView(R.layout.landing_page);
 
         // Set UUID for bluetooth connection.
-        CONNECTION_UUID =  UUID.fromString(getString(R.string.UUID));
+        CONNECTION_UUID = UUID.fromString(getString(R.string.UUID));
 
         File dir = this.getDir("deck", this.MODE_PRIVATE);
         IMAGE_DIR = dir.toString();
@@ -83,6 +83,7 @@ public class LandingPageActivity extends AppCompatActivity {
         }
     }
 
+
     public void openInfo(View view) {
         Intent intent = new Intent(this, InfoActivity.class);
         startActivity(intent);
@@ -99,6 +100,11 @@ public class LandingPageActivity extends AppCompatActivity {
         Intent intent = new Intent(this, PlayActivity.class);
         startActivity(intent);
         overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+    
+    public void debug(View view) {
+        Intent intent = new Intent(this, Test.class);
+        startActivity(intent);
     }
 
     public void connectBluetooth(View view) {

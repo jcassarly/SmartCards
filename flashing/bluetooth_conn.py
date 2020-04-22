@@ -38,7 +38,7 @@ class BluetoothConn():
     FILE_NAME = "decklist.json"
     DECK_DIR = "./deck/"
     ENCODING = "utf-8"
-    
+
     BUFFER_SIZE = 50000
 
     MSG_QUERY = 1
@@ -50,7 +50,7 @@ class BluetoothConn():
     INDEX_CODE = 4
 
     RECV_SIZE = 0
-    RECV_DATA = 4 
+    RECV_DATA = 4
 
     def server_setup(self):
         self.server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
@@ -119,9 +119,9 @@ class BluetoothConn():
         # send an error code to the app?
         self.send(ints_to_bytes([BluetoothConn.MSG_ERROR, code]))
 
-    def send_file(self, file_dir, file_name):
+    def send_file(self, file_path):
         data = None
-        with open(file_dir + file_name, 'rb') as phil:
+        with open(file_path, 'rb') as phil:
             data = phil.read()
         self.moon = data
         # TODO: I may not need to send the name of the file being sent
@@ -143,12 +143,12 @@ class BluetoothConn():
             code = -1 # temp err handling
         return code
 
-    def recv_file(self, file_dir, file_name):
-        # returns status, 
+    def recv_file(self, file_path):
+        # returns status,
         #   1: Received all fine
         #   2: received not a full file, nothing written
         #   3: received an error
-        print("Waiting to receive file: {}".format(file_name))
+        #print("Waiting to receive file: {}".format(file_name))
         # metadata = self.recv()
         # # file_name = bytes_to_int(data, BluetoothConn.INDEX_NAME)
         # file_size = bytes_to_int(metadata, BluetoothConn.INDEX_SIZE)
@@ -163,10 +163,12 @@ class BluetoothConn():
         #     data += self.recv()
 
         data = self.recv()
-        print("data is equal: {}".format(data == self.moon))
-        print("Writing file: {}. Data amount: {}".format(file_name, len(data)))
-        with open(file_dir + file_name, 'wb') as phil:
+        #print("data is equal: {}".format(data == self.moon))
+        #print("Writing file: {}. Data amount: {}".format(file_name, len(data)))
+        with open(file_path, 'wb') as phil:
             phil.write(data)
+
+        return RecvFileCode.OK
 
 if __name__=="__main__":
     server = BluetoothConn()
