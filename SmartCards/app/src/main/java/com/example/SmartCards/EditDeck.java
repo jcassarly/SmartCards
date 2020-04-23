@@ -80,6 +80,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
         deckManager.saveDeck(deck, this);
+        deckManager.saveDeckName(this);
         finish();
     }
 
@@ -106,7 +107,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
             // TODO: the card list adapter has the deck we need, we can expose this from there which makes the actual call on the deck manager
             // cast the recycler view to a CardListAdapter since it should always be that
-            Collections.swap(deck, fromPosition, toPosition);
+            deckManager.swapInFullDeck(fromPosition, toPosition);
 
             recyclerView.getAdapter().notifyItemMoved(fromPosition,toPosition);
             //Note, `this` was added to the payload to make the default fade animation not play
@@ -135,8 +136,8 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         Intent editCardIntent = new Intent(this, EditCard.class);
         Bundle extras = new Bundle();
         // TODO: this will need to have the deck object passed as extra if singleton doesnt work
+//        extras.putSerializable(LandingPageActivity.DECK_MANAGER, deckManager);
         extras.putInt("position", position);
-        extras.putSerializable(LandingPageActivity.DECK_MANAGER, deckManager);
         editCardIntent.putExtras(extras);
         startActivityForResult(editCardIntent, RESULT_EDIT_CARD);
         setResult(RESULT_OK, editCardIntent);
