@@ -1,6 +1,7 @@
 package com.example.SmartCards;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.os.Build;
 
@@ -17,6 +18,7 @@ import java.util.List;
 public class DeckManager {
 
     public static String IMAGE_DIR;
+    public static String ID_COUNT = "id_count";
 
     List<PlayingCard> deck = new ArrayList<>();
     List<PlayingCard> deckSubdeck = new ArrayList<>();
@@ -34,6 +36,7 @@ public class DeckManager {
 
 
     public void clearDeckFromMemory(){
+        resetIDs(context);
         for(PlayingCard card : deck){
             card.delete(context);
         }
@@ -43,10 +46,11 @@ public class DeckManager {
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void saveDeck(List<PlayingCard> deck){
-        //clearDeckFromMemory();
+        resetIDs(context);
+       //clearDeckFromMemory();
         for(PlayingCard card : deck){
             try{
-                card.save(context,card.getCardName());
+                card.save(context);
                 this.deck.add(card);
             }
             catch(IOException e){
@@ -77,7 +81,30 @@ public class DeckManager {
         else {
             throw new IOException("Default directory is configured incorrectly or missing");
         }
+    }
 
+
+    public static int getNextID(Context context){
+        SharedPreferences sharedPreferences = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        int nextID = sharedPreferences.getInt(ID_COUNT, 0) + 1;
+
+        if(nextID == Integer.MAX_VALUE){
+            nextID = 0;
+        }
+
+        editor.putInt(ID_COUNT, nextID);
+        editor.apply();
+
+        return nextID;
+    }
+
+    public static void resetIDs(Context context){
+        SharedPreferences sharedPreferences = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(ID_COUNT, 0);
+        editor.apply();
     }
 
     public List<PlayingCard> getDeck(){

@@ -30,7 +30,6 @@ public class PlayingCard implements Serializable {
     public PlayingCard(Context context, String imageAddress){
         //TODO: Error handling if the image address is bad
         savedImageAddress = imageAddress;
-        //this.context = context;
         this.idName = new File(savedImageAddress).getName();
         SharedPreferences sharedPreferences = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
         this.cardName = sharedPreferences.getString(idName,"DefaultCardName");
@@ -69,9 +68,9 @@ public class PlayingCard implements Serializable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void save(Context context, String fileID) throws IOException {
+    public void save(Context context) throws IOException {
         if(!isSaved) {
-            idName = fileID;
+            idName = String.valueOf(DeckManager.getNextID(context));
 
             //Save Card Image
             File dir = context.getDir("deck", context.MODE_PRIVATE);

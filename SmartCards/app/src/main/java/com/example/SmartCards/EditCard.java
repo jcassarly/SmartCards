@@ -89,7 +89,7 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void saveCardToMemory(PlayingCard card){
         try{
-            card.save(this,uploadedCardName.getText().toString());
+            card.save(this);
         } catch (IOException e){
             e.printStackTrace();
         }
