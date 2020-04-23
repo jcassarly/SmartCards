@@ -39,7 +39,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     TextView deckName;
 
-    public static DeckManager deckManager;
+    public DeckManager deckManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +60,8 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         deckListView.addItemDecoration(divider);
+
+        deckManager = (DeckManager) getIntent().getSerializableExtra(LandingPageActivity.DECK_MANAGER);
     }
 
     // TODO: delete and move to deck manager

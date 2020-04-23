@@ -28,6 +28,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private List<PlayingCard> inPlaySubdeck = new ArrayList<>();
     private List<PlayingCard> discardSubdeck = new ArrayList<>();
 
+    private DeckManager deckManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +53,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         deckName = sharedPreferences.getString(EditDeck.DECK_NAME,"DeckName");
         deckNameText.setText(deckName);
         updateSubdecks();
+
+        deckManager = (DeckManager) getIntent().getSerializableExtra(LandingPageActivity.DECK_MANAGER);
     }
 
     public void updateSubdecks(){

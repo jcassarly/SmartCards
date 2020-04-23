@@ -36,6 +36,9 @@ public class LandingPageActivity extends AppCompatActivity {
     public static ReceiveMsgHandler receive_msg_handler = null;
     public static BluetoothService bluetooth_service = null;
 
+    private DeckManager deckManager;
+    public static String DECK_MANAGER = "DeckManager";
+
     private class ReceiveMsgHandler extends Handler {
 
         public ReceiveMsgHandler() {
@@ -66,13 +69,8 @@ public class LandingPageActivity extends AppCompatActivity {
                 this,
                 DECKLIST_FILE_NAME,
                 IMAGE_DIR);
-        //File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "YourAppDirectory");
-// Make the directory if it does not yet exist
-       //file.mkdirs();
 
-        //generateDirectory();
-
-
+        deckManager = new DeckManager(this);
     }
 
 

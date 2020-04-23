@@ -21,6 +21,8 @@ public class EditGame extends AppCompatActivity {
     GridView cardGridView;
     TextView subDeckTitle;
 
+    private DeckManager deckManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +48,8 @@ public class EditGame extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
             }
         });
+
+        deckManager = (DeckManager) getIntent().getSerializableExtra(LandingPageActivity.DECK_MANAGER);
     }
 
     private void setSubDeckTitle(PlayActivity.subDecks deckType){
