@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 
@@ -179,8 +180,33 @@ public class DeckManager implements Serializable {
 
 
 
+    public void saveDeckName(TextView deckName)
+    {
 
+    }
 
+    public void loadDeckName(TextView deckName)
+    {
 
+    }
 
+    public void addCard(PlayingCard card)
+    {
+
+    }
+
+    /**
+     * Swaps positions in the full deck, not subdecks
+     * @param fromPosition
+     * @param toPosition
+     */
+    public void swapInFullDeck(int fromPosition, int toPosition)
+    {
+
+    }
+
+    public void loadFromMemoryIfPossible()
+    {
+        
+    }
 }
