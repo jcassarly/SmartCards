@@ -49,8 +49,9 @@ public class PlayingCard implements Serializable {
         }
     }
 
-    public void setCardName(String cardName) {
+    public void setCardName(Context context, String cardName) {
         this.cardName = cardName;
+        saveCardName(context, cardName);
         isSaved = false;
     }
 
@@ -85,13 +86,17 @@ public class PlayingCard implements Serializable {
             savedImageAddress = imageFile.getAbsolutePath();
 
             //Save Card Name
-            SharedPreferences sharedPref = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString(idName, cardName);
-            editor.apply();
+            saveCardName(context, cardName);
 
             isSaved = true;
         }
+    }
+
+    private void saveCardName(Context context, String name){
+        SharedPreferences sharedPref = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(idName, name);
+        editor.apply();
     }
 
     public void delete(Context context){

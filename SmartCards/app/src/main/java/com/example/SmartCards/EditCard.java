@@ -67,7 +67,7 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
                 error.show();
             }
             else {
-                card.setCardName(uploadedCardName.getText().toString());
+                card.setCardName(this, uploadedCardName.getText().toString());
                 if(!card.isSaved()) {
                     card.setTempImageAddress(uploadedURI);
                 } else {

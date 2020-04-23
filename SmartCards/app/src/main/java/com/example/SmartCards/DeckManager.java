@@ -46,8 +46,7 @@ public class DeckManager {
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void saveDeck(List<PlayingCard> deck){
-        resetIDs(context);
-       //clearDeckFromMemory();
+        this.deck.clear();
         for(PlayingCard card : deck){
             try{
                 card.save(context);
