@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 
@@ -86,7 +87,7 @@ public class DeckManager implements Serializable {
             JSONArray inPlay = jobj.getJSONArray("inPlayList");
             JSONArray discard = jobj.getJSONArray("discardList");
 
-            
+
         }
         catch (IOException | JSONException ioe)
         {
@@ -205,12 +206,12 @@ public class DeckManager implements Serializable {
         translateDeckToSubdeck();
     }
 
-    public void saveDeckName(Context context)
+    public void saveDeckName(TextView deckName)
     {
 
     }
 
-    public void loadDeckName(Context context)
+    public void loadDeckName(TextView deckName)
     {
 
     }
@@ -221,7 +222,7 @@ public class DeckManager implements Serializable {
     }
 
     /**
-     * Swaps position in the full
+     * Swaps positions in the full deck, not subdecks
      * @param fromPosition
      * @param toPosition
      */
@@ -230,9 +231,8 @@ public class DeckManager implements Serializable {
 
     }
 
-    public void loadFromMemoryIfPossible(Context context)
+    public void loadFromMemoryIfPossible()
     {
 
     }
-
 }
