@@ -13,17 +13,26 @@ import com.chaquo.python.Python;
 import com.example.SmartCards.PlayActivity;
 import com.example.SmartCards.PlayingCard;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DeckManager implements Serializable {
 
     public static String IMAGE_DIR;
     public static String DECK_LIST_DIR;
+    public static String DECK_LIST;
     public static String ID_COUNT = "id_count";
 
     List<PlayingCard> deck = new ArrayList<>();
@@ -33,7 +42,6 @@ public class DeckManager implements Serializable {
     List<PlayingCard> inPlaySubdeck = new ArrayList<>();
     List<PlayingCard> discardSubdeck = new ArrayList<>();
 
-    private Context context;
     private Python py;
     private PyObject deckManagerModule;
     private PyObject deckManager;
@@ -51,16 +59,11 @@ public class DeckManager implements Serializable {
     }
 
     public DeckManager(Context context){
-        this.context = context;
         File dir = context.getDir("deck", context.MODE_PRIVATE);
         File decklist = context.getDir("decklist", context.MODE_PRIVATE);
         IMAGE_DIR = dir.toString();
         DECK_LIST_DIR = decklist.toString();
-        this.py = Python.getInstance();
-        this.deckManagerModule = this.py.getModule("DeckManager");
-        this.deckManagerModule.put("IMAGE_DIR", IMAGE_DIR);
-        this.deckManagerModule.put("DECK_LIST", DECK_LIST_DIR + "/decklist.json");
-        this.deckManager = this.deckManagerModule.callAttr("empty_deck");
+        DECK_LIST = DECK_LIST_DIR + "/decklist.json";
     }
 
     private void toFile()
@@ -68,20 +71,45 @@ public class DeckManager implements Serializable {
         this.deckManager.callAttr("to_file", DECK_LIST_DIR + "/decklist.json");
     }
 
+    private void fromFile()
+    {
+        try {
+            FileInputStream fis = new FileInputStream(new File(DECK_LIST));
+            byte buffer[] = new byte[fis.available()];
+            fis.read(buffer);
+            String jstr = new String(buffer, "UTF-8");
+            Pattern pattern = Pattern.compile("\\{(.*?)\\}", Pattern.DOTALL); // in case there's some unwanted characters outside the brackets.
+            Matcher matcher = pattern.matcher(jstr);
+            matcher.find();
+            jstr = matcher.group();
+            JSONObject jobj = (JSONObject) new JSONTokener(jstr).nextValue();
+            JSONArray deck = jobj.getJSONArray("deckList");
+            JSONArray inPlay = jobj.getJSONArray("inPlayList");
+            JSONArray discard = jobj.getJSONArray("discardList");
 
-    public void clearDeckFromMemory(){
+
+        }
+        catch (IOException | JSONException ioe)
+        {
+            // TODO: write default deck to the file and load in default deck
+        }
+
+    }
+
+
+    public void clearDeckFromMemory(Context context){
         resetIDs(context);
         for(PlayingCard card : deck){
             card.delete(context);
         }
         deck.clear();
-        setIsDeckInMemory(false);
+        setIsDeckInMemory(false, context);
         this.deckManager = this.deckManagerModule.callAttr("empty_deck");
         this.toFile();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void saveDeck(List<PlayingCard> deck){
+    public void saveDeck(List<PlayingCard> deck, Context context){
         //this.deck.clear();
         for(PlayingCard card : deck){
             try{
@@ -89,22 +117,22 @@ public class DeckManager implements Serializable {
                 this.deck.add(card);
             }
             catch(IOException e){
-                setIsDeckInMemory(false);
+                setIsDeckInMemory(false, context);
                 e.printStackTrace();
             }
         }
         this.toFile();
-        setIsDeckInMemory(true);
+        setIsDeckInMemory(true, context);
     }
 
-    private void setIsDeckInMemory(boolean bool){
+    private void setIsDeckInMemory(boolean bool, Context context){
         SharedPreferences sharedPref = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putBoolean(EditDeck.IS_DECK_IN_MEMORY, bool);
         editor.apply();
     }
 
-    public void loadDeckFromMemory() throws IOException {
+    public void loadDeckFromMemory(Context context) throws IOException {
         deck.clear();
         this.deckManager = this.deckManagerModule.callAttr("load_deck", DECK_LIST_DIR + "/decklist.json");
         // if the file didnt exist, the load deck seems to do nothing
@@ -178,8 +206,6 @@ public class DeckManager implements Serializable {
         translateDeckToSubdeck();
     }
 
-
-
     public void saveDeckName(TextView deckName)
     {
 
@@ -207,6 +233,6 @@ public class DeckManager implements Serializable {
 
     public void loadFromMemoryIfPossible()
     {
-        
+
     }
 }

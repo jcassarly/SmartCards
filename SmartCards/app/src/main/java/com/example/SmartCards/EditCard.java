@@ -29,6 +29,8 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
 
     boolean isImageUploaded;
 
+    private DeckManager deckManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,7 +48,8 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
         isImageUploaded = true;
 
         // TODO: get the instance of the deck manager (or from extra if singleton fails)
-        card = EditDeck.deck.get(getIntent().getExtras().getInt("position"));
+//        card = EditDeck.deck.get(getIntent().getExtras().getInt("position"));
+        deckManager = DeckManager.getInstance(this);
 
         uploadedURI = card.getImageAddress();
         imageUpload.setImageURI(uploadedURI);
