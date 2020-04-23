@@ -84,7 +84,8 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
 
         } else if(v == deleteCardButton) {
             card.delete(this);
-            EditDeck.deck.remove(card); // tODO: use the deckmanager
+//            EditDeck.deck.remove(card); // tODO: use the deckmanager
+            deckManager.remove(card);
             setResult(RESULT_OK);
             finish();
         }

@@ -25,7 +25,7 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
         this.mOnCardListener = onCardListener;
     }
 
-    // TODO: add a method to swap cards in the deckmanager that uses the one in deckmanager
+    // TODO: Still need to add swap function? Still need to have a DeckManager member?
 
     @NonNull
     @Override
