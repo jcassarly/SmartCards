@@ -57,7 +57,7 @@ class Deck:
         """
         return hash((tuple(self.deckList), tuple(self.inPlayList), tuple(self.discardList)))
 
-    def __all_cards(self):
+    def all_cards(self):
         """Puts all the cards in the deck into a single list
 
         :returns: a list with all the cards in the order: in play, deck, discard
@@ -173,15 +173,20 @@ class Deck:
         """
         '''filepath is where we read from'''
         if os.path.exists(file_path):
-            with open(file_path, 'r') as input_file:
-                deck_data = json.load(input_file)
+            try:
+                with open(file_path, 'r') as input_file:
+                    deck_data = json.load(input_file)
 
-                self.deckList = self.__add_path(deck_data['deckList'])
-                self.inPlayList = self.__add_path(deck_data['inPlayList'])
-                self.discardList = self.__add_path(deck_data['discardList'])
-                self.rev_number = deck_data['rev_number']
+                    self.deckList = self.__add_path(deck_data['deckList'])
+                    self.inPlayList = self.__add_path(deck_data['inPlayList'])
+                    self.discardList = self.__add_path(deck_data['discardList'])
+                    self.rev_number = deck_data['rev_number']
+            except json.JSONDecodeError:
+                self.__init__([])
+                self.to_file(file_path)
         else:
             self.__init__([])
+            self.to_file(file_path)
 
     def shuffle(self):
         """Shuffle the order of the deck list"""

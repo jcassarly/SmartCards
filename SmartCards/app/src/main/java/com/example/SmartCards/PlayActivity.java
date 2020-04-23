@@ -84,7 +84,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         Intent intent = new Intent(this, EditGame.class);
 
         intent.putExtra("deckType", deckType);
-        intent.putExtra("subdeck", (Serializable) EditDeck.deck);
+        //TODO: intent.putExtra("subdeck", (Serializable) EditDeck.deck);
         /*
         switch(deckType){
             case DECK:

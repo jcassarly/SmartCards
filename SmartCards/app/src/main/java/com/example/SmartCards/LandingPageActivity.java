@@ -70,7 +70,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 DECKLIST_FILE_NAME,
                 IMAGE_DIR);
 
-        deckManager = new DeckManager(this);
+        deckManager = DeckManager.getInstance(this);
     }
 
 

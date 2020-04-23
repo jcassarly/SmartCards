@@ -31,7 +31,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     public static final String DECK_NAME = "deckName";
     public static final String IS_DECK_IN_MEMORY = "isDeckInMemory";
 
-    public static List<PlayingCard> deck = new ArrayList<>();
+    //public static List<PlayingCard> deck = new ArrayList<>();
 
     RecyclerView deckListView;
 
@@ -39,7 +39,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     TextView deckName;
 
-    public DeckManager deckManager;
+    private DeckManager deckManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +49,11 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
         deckName = (TextView) findViewById(R.id.editDeckNameInputText);
 
+        deckManager = DeckManager.getInstance(this);
+        deckManager.loadFromMemoryIfPossible(this.deckName);
+
         //Populate RecyclerView
-        cardListAdapter = new CardListAdapter(this,deck, this);
+        cardListAdapter = new CardListAdapter(this, deckManager.getDeck(), this);
         deckListView.setAdapter(cardListAdapter);
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
@@ -58,8 +61,6 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         deckListView.addItemDecoration(divider);
-
-        deckManager = DeckManager.getInstance(this);
     }
 
     // starts the add card activity
@@ -79,8 +80,8 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
-        deckManager.saveDeck(deck, this);
-        deckManager.saveDeckName(this);
+        deckManager.saveDeck();
+        deckManager.saveDeckName(this.deckName);
         finish();
     }
 
