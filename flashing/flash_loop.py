@@ -11,6 +11,7 @@ from led_status import LEDStatus
 from flash import ImageFlasher
 from clear_mode import ClearMode
 import DeckManager
+from deck_sync import DeckSynchronizer
 
 REREAD_DELAY = 0.5 # s
 
@@ -137,7 +138,7 @@ def flash_display(display_id, deck, deck_lock, is_in_clear_mode, flasher):
         # do nothing because the status led is already set correctly
         pass
 
-    deck.toFile(DeckManager.DECK_LIST)
+    deck.to_file(DeckManager.DECK_LIST)
 
     # release the lock on the deck
     deck_lock.release()
@@ -213,9 +214,9 @@ def main():
     deck_lock = threading.Lock()
 
     # spawn the bluetooth update process with deck
-    # TODO: finish up the bluetooth spawning
-    #bluetooth_thread = threading.Thread(target=None, args=(deck, deck_lock)) # TODO replace None with the bluetooth call
-    #bluetooth_thread.start()
+    synchronizer = DeckSynchronizer(deck, deck_lock)
+    bluetooth_thread = threading.Thread(target=synchronizer.run_state_machine) # TODO replace None with the bluetooth call
+    bluetooth_thread.start()
 
     flash_loop(deck, deck_lock)
 
