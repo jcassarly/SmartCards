@@ -556,13 +556,11 @@ public class BluetoothService {
         int return_code = 0;
         sendQuery(ConnectionManager.QUERY_OVERRIDE);
         Pair<Integer, Integer> resp = receiveResponse();
-        if (resp.first == ConnectionManager.MSG_ACK) {
-            // Iterate through file list to send
-            Queue<String> file_names = readDecklist();
-            while (!file_names.isEmpty() && resp.first == ConnectionManager.MSG_ACK) {
-                manage_conn_thread.sendFile(file_names.poll());
-                resp = receiveResponse();
-            }
+        Queue<String> file_names = readDecklist();
+        // Iterate through file list to send
+        while (!file_names.isEmpty() && resp.first == ConnectionManager.MSG_ACK) {
+            manage_conn_thread.sendFile(file_names.poll());
+            resp = receiveResponse();
         }
 
         if (resp.first == ConnectionManager.MSG_ERROR) {
