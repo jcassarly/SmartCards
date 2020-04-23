@@ -42,6 +42,7 @@ public class DeckManager implements Serializable {
     List<PlayingCard> inPlaySubdeck = new ArrayList<>();
     List<PlayingCard> discardSubdeck = new ArrayList<>();
 
+    private Context context;
     private Python py;
     private PyObject deckManagerModule;
     private PyObject deckManager;
@@ -59,6 +60,7 @@ public class DeckManager implements Serializable {
     }
 
     public DeckManager(Context context){
+        this.context = context;
         File dir = context.getDir("deck", context.MODE_PRIVATE);
         File decklist = context.getDir("decklist", context.MODE_PRIVATE);
         IMAGE_DIR = dir.toString();
@@ -208,12 +210,16 @@ public class DeckManager implements Serializable {
 
     public void saveDeckName(TextView deckName)
     {
-
+        SharedPreferences sharedPreferences = this.context.getSharedPreferences(EditDeck.SHARED_PREFS, this.context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(EditDeck.DECK_NAME, deckName.getText().toString());
+        editor.apply();
     }
 
     public void loadDeckName(TextView deckName)
     {
-
+        SharedPreferences sharedPreferences = this.context.getSharedPreferences(EditDeck.SHARED_PREFS, this.context.MODE_PRIVATE);
+        deckName.setText(sharedPreferences.getString(EditDeck.DECK_NAME,""));
     }
 
     public void addCard(PlayingCard card)
