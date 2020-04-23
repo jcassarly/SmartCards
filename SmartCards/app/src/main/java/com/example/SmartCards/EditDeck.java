@@ -49,8 +49,6 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
         deckName = (TextView) findViewById(R.id.editDeckNameInputText);
 
-        loadFromMemoryIfPossible();
-
         //Populate RecyclerView
         cardListAdapter = new CardListAdapter(this,deck, this);
         deckListView.setAdapter(cardListAdapter);
@@ -61,28 +59,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         deckListView.addItemDecoration(divider);
 
-        deckManager = (DeckManager) getIntent().getSerializableExtra(LandingPageActivity.DECK_MANAGER);
-    }
-
-    // TODO: delete and move to deck manager
-    private void loadFromMemoryIfPossible(){
-        if(deckManager == null){
-            deckManager = new DeckManager(this);
-        }
-
-        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
-
-        try {
-            if (sharedPreferences.getBoolean(IS_DECK_IN_MEMORY, false)) {
-                deckManager.loadDeckFromMemory();
-                deck = new ArrayList(deckManager.getDeck());
-                loadDeckName();
-            } else {
-              deck = new ArrayList<>();
-            }
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+        deckManager = DeckManager.getInstance(this);
     }
 
     // starts the add card activity
@@ -94,42 +71,21 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     // TODO: add the deckManager clear and eck clear to the deck manager, call that and then use updateDeckDisplay
     public void clearDeck(View view){
-        deckManager.clearDeckFromMemory();
-        deck.clear();
+        deckManager.clearDeckFromMemory(this);
         updateDeckDisplay();
-    }
-
-    // TODO: move this to deck manager because the deck will control the deck name
-    public void saveDeckName(){
-        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(DECK_NAME, deckName.getText().toString());
-        editor.apply();
-    }
-
-    // TODO: move to deck manager
-    public void loadDeckName(){
-        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
-        deckName.setText(sharedPreferences.getString(DECK_NAME,""));
     }
 
     // TODO: leave this function, but move the save deck and name to be a call from deckmanager
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
-        deckManager.saveDeck(deck);
-        saveDeckName();
+        deckManager.saveDeck(deck, this);
         finish();
     }
 
     // refreshes the display seen by the user
     private void updateDeckDisplay(){
         cardListAdapter.notifyDataSetChanged();
-    }
-
-    // TODO: move to deck manager
-    public static void addCardToDeck(PlayingCard card){
-        deck.add(card);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -180,6 +136,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         Bundle extras = new Bundle();
         // TODO: this will need to have the deck object passed as extra if singleton doesnt work
         extras.putInt("position", position);
+        extras.putSerializable(LandingPageActivity.DECK_MANAGER, deckManager);
         editCardIntent.putExtras(extras);
         startActivityForResult(editCardIntent, RESULT_EDIT_CARD);
         setResult(RESULT_OK, editCardIntent);

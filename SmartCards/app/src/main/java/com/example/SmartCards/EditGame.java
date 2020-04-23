@@ -49,7 +49,7 @@ public class EditGame extends AppCompatActivity {
             }
         });
 
-        deckManager = (DeckManager) getIntent().getSerializableExtra(LandingPageActivity.DECK_MANAGER);
+        deckManager = DeckManager.getInstance(this);
     }
 
     private void setSubDeckTitle(PlayActivity.subDecks deckType){

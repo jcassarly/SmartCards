@@ -54,7 +54,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         deckNameText.setText(deckName);
         updateSubdecks();
 
-        deckManager = (DeckManager) getIntent().getSerializableExtra(LandingPageActivity.DECK_MANAGER);
+        deckManager = DeckManager.getInstance(this);
     }
 
     public void updateSubdecks(){
