@@ -42,7 +42,8 @@ public class LandingPageActivity extends AppCompatActivity {
             super(Looper.getMainLooper());
         }
     };
-    
+
+    // TODO: instantiate the deck manager
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,15 +73,6 @@ public class LandingPageActivity extends AppCompatActivity {
         //generateDirectory();
 
 
-    }
-
-    public void generateDirectory() {
-        try {
-            File dir = this.getDir("deck", this.MODE_PRIVATE); //Creating an internal dir;
-            File fileWithinMyDir = new File(dir, "myfile"); //Getting a file within the dir.
-            FileOutputStream out = new FileOutputStream(fileWithinMyDir); //Use the stream as usual to write into the file.
-        } catch (IOException e) {
-        }
     }
 
 

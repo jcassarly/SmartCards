@@ -18,12 +18,14 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
     private OnCardListener mOnCardListener;
 
 
-
+    // TODO: change to deck manager object
     public CardListAdapter(Activity context, List<PlayingCard> deck, OnCardListener onCardListener) {
         this.context = context;
         this.deck = deck;
         this.mOnCardListener = onCardListener;
     }
+
+    // TODO: add a method to swap cards in the deckmanager that uses the one in deckmanager
 
     @NonNull
     @Override

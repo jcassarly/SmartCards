@@ -14,11 +14,12 @@ import com.example.SmartCards.PlayingCard;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DeckManager {
+public class DeckManager implements Serializable {
 
     public static String IMAGE_DIR;
     public static String DECK_LIST_DIR;
@@ -36,6 +37,17 @@ public class DeckManager {
     private PyObject deckManagerModule;
     private PyObject deckManager;
 
+    private static DeckManager singletonDeck = null;
+
+    public static DeckManager getInstance(Context context)
+    {
+        if (singletonDeck == null)
+        {
+            singletonDeck = new DeckManager(context);
+        }
+
+        return singletonDeck;
+    }
 
     public DeckManager(Context context){
         this.context = context;
@@ -47,12 +59,12 @@ public class DeckManager {
         this.deckManagerModule = this.py.getModule("DeckManager");
         this.deckManagerModule.put("IMAGE_DIR", IMAGE_DIR);
         this.deckManagerModule.put("DECK_LIST", DECK_LIST_DIR + "/decklist.json");
-        String empty[] = new String[0];
         this.deckManager = this.deckManagerModule.callAttr("empty_deck");
-        this.deckManager.callAttr("add_to_top", IMAGE_DIR + "/1");
+    }
+
+    private void toFile()
+    {
         this.deckManager.callAttr("to_file", DECK_LIST_DIR + "/decklist.json");
-        //PyObject dicks = this.deckManager.get("deckList");
-        //this.deckManager.callAttr("toFile", this.deckManagerModule.callAttr("DECK_LIST"));
     }
 
 
@@ -63,6 +75,8 @@ public class DeckManager {
         }
         deck.clear();
         setIsDeckInMemory(false);
+        this.deckManager = this.deckManagerModule.callAttr("empty_deck");
+        this.toFile();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -78,6 +92,7 @@ public class DeckManager {
                 e.printStackTrace();
             }
         }
+        this.toFile();
         setIsDeckInMemory(true);
     }
 
@@ -90,6 +105,21 @@ public class DeckManager {
 
     public void loadDeckFromMemory() throws IOException {
         deck.clear();
+        this.deckManager = this.deckManagerModule.callAttr("load_deck", DECK_LIST_DIR + "/decklist.json");
+        // if the file didnt exist, the load deck seems to do nothing
+        // so write all the data back to the file so that we get a decklist.json if it didnt exist
+        this.toFile();
+
+        PyObject pyAllCards = this.deckManager.callAttr("__all_cards");
+        ArrayList<String> allCards = new ArrayList<>();
+        allCards = pyAllCards.toJava(allCards.getClass());
+
+        for (String cardPath : allCards)
+        {
+            PlayingCard card = new PlayingCard(context, cardPath);
+            deck.add(card);
+        }
+        /* Old version
         File imageDirectory = new File(IMAGE_DIR);
         File[] directoryFiles = imageDirectory.listFiles();
         if (directoryFiles != null){
@@ -100,7 +130,7 @@ public class DeckManager {
         }
         else {
             throw new IOException("Default directory is configured incorrectly or missing");
-        }
+        }*/
     }
 
 

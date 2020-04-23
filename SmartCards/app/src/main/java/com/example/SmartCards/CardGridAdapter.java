@@ -17,6 +17,7 @@ public class CardGridAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private List<PlayingCard> subdeck = new ArrayList();
 
+    // TODO: change to use the deck
     public CardGridAdapter(Context context, List<PlayingCard> subdeck){
         this.context = context;
         this.subdeck = subdeck;

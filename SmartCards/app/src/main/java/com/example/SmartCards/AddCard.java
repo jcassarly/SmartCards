@@ -34,6 +34,8 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
         uploadedCardName = (EditText) findViewById(R.id.editCardNameField);
         uploadButton = (Button) findViewById(R.id.editCardButton);
 
+        // TODO: load in the deck manager into an instance variable
+
         imageUpload.setOnClickListener(this);
         uploadButton.setOnClickListener(this);
 
@@ -54,7 +56,7 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
             }
             else {
                 PlayingCard newCard = new PlayingCard(this, uploadedCardName.getText().toString(), uploadedURI);
-                EditDeck.addCardToDeck(newCard);
+                EditDeck.addCardToDeck(newCard); // TODO: use the instance variable here
                 setResult(RESULT_OK);
                 this.finish();
             }

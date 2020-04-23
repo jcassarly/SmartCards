@@ -62,6 +62,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckListView.addItemDecoration(divider);
     }
 
+    // TODO: delete and move to deck manager
     private void loadFromMemoryIfPossible(){
         if(deckManager == null){
             deckManager = new DeckManager(this);
@@ -82,20 +83,21 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         }
     }
 
-
-
+    // starts the add card activity
     public void addCard(View view){
         Intent addNewCardIntent = new Intent(this, AddCard.class);
         startActivityForResult(addNewCardIntent, RESULT_ADD_CARD);
         setResult(RESULT_OK, addNewCardIntent);
     }
 
+    // TODO: add the deckManager clear and eck clear to the deck manager, call that and then use updateDeckDisplay
     public void clearDeck(View view){
         deckManager.clearDeckFromMemory();
         deck.clear();
         updateDeckDisplay();
     }
 
+    // TODO: move this to deck manager because the deck will control the deck name
     public void saveDeckName(){
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -103,11 +105,13 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         editor.apply();
     }
 
+    // TODO: move to deck manager
     public void loadDeckName(){
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         deckName.setText(sharedPreferences.getString(DECK_NAME,""));
     }
 
+    // TODO: leave this function, but move the save deck and name to be a call from deckmanager
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
@@ -116,11 +120,12 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         finish();
     }
 
+    // refreshes the display seen by the user
     private void updateDeckDisplay(){
         cardListAdapter.notifyDataSetChanged();
     }
 
-
+    // TODO: move to deck manager
     public static void addCardToDeck(PlayingCard card){
         deck.add(card);
     }
@@ -141,6 +146,8 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
             int fromPosition = viewHolder.getAdapterPosition();
             int toPosition = target.getAdapterPosition();
 
+            // TODO: the card list adapter has the deck we need, we can expose this from there which makes the actual call on the deck manager
+            // cast the recycler view to a CardListAdapter since it should always be that
             Collections.swap(deck, fromPosition, toPosition);
 
             recyclerView.getAdapter().notifyItemMoved(fromPosition,toPosition);
@@ -169,6 +176,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     public void onCardClick(int position) {
         Intent editCardIntent = new Intent(this, EditCard.class);
         Bundle extras = new Bundle();
+        // TODO: this will need to have the deck object passed as extra if singleton doesnt work
         extras.putInt("position", position);
         editCardIntent.putExtras(extras);
         startActivityForResult(editCardIntent, RESULT_EDIT_CARD);
