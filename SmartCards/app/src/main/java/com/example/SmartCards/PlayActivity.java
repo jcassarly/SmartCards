@@ -65,11 +65,13 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void blockDock(){
         //When modifying subdecks, send message to dock to prevent it from flashing cards
         //TODO:Send block command to pi
+        LandingPageActivity.bluetooth_service.block();
     }
 
     public void unblockDock(){
         //When finished modifying subdecks, send message to dock to allow it to flash cards
         //TODO:Send unblock command to pi
+        LandingPageActivity.bluetooth_service.unblock();
     }
 
 

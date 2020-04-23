@@ -7,10 +7,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.core.content.res.TypedArrayUtils;
 
@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -58,6 +59,10 @@ public class BluetoothService {
     private ConnectThread make_conn_thread = null;
     private ConnectionManager manage_conn_thread = null;
 
+    // Receiving file codes
+    private final static int RECV_FILE_OK = 1;
+    private final static int RECV_FILE_ERR = 2;
+
     public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity, String file_name, String image_dir) {
         parent_activity = activity;
         mmAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -79,13 +84,11 @@ public class BluetoothService {
         handler = msg_handler;
 
         // Creates a new file directory for images
-        //File directory = parent_activity.getFilesDir();
+        File directory = parent_activity.getFilesDir();
 //        DECKLIST_FILE_NAME = directory.getAbsolutePath() + "/" + file_name;
         DECKLIST_FILE_NAME = file_name;
-        //File new_img_dir = new File(directory, image_dir);
+        File new_img_dir = new File(directory, image_dir);
         IMAGE_DIR = image_dir; //new_img_dir.getAbsolutePath();
-
-         //File internal_m1 = getDir("custom", 0);
 
     }
 
@@ -159,20 +162,21 @@ public class BluetoothService {
 
     private class ConnectionManager extends Thread {
         // Message Types
-        private final static int MSG_QUERY = 1;
+        public final static int MSG_QUERY = 1;
         private final static int MSG_RECV_FILE = 2;
         private final static int MSG_ERROR = 3;
+        public final static int MSG_ACK = 0xBEEFCAFE;
 
         // Query Codes
-        private final static int QUERY_JSON = 1;
-        private final static int QUERY_IMAGE = 2;
-        private final static int QUERY_OVERRIDE = 3;
-        private final static int QUERY_LOCK = 4;
-        private final static int QUERY_UNLOCK = 5;
+        public final static int QUERY_JSON = 1;
+        public final static int QUERY_IMAGE = 2;
+        public final static int QUERY_OVERRIDE = 3;
+        public final static int QUERY_LOCK = 4;
+        public final static int QUERY_UNLOCK = 5;
 
         // Receive File Codes
-        private final static int RECV_FILE_OK = 1;
-        private final static int RECV_FILE_ERR = 2;
+//        private final static int RECV_FILE_OK = 1; // Now defined in bluetooth service
+//        private final static int RECV_FILE_ERR = 2; // Now defined in bluetooth service
         private final static int RECV_FILE_BEGIN = 3;
         private final static int RECV_FILE_END = 4;
 
@@ -205,11 +209,13 @@ public class BluetoothService {
 
         // File Transfer members
         private ByteBuffer cur_packet = null;
-        private LinkedBlockingQueue<byte[]> file_queue = null;
         private ByteBuffer send_file_buffer = null;
         private ByteBuffer recv_file_buffer = null;
         private String recv_file_name;
         private Queue<String> send_file_queue;
+
+        private LinkedBlockingQueue<Pair<Integer, Integer>> query_responses;
+        private LinkedBlockingQueue<byte[]> file_queue = null;
 
         private final String DECKLIST_FILE_NAME;
 
@@ -242,6 +248,7 @@ public class BluetoothService {
             mmBuffer = ByteBuffer.allocate(BUFFER_SIZE);
             this.parent_activity = parent_activity;
             send_file_queue = new LinkedList<String>();
+            query_responses = new LinkedBlockingQueue<>();
             file_queue = new LinkedBlockingQueue<>();
             DECKLIST_FILE_NAME = deck_file_name;
         }
@@ -347,30 +354,35 @@ public class BluetoothService {
 
         private void parseResponse(byte msg[]) {
             int msgType = getMsgInt(msg, INDEX_TYPE);
-            int msgCode = getMsgInt(msg, INDEX_CODE);
-            switch (msgType) {
-                case MSG_RECV_FILE:
+            int msgCode = -1;
+            if (msgType != MSG_ACK) {
+                msgCode = getMsgInt(msg, INDEX_CODE);
+
+                if (msgType == MSG_RECV_FILE) {
                     if (msgCode == RECV_FILE_BEGIN) {
                         state = STATE_RECEIVE;
                     } else if (msgCode == RECV_FILE_END) {
                         state = STATE_QUERY;
                     }
-                    break;
-                case MSG_QUERY:
-                    // TODO: Respond to ui with query result
-                    break;
-                case MSG_ERROR:
-                    // TODO: Respond to ui with error
-                    break;
+                }
+            }
+            try {
+                query_responses.put(new Pair<Integer, Integer>(msgType, msgCode));
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
             }
         }
 
-        public void receiveFile(String file_name) {
-            // TODO: remove this line, just for testing
-            byte file_data[] = file_queue.poll();
+        public int receiveFile(String file_name) {
             FileOutputStream fos = null;
             try {
-                File file = new File(IMAGE_DIR, file_name);
+                byte file_data[] = file_queue.take();
+                // Check if we actually received an error message instead
+                if (file_data.length <= 8) {
+                    // Return error code
+                    return RECV_FILE_ERR;
+                }
+                File file = new File(parent_activity.getFilesDir(), file_name);
                 if (!file.exists()) {
                     file.createNewFile();
                 }
@@ -380,7 +392,9 @@ public class BluetoothService {
             } catch (IOException ioe) {
                 // TODO: Some proper error handling
                 ioe.printStackTrace();
-            } finally {
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }  finally {
                 try {
                     if (fos != null) {
                         fos.close();
@@ -390,7 +404,7 @@ public class BluetoothService {
                     System.out.println("Error in closing the stream");
                 }
             }
-            sendFile(file_name);
+            return RECV_FILE_OK;
         }
 
         public void sendFile(String file_name) {
@@ -413,6 +427,16 @@ public class BluetoothService {
                     System.out.println("Error in closing the stream");
                 }
             }
+        }
+
+        public Pair<Integer, Integer> getQueryResponse() {
+            Pair<Integer, Integer> response = new Pair<Integer, Integer>(0,0);
+            try {
+                response = query_responses.take();
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+            return response;
         }
 
         private int getMsgInt(byte[] msg, int index) {
@@ -459,8 +483,93 @@ public class BluetoothService {
         manage_conn_thread.sendFile(file_name);
     }
 
-    public void receiveFile(String file_name) {
-        manage_conn_thread.receiveFile(file_name);
+    public int receiveFile(String file_name) {
+        return manage_conn_thread.receiveFile(file_name);
+    }
+
+    public Pair<Integer, Integer> receiveResponse() {
+        return manage_conn_thread.getQueryResponse();
+    }
+
+    public void sendQuery(int code) {
+        ByteBuffer send_bytes = ByteBuffer.allocate(8);
+        send_bytes.putInt(ConnectionManager.MSG_QUERY);
+        send_bytes.putInt(code);
+        manage_conn_thread.send(send_bytes.array());
+    }
+
+    public void block() {
+        sendQuery(ConnectionManager.QUERY_LOCK);
+    }
+
+    public void unblock() {
+        sendQuery(ConnectionManager.QUERY_UNLOCK);
+    }
+
+    private Queue<String> readDecklist() {
+        Queue<String> file_names = new LinkedList<String>();
+        FileInputStream fis = null;
+        try {
+            fis = parent_activity.openFileInput(DECKLIST_FILE_NAME);
+            byte buffer[] = new byte[fis.available()];
+            fis.read(buffer);
+            String jstr = new String(buffer, "UTF-8");
+            Pattern pattern = Pattern.compile("\\{(.*?)\\}", Pattern.DOTALL); // in case there's some unwanted characters outside the brackets.
+            Matcher matcher = pattern.matcher(jstr);
+            matcher.find();
+            jstr = matcher.group();
+            JSONObject jobj = (JSONObject) new JSONTokener(jstr).nextValue();
+            JSONArray deck = jobj.getJSONArray("deckList");
+            JSONArray inPlay = jobj.getJSONArray("inPlayList");
+            JSONArray discard = jobj.getJSONArray("discardList");
+
+            JSONArray lists[] = {deck, inPlay, discard};
+            for (int list_index = 0; list_index < lists.length; list_index++) {
+                JSONArray current = lists[list_index];
+                for (int arr_index = 0; arr_index < current.length(); arr_index++) {
+                    String current_string = current.getString(arr_index);
+                    if (!current_string.equals("null")) {
+                        file_names.add(current_string);
+                    }
+                }
+            }
+
+        } catch (IOException ioe) {
+            // TODO: Some proper error handling
+            ioe.printStackTrace();
+        } catch(JSONException je) {
+            je.printStackTrace();
+        } finally {
+            try {
+                if (fis != null) {
+                    fis.close();
+                }
+            } catch (IOException ioe) {
+                System.out.println("Error in closing the image name stream");
+            }
+        }
+        return file_names;
+    }
+
+
+    public int override() {
+        int return_code = 0;
+        sendQuery(ConnectionManager.QUERY_OVERRIDE);
+        Pair<Integer, Integer> resp = receiveResponse();
+        if (resp.first == ConnectionManager.MSG_ACK) {
+            // Iterate through file list to send
+            Queue<String> file_names = readDecklist();
+            while (!file_names.isEmpty() && resp.first == ConnectionManager.MSG_ACK) {
+                manage_conn_thread.sendFile(file_names.poll());
+                resp = receiveResponse();
+            }
+        }
+
+        if (resp.first == ConnectionManager.MSG_ERROR) {
+            return_code = resp.second;
+        }
+
+        return return_code;
     }
 
     public int checkBluetoothEnabled() {
