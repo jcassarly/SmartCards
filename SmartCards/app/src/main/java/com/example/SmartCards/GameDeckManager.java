@@ -25,7 +25,7 @@ public class GameDeckManager extends AbstractDeckManager {
         this.pyDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
     }
 
-    GameDeckManager getInstance(Context context)
+    static GameDeckManager getInstance(Context context)
     {
         if (singletonManager == null)
         {
@@ -95,8 +95,7 @@ public class GameDeckManager extends AbstractDeckManager {
 
         for (PyObject cardPath : pyCardList.asList())
         {
-            PlayingCard card = new PlayingCard(this.context, cardPath.toString());
-            cardList.add(card);
+            cardList.add(this.pyCardPathToPlayingCard(cardPath));
         }
 
         return cardList;
@@ -104,9 +103,9 @@ public class GameDeckManager extends AbstractDeckManager {
 
     @Override
     PlayingCard getCard(int index) {
-        String cardPath = this.pyCardList().get(index).toString();
+        PyObject pyCardPath = this.pyCardList().asList().get(index);
 
-        return new PlayingCard(this.context, cardPath);
+        return this.pyCardPathToPlayingCard(pyCardPath);
     }
 
     @Override
@@ -114,8 +113,29 @@ public class GameDeckManager extends AbstractDeckManager {
         return this.pyCardList().callAttr("__len__").toInt();
     }
 
+    /**
+     * @return the number of elements in the primary deck that are not null
+     */
+    int sizeNonNull()
+    {
+        int size = 0;
+        for (PlayingCard card : this.getPrimaryDeck())
+        {
+            if (card != null)
+            {
+                size++;
+            }
+        }
+        return size;
+    }
+
     private PyObject pyCardList()
     {
         return this.pyDeckManager.get(this.primaryDeck.getPyFieldName());
+    }
+
+    private PlayingCard pyCardPathToPlayingCard(PyObject pyCardPath)
+    {
+        return (pyCardPath == null) ? null : new PlayingCard(this.context, pyCardPath.toString());
     }
 }

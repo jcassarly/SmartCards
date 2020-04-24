@@ -26,8 +26,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private List<PlayingCard> inPlaySubdeck = new ArrayList<>();
     private List<PlayingCard> discardSubdeck = new ArrayList<>();
 
-    // TODO: make game
-    private EditDeckManager deckManager;
+    private GameDeckManager deckManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +52,17 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         deckNameText.setText(deckName);
         updateSubdecks();
 
-        // TODO: make game
-        deckManager = EditDeckManager.getInstance(this);
+        deckManager = GameDeckManager.getInstance(this);
         deckManager.loadDeck(this.deckNameText);
+
+        deckManager.setPrimaryDeck(DeckType.DECK);
+        deckCountText.setText(String.valueOf(deckManager.size()));
+
+        deckManager.setPrimaryDeck(DeckType.INPLAY);
+        inPlayCountText.setText(String.valueOf(deckManager.sizeNonNull()));
+
+        deckManager.setPrimaryDeck(DeckType.DISCARD);
+        discardCountText.setText(String.valueOf(deckManager.size()));
     }
 
     public void updateSubdecks(){
