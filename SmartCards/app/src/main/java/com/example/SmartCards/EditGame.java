@@ -27,7 +27,8 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     //GridView cardGridView;
     TextView subDeckTitle;
 
-    private DeckManager deckManager;
+    // TODO: make game
+    private EditDeckManager deckManager;
 
     private CardListAdapter cardListAdapter;
 
@@ -48,7 +49,8 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
         setSubDeckTitle(deckType);
 
-        deckManager = DeckManager.getInstance(this);
+        // TODO: make game
+        deckManager = EditDeckManager.getInstance(this);
         //deckManager.loadFromMemoryIfPossible(new TextView(this));
 
         cardListAdapter = new CardListAdapter(this, deckManager, this);
@@ -62,8 +64,6 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         recyclerView.addItemDecoration(divider);
-
-
     }
 
     ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
@@ -76,7 +76,7 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
             // TODO: the card list adapter has the deck we need, we can expose this from there which makes the actual call on the deck manager
             // cast the recycler view to a CardListAdapter since it should always be that
-            deckManager.swapInFullDeck(fromPosition, toPosition);
+            deckManager.swap(fromPosition, toPosition);
 
             recyclerView.getAdapter().notifyItemMoved(fromPosition, toPosition);
             //Note, `this` was added to the payload to make the default fade animation not play

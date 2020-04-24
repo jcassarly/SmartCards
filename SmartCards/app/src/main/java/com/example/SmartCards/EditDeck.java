@@ -39,7 +39,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     TextView deckName;
 
-    private DeckManager deckManager;
+    private EditDeckManager deckManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +49,8 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckListView = (RecyclerView) findViewById(R.id.EditDeckListView);
         deckName = (TextView) findViewById(R.id.editDeckNameInputText);
 
-        deckManager = DeckManager.getInstance(this);
-        deckManager.loadFromMemoryIfPossible(this.deckName);
+        deckManager = EditDeckManager.getInstance(this);
+        deckManager.loadDeck(this.deckName);
 
         //Populate RecyclerView
         cardListAdapter = new CardListAdapter(this, deckManager, this);
@@ -108,7 +108,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
             // TODO: the card list adapter has the deck we need, we can expose this from there which makes the actual call on the deck manager
             // cast the recycler view to a CardListAdapter since it should always be that
-            deckManager.swapInFullDeck(fromPosition, toPosition);
+            deckManager.swap(fromPosition, toPosition);
 
             recyclerView.getAdapter().notifyItemMoved(fromPosition,toPosition);
             //Note, `this` was added to the payload to make the default fade animation not play

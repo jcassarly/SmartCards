@@ -14,12 +14,12 @@ import java.util.List;
 public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHolder> {
 
     private Activity context;
-    private DeckManager deck;
+    private AbstractDeckManager deck;
     private OnCardListener mOnCardListener;
 
 
     // TODO: change to deck manager object
-    public CardListAdapter(Activity context, DeckManager deck, OnCardListener onCardListener) {
+    public CardListAdapter(Activity context, AbstractDeckManager deck, OnCardListener onCardListener) {
         this.context = context;
         this.deck = deck;
         this.mOnCardListener = onCardListener;

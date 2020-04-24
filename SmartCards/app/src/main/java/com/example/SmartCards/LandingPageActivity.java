@@ -32,11 +32,13 @@ public class LandingPageActivity extends AppCompatActivity {
     public static UUID CONNECTION_UUID = null;
     public static final String DECKLIST_FILE_NAME = "decklist.json";
     public static String IMAGE_DIR = "images";
+    public static String DECK_LIST_DIR;
+    public static String DECK_LIST;
     public static String BLUETOOTH_DEVICE_NAME = "raspberrypi";
     public static ReceiveMsgHandler receive_msg_handler = null;
     public static BluetoothService bluetooth_service = null;
 
-    private DeckManager deckManager;
+    private EditDeckManager deckManager;
     public static String DECK_MANAGER = "DeckManager";
 
     private class ReceiveMsgHandler extends Handler {
@@ -55,9 +57,12 @@ public class LandingPageActivity extends AppCompatActivity {
         // Set UUID for bluetooth connection.
         CONNECTION_UUID = UUID.fromString(getString(R.string.UUID));
 
-        File dir = this.getDir("deck", this.MODE_PRIVATE);
-        IMAGE_DIR = dir.toString();
         //File testFile = new File(dir, "ThisisaTest");
+        File dir = this.getDir("deck", this.MODE_PRIVATE);
+        File decklist = this.getDir("decklist", this.MODE_PRIVATE);
+        IMAGE_DIR = dir.toString();
+        DECK_LIST_DIR = decklist.toString();
+        DECK_LIST = DECK_LIST_DIR + "/decklist.json";
 
 
         // Setup bluetooth, do something if it fails?
@@ -70,7 +75,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 DECKLIST_FILE_NAME,
                 IMAGE_DIR);
 
-        deckManager = DeckManager.getInstance(this);
+        deckManager = EditDeckManager.getInstance(this);
     }
 
 
