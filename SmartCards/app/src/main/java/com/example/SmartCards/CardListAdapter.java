@@ -14,21 +14,15 @@ import java.util.List;
 public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHolder> {
 
     private Activity context;
-    private List<PlayingCard> deck;
+    private DeckManager deck;
     private OnCardListener mOnCardListener;
 
 
     // TODO: change to deck manager object
-    public CardListAdapter(Activity context, List<PlayingCard> deck, OnCardListener onCardListener) {
+    public CardListAdapter(Activity context, DeckManager deck, OnCardListener onCardListener) {
         this.context = context;
         this.deck = deck;
         this.mOnCardListener = onCardListener;
-    }
-
-    @NonNull
-    public void setDeck(List<PlayingCard> deck)
-    {
-        this.deck = deck;
     }
 
     // TODO: Still need to add swap function? Still need to have a DeckManager member?
@@ -43,9 +37,9 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.cardFace.setImageURI(deck.get(position).getImageAddress());
+        holder.cardFace.setImageURI(deck.getCard(position).getImageAddress());
         holder.cardNumber.setText(Integer.toString(position+1));
-        holder.cardName.setText(deck.get(position).getCardName());
+        holder.cardName.setText(deck.getCard(position).getCardName());
     }
 
     @Override

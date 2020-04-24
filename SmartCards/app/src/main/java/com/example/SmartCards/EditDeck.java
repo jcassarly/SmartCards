@@ -53,7 +53,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckManager.loadFromMemoryIfPossible(this.deckName);
 
         //Populate RecyclerView
-        cardListAdapter = new CardListAdapter(this, deckManager.getDeck(), this);
+        cardListAdapter = new CardListAdapter(this, deckManager, this);
         deckListView.setAdapter(cardListAdapter);
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
@@ -87,7 +87,6 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     // refreshes the display seen by the user
     private void updateDeckDisplay(){
-        cardListAdapter.setDeck(this.deckManager.getDeck());
         cardListAdapter.notifyDataSetChanged();
     }
 

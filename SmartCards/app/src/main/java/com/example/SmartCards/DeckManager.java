@@ -239,4 +239,9 @@ public class DeckManager implements Serializable {
         this.deckManager.callAttr("remove_from_index", cardIndex);
     }
 
+    public int size()
+    {
+        return this.deck.size();
+    }
+
 }
