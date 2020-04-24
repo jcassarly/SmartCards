@@ -89,6 +89,7 @@ public class DeckManager implements Serializable {
             card.delete(context);
         }
         setIsDeckInMemory(false);
+        this.deck.clear();
         this.deckManager = this.deckManagerModule.callAttr("empty_deck");
         this.toFile();
     }
