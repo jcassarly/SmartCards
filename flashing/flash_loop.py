@@ -6,7 +6,6 @@ import os
 from command import Command
 from conversion import DisplayConversion
 from display_identification import DisplayIdentification
-import image_loader
 from led_status import LEDStatus
 from flash import ImageFlasher
 from clear_mode import ClearMode
