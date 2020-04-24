@@ -74,16 +74,18 @@ public class PlayingCard implements Serializable {
             idName = String.valueOf(DeckManager.getNextID(context));
 
             //Save Card Image
-            File dir = context.getDir("deck", context.MODE_PRIVATE);
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), getImageAddress());
-            File imageFile = new File(dir, idName);
+            if (!this.tempImageAddress.equals(this.savedImageAddress)) {
+                File dir = context.getDir("deck", context.MODE_PRIVATE);
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), getImageAddress());
+                File imageFile = new File(dir, idName);
 
-            try (FileOutputStream out = new FileOutputStream(imageFile)) {
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-            } catch (IOException e) {
-                e.printStackTrace();
+                try (FileOutputStream out = new FileOutputStream(imageFile)) {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                savedImageAddress = imageFile.getAbsolutePath();
             }
-            savedImageAddress = imageFile.getAbsolutePath();
 
             //Save Card Name
             saveCardName(context, cardName);
