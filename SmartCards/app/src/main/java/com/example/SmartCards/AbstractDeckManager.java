@@ -55,6 +55,5 @@ public abstract class AbstractDeckManager {
     abstract void loadDeck(TextView deckName);
     abstract List<PlayingCard> getPrimaryDeck();
     abstract PlayingCard getCard(int index); // gets the card from the primary deck
-    abstract void swap(int fromPosition, int toPosition); // swaps in the primary deck
     abstract int size();
 }
