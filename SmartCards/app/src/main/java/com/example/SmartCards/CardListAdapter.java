@@ -1,6 +1,7 @@
 package com.example.SmartCards;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -37,9 +38,17 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.cardFace.setImageURI(deck.getCard(position).getImageAddress());
         holder.cardNumber.setText(Integer.toString(position+1));
-        holder.cardName.setText(deck.getCard(position).getCardName());
+        if(deck.getCard(position) != null){
+            holder.cardFace.setImageURI(deck.getCard(position).getImageAddress());
+            holder.cardName.setText(deck.getCard(position).getCardName());
+        }
+        else {
+            holder.cardName.setText("NO CARD");
+            Drawable nullIcon = context.getResources().getDrawable(R.drawable.ic_remove_circle_outline_black_24dp);
+            holder.cardFace.setImageDrawable(nullIcon);
+        }
+
     }
 
     @Override
