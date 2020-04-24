@@ -21,7 +21,8 @@ public class EditGame extends AppCompatActivity {
     GridView cardGridView;
     TextView subDeckTitle;
 
-    private DeckManager deckManager;
+    // TODO: make game
+    private EditDeckManager deckManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +50,8 @@ public class EditGame extends AppCompatActivity {
             }
         });
 
-        deckManager = DeckManager.getInstance(this);
+        // TODO: make game
+        deckManager = EditDeckManager.getInstance(this);
     }
 
     private void setSubDeckTitle(PlayActivity.subDecks deckType){
