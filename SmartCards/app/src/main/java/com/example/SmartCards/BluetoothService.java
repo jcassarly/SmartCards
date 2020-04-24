@@ -410,7 +410,7 @@ public class BluetoothService {
         public void sendFile(String file_name) {
             FileInputStream fis = null;
             try {
-                fis = parent_activity.openFileInput(file_name);
+                fis = new FileInputStream(new File(file_name));
                 byte file_buffer[] = new byte[fis.available()];
                 fis.read(file_buffer);
                 send(file_buffer);

@@ -46,8 +46,13 @@ public abstract class AbstractDeckManager {
 
     public void loadDeckName(TextView deckName)
     {
-        SharedPreferences sharedPreferences = this.context.getSharedPreferences(EditDeck.SHARED_PREFS, this.context.MODE_PRIVATE);
-        deckName.setText(sharedPreferences.getString(EditDeck.DECK_NAME,""));
+        // TODO: might want to remove this null check.  I added it to test something
+        if (deckName != null)
+        {
+            SharedPreferences sharedPreferences = this.context.getSharedPreferences(EditDeck.SHARED_PREFS, this.context.MODE_PRIVATE);
+            deckName.setText(sharedPreferences.getString(EditDeck.DECK_NAME,""));
+        }
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)

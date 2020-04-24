@@ -79,8 +79,9 @@ public class PlayingCard implements Serializable {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), getImageAddress());
                 File imageFile = new File(dir, idName);
 
+                Bitmap.CompressFormat format = (getImageAddress().toString().endsWith(".png")) ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
                 try (FileOutputStream out = new FileOutputStream(imageFile)) {
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    bitmap.compress(format, 100, out);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
