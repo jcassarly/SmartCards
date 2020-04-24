@@ -1,6 +1,8 @@
 package com.example.SmartCards;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +47,8 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
         }
         else {
             holder.cardName.setText("NO CARD");
+            holder.cardName.setTextColor(Color.RED);
+            holder.cardName.setTypeface(null, Typeface.BOLD_ITALIC);
             Drawable nullIcon = context.getResources().getDrawable(R.drawable.ic_remove_circle_outline_black_24dp);
             holder.cardFace.setImageDrawable(nullIcon);
         }
