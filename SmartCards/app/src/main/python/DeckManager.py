@@ -328,6 +328,26 @@ class Deck:
         """
         return self.remove_from_index(self.deck_len() - 1)
 
+    def shuffle_add_to_top(self, deck_index):
+        """Moves the card in the deck to the top of the deck and shuffles the rest
+
+        :param int deck_index:
+            the index of the card to put on the top of the deck
+        :return:
+            True if the card was moved to the top of th deck, False otherwise
+            (ie the deck list was empty)
+
+        """
+        removed_card = self.remove_from_index(deck_index)
+        was_success = removed_card is not None
+
+        if was_success:
+            self.shuffle()
+            self.add_to_top(removed_card)
+
+        return was_success
+
+
     def discard_from_play(self, display_id):
         """Discards the card on display_id from play
 

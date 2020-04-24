@@ -48,3 +48,33 @@
 # App Enviroment
 Make sure to create `PYTHON` enviroment variable with the value that is the path to your python.exe. Must be at least V3.8.
 
+- AbstractDeckManager superclass
+    - protected void toFile() // same in both
+    - void loadDeckName(TextView deckName)
+    - abstract void saveDeck()
+    - abstract void loadDeck(Context context)
+    - abstract void getPrimaryDeck()
+    - abstract void getCard(int index) // gets the card from the primary deck
+    - abstract void swap(int fromPosition, int toPosition) // swaps in the primary deck
+    - abstract void size()
+
+
+- EditDeckManager extends AbstractDeckManager
+    - EditDeckManager getInstance(Context context)
+    - void clearDeckFromMemory(Context context)
+    - void setIsDeckInMemory(boolean bool)
+    - static int getNextID(Context context)
+    - static void resetIDs(Context context)
+    - void saveDeckName(TextView deckName)
+    - void addCard(PlayingCard card)
+    - void remove(PlayingCard card)
+
+- GameDeckManager extends AbstractDeckManager
+    - GameDeckManager getInstance(Context context)
+    - void setPrimaryDeck(subDeck sd)
+    - void restartGame()
+    - void shuffleDeck()
+    - void shuffleInDiscard()
+    - void deckToDiscard(int deckIndex) // to top of discard
+    - void discardToTopOfDeck(int indexInDiscard)
+    - void discardToDeckRandom(int indexInDiscard)

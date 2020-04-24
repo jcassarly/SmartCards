@@ -71,7 +71,7 @@ public class PlayingCard implements Serializable {
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void save(Context context) throws IOException {
         if(!isSaved) {
-            idName = String.valueOf(DeckManager.getNextID(context));
+            idName = String.valueOf(EditDeckManager.getNextID(context));
 
             //Save Card Image
             if (!this.tempImageAddress.equals(this.savedImageAddress)) {

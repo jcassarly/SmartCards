@@ -24,7 +24,7 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
 
     boolean isImageUploaded;
 
-    private DeckManager deckManager;
+    private EditDeckManager deckManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +36,7 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
         uploadButton = (Button) findViewById(R.id.editCardButton);
 
         // TODO: load in the deck manager into an instance variable
-        deckManager = DeckManager.getInstance(this);
+        deckManager = EditDeckManager.getInstance(this);
 
         imageUpload.setOnClickListener(this);
         uploadButton.setOnClickListener(this);
