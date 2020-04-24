@@ -17,8 +17,6 @@ import java.util.List;
 public class PlayActivity extends AppCompatActivity implements View.OnClickListener{
 
 
-    public enum subDecks {DECK, INPLAY, DISCARD}
-
     TextView deckNameText, deckCountText, inPlayCountText, discardCountText;
     Button exitButton;
     ConstraintLayout deckSubdeckButton, inPlaySubdeckButton, discardSubdeckButton;
@@ -55,6 +53,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         updateSubdecks();
 
         deckManager = DeckManager.getInstance(this);
+        deckManager.loadFromMemoryIfPossible(this.deckNameText);
     }
 
     public void updateSubdecks(){
@@ -79,13 +78,13 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    public void modifySubdeck(subDecks deckType){
+    public void modifySubdeck(DeckType deckType){
 
         Intent intent = new Intent(this, EditGame.class);
 
-        intent.putExtra("deckType", deckType);
-        //TODO: intent.putExtra("subdeck", (Serializable) EditDeck.deck);
-        /*
+        //intent.putExtra("deckType", deckType);
+        //intent.putExtra("subdeck", (Serializable) deckManager.getDeck());
+
         switch(deckType){
             case DECK:
                 intent.putExtra("subdeck", (Serializable) deckSubdeck);
@@ -102,7 +101,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
             default:
                 break;
         }
-         */
+
         startActivity(intent);
     }
 
@@ -114,11 +113,11 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         if(v == deckSubdeckButton){
-            modifySubdeck(subDecks.DECK);
+            modifySubdeck(DeckType.DECK);
         } else if (v == inPlaySubdeckButton){
-            modifySubdeck(subDecks.INPLAY);
+            modifySubdeck(DeckType.INPLAY);
         } else if (v == discardSubdeckButton){
-            modifySubdeck(subDecks.DISCARD);
+            modifySubdeck(DeckType.DISCARD);
         }
 
     }

@@ -10,7 +10,6 @@ import androidx.annotation.RequiresApi;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
-import com.example.SmartCards.PlayActivity;
 import com.example.SmartCards.PlayingCard;
 
 import org.json.JSONArray;
