@@ -163,6 +163,11 @@ public class DeckManager implements Serializable {
         return new ArrayList<>(this.deck);
     }
 
+    public PlayingCard getCard(int index)
+    {
+        return this.deck.get(index);
+    }
+
     private void clearSubdecks(){
 
         deckSubdeck = new ArrayList<>();
@@ -203,6 +208,7 @@ public class DeckManager implements Serializable {
 
     public void loadFromMemoryIfPossible(TextView deckName)
     {
+        this.deck.clear();
         SharedPreferences sharedPreferences = this.context.getSharedPreferences(EditDeck.SHARED_PREFS, this.context.MODE_PRIVATE);
 
         try {

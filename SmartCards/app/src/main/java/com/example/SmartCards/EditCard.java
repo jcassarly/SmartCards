@@ -50,6 +50,7 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
         // TODO: get the instance of the deck manager (or from extra if singleton fails)
 //        card = EditDeck.deck.get(getIntent().getExtras().getInt("position"));
         deckManager = DeckManager.getInstance(this);
+        card = deckManager.getCard(getIntent().getExtras().getInt("position"));
 
         uploadedURI = card.getImageAddress();
         imageUpload.setImageURI(uploadedURI);

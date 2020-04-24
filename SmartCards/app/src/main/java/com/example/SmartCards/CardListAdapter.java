@@ -25,6 +25,12 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
         this.mOnCardListener = onCardListener;
     }
 
+    @NonNull
+    public void setDeck(List<PlayingCard> deck)
+    {
+        this.deck = deck;
+    }
+
     // TODO: Still need to add swap function? Still need to have a DeckManager member?
 
     @NonNull

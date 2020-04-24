@@ -87,6 +87,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
 
     // refreshes the display seen by the user
     private void updateDeckDisplay(){
+        cardListAdapter.setDeck(this.deckManager.getDeck());
         cardListAdapter.notifyDataSetChanged();
     }
 
