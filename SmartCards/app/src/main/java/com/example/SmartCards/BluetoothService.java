@@ -523,7 +523,7 @@ public class BluetoothService {
         sendQuery(ConnectionManager.QUERY_IMAGE_TRANSFER);
         Pair<Integer, Integer> resp = receiveResponse();
         if (resp.first == ConnectionManager.MSG_ACK) {
-            sendFile(LandingPageActivity.IMAGE_TRANSFER_FILE);
+            sendFile(LandingPageActivity.FILE_TRANSFER_LIST);
             resp = receiveResponse();
             if (resp.first == ConnectionManager.MSG_ACK) {
                 return_code = 0;

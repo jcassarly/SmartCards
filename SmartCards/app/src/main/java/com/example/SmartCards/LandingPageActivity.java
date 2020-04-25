@@ -31,7 +31,6 @@ public class LandingPageActivity extends AppCompatActivity {
     // Bluetooth Connection Members
     public static UUID CONNECTION_UUID = null;
     public static final String DECKLIST_FILE_NAME = "decklist.json";
-    public static final String IMAGE_TRANSFER_FILE = "image_transfer.json";
     public static String IMAGE_DIR = "images";
     public static String DECK_LIST_DIR;
     public static String DECK_LIST;

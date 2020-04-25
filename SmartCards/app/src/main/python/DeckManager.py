@@ -3,8 +3,9 @@ import json
 import threading
 import random
 
-IMAGE_DIR = os.path.join(os.sep, 'data', 'user', '0', 'com.example.herroworld', 'app_deck')
-DECK_LIST = os.path.join(os.sep, 'data', 'user', '0', 'com.example.herroworld', 'decklist.json')
+IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'deck')
+DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.json')
+IMAGE_TRANSFER_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'image_transfer.json')
 
 def empty_deck():
     return Deck([])

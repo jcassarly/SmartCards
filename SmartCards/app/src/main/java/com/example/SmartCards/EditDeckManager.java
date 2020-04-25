@@ -118,9 +118,12 @@ public class EditDeckManager extends AbstractDeckManager {
 
         PyObject pyFileTransfer = py.getModule("file_transfer");
         PyObject dict = pyFileTransfer.callAttr("FileTransferDict");
+
+        dict.callAttr("add", "https://photos.app.goo.gl/TjHt5YB4ZsdMkNnu6", "/data/user/0/com.example.herroworld/app_deck/1");
+
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
 
-        
+        LandingPageActivity.bluetooth_service.transferImages();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -139,6 +142,7 @@ public class EditDeckManager extends AbstractDeckManager {
                 e.printStackTrace();
             }
         }
+        sendImagesToPi();
         this.toFile(this.pyDeckManager);
         setIsDeckInMemory(true);
     }
