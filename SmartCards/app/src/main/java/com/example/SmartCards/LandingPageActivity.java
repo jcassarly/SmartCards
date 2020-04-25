@@ -76,6 +76,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 IMAGE_DIR);
 
         deckManager = EditDeckManager.getInstance(this);
+
     }
 
 

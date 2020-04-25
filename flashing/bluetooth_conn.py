@@ -1,5 +1,6 @@
 import bluetooth
 import base64
+import select
 # from queue import Queue
 from functools import reduce
 
@@ -98,18 +99,35 @@ class BluetoothConn():
             size = ints_to_bytes([len(data)])
             self.conn_sock.send(size + data)
 
-    def recv(self):
-        if self.is_connected():
-            data = self.conn_sock.recv(BluetoothConn.BUFFER_SIZE)
-            print("Receiving {} bytes".format(len(data)))
-            size = bytes_to_int(data, BluetoothConn.RECV_SIZE)
-            data = data[BluetoothConn.RECV_DATA : ]
-            print("initial packet size: {}, total: {}".format(len(data), size))
-            while len(data) < size:
-                data += self.conn_sock.recv(BluetoothConn.BUFFER_SIZE)
+    def select_recv(self):
+        receiving, _, _ = select.select([self.conn_sock], [],[], 10)
+        if len(receiving) == 0:
+            self.conn_sock.close()
+            self.conn_sock = None
+            return None
+        else:
+            return receiving[0].recv(BluetoothConn.BUFFER_SIZE)
 
-            print("Received {} bytes".format(len(data)))
-            return data
+    def recv(self):
+        data = None
+        return_code = RecvFileCode.ERR
+        if self.is_connected():
+            data = self.select_recv()
+            if data is not None:
+                size = bytes_to_int(data, BluetoothConn.RECV_SIZE)
+                print("Receiving {} bytes, Packet size: {}".format(len(data), size))
+                data = data[BluetoothConn.RECV_DATA : ]
+                while len(data) < size:
+                    recv_data = self.select_recv()
+                    if data is None or recv_data is None:
+                        break
+                    data += recv_data
+                    print("Received {} bytes".format(len(data)), end="\r", flush=True)
+                if len(data) == size:
+                    return_code = RecvFileCode.OK
+                print("\nDone receiving")
+
+        return data, return_code
 
     def send_ack(self):
         print("sending ack")
@@ -136,51 +154,26 @@ class BluetoothConn():
 
     def recv_query(self):
         # returns type of query, an integer
-        data = self.recv()
-        if bytes_to_int(data, BluetoothConn.INDEX_TYPE) == BluetoothConn.MSG_QUERY:
+        data, code = self.recv()
+        if data is not None and bytes_to_int(data, BluetoothConn.INDEX_TYPE) == BluetoothConn.MSG_QUERY:
             code = bytes_to_int(data, BluetoothConn.INDEX_CODE)
         else:
             code = -1 # temp err handling
         return code
 
     def recv_file(self, file_path):
-        # returns status,
-        #   1: Received all fine
-        #   2: received not a full file, nothing written
-        #   3: received an error
-        #print("Waiting to receive file: {}".format(file_name))
-        # metadata = self.recv()
-        # # file_name = bytes_to_int(data, BluetoothConn.INDEX_NAME)
-        # file_size = bytes_to_int(metadata, BluetoothConn.INDEX_SIZE)
-        # print("Receiving file of size: {}".format(file_size))
-        # data = bytearray()
-        # # extra_data = bytearray()
-        # remaining_data = file_size
-        # while remaining_data > 0:
-        #     remaining_data = remaining_data - len(data)
-        #     # recv_data = self.recv()
-        #     # data += recv_data[:remaining_data]
-        #     data += self.recv()
+        data, code = self.recv()
 
-        data = self.recv()
-        #print("data is equal: {}".format(data == self.moon))
-        #print("Writing file: {}. Data amount: {}".format(file_name, len(data)))
-        with open(file_path, 'wb') as phil:
-            phil.write(data)
+        if code == RecvFileCode.OK:
+            with open(file_path, 'wb') as phil:
+                phil.write(data)
 
-        return RecvFileCode.OK
+        return code
 
 if __name__=="__main__":
     server = BluetoothConn()
     server.wait_for_connection()
-    # server.send_ack()
-    # server.send_err(ErrorCode.BUSY)
-    # server.send_file('./deck/', 'test.json')
-    # server.recv_file('./deck/', 'test2.json')
-    # server.send_file('./deck/', 'decklist.json')
-    # server.recv_file('./deck/', 'decklist2.json')
-    # server.send_file('./deck/', 'moon.png')
-    # server.recv_file('./deck/', 'moon2.png')
-    print("Received: {}".format(server.recv_query()))
-    # server.send_ack()
-    server.send_err(ErrorCode.BUSY)
+
+    while server.is_connected():
+        server.recv()
+        server.send_ack()

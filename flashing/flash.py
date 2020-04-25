@@ -5,7 +5,6 @@ import argparse
 from command import Command, transmission_command
 from conversion import DisplayConversion
 from display_identification import DisplayIdentification
-import image_loader
 from led_status import LEDStatus
 
 class ImageFlasher:

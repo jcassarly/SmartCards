@@ -14,6 +14,7 @@ import android.util.Pair;
 
 import androidx.core.content.res.TypedArrayUtils;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -199,19 +200,14 @@ public class BluetoothService {
         private int state = STATE_QUERY;
 
         // Bluetooth packet size
-        private final int BUFFER_SIZE = 50000;
+        private final int RECEIVE_BUFFER_SIZE = 8192;
+        private final int TRANSMIT_BUFFER_SIZE = 8192;
         private final int INT_SIZE = 4;
 
         public static final String TAG = "BLUETOOTH_MANAGER";
 
-        // Deck Revision numbers
-        private int cur_rev_num = 0;
-
         // File Transfer members
         private ByteBuffer cur_packet = null;
-        private ByteBuffer send_file_buffer = null;
-        private ByteBuffer recv_file_buffer = null;
-        private String recv_file_name;
         private Queue<String> send_file_queue;
 
         private LinkedBlockingQueue<Pair<Integer, Integer>> query_responses;
@@ -245,12 +241,16 @@ public class BluetoothService {
 
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
-            mmBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+//            RECEIVE_BUFFER_SIZE = mmSocket.getMaxReceivePacketSize();
+//            TRANSMIT_BUFFER_SIZE = mmSocket.getMaxTransmitPacketSize();
+            mmBuffer = ByteBuffer.allocate(RECEIVE_BUFFER_SIZE);
             this.parent_activity = parent_activity;
             send_file_queue = new LinkedList<String>();
             query_responses = new LinkedBlockingQueue<>();
             file_queue = new LinkedBlockingQueue<>();
             DECKLIST_FILE_NAME = deck_file_name;
+
+
         }
 
         public void run() {
@@ -282,8 +282,12 @@ public class BluetoothService {
 
         // Call this from the main activity to send data to the remote device.
         public void write(byte[] bytes) {
+            write(bytes, bytes.length);
+        }
+
+        public void write(byte[] bytes, int len) {
             try {
-                mmOutStream.write(bytes);
+                mmOutStream.write(bytes, 0, len);
 
 //                // Share the sent message with the UI activity.
 //                Message writtenMsg = handler.obtainMessage(
@@ -303,6 +307,7 @@ public class BluetoothService {
 //            handler.sendMessage(writeErrorMsg);
             }
         }
+
 
         private void send(byte data[]) {
             int packet_size = data.length;
@@ -410,10 +415,16 @@ public class BluetoothService {
         public void sendFile(String file_name) {
             FileInputStream fis = null;
             try {
-                fis = parent_activity.openFileInput(file_name);
-                byte file_buffer[] = new byte[fis.available()];
-                fis.read(file_buffer);
-                send(file_buffer);
+                fis = new FileInputStream(new File(file_name));
+                BufferedInputStream bis = new BufferedInputStream(fis, TRANSMIT_BUFFER_SIZE);
+                byte file_buffer[] = new byte[TRANSMIT_BUFFER_SIZE];
+                int len;
+                ByteBuffer size_buffer = ByteBuffer.allocate(Integer.BYTES);
+                size_buffer.putInt(fis.available());
+                write(size_buffer.array());
+                while ((len = bis.read(file_buffer)) != -1) {
+                    write(file_buffer, len);
+                }
             } catch (IOException ioe) {
                 // TODO: Some proper error handling
                 ioe.printStackTrace();

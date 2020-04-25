@@ -1,6 +1,5 @@
 scryfall-default-cards.json
 *.pyc
 HerroWorld/.idea/gradle.xml
-flashing/image_loader.py
 flashing/decklist.json
 flashing/deck/*
