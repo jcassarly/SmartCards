@@ -23,6 +23,7 @@ public class EditDeckManager extends AbstractDeckManager {
     private Context context;
     private PyObject pyDeckManagerModule;
     private PyObject pyDeckManager;
+    private PyObject pyImgurUploader;
 
     private static EditDeckManager singletonManager = null;
 
@@ -31,6 +32,7 @@ public class EditDeckManager extends AbstractDeckManager {
         this.primaryDeck = new ArrayList<>();
         this.context = context;
         this.pyDeckManagerModule = AbstractDeckManager.getPyDeckManagerModuleInstance();
+        this.pyImgurUploader = AbstractDeckManager.getPyImgurUploaderInstance();
         this.pyDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
     }
 
@@ -112,23 +114,19 @@ public class EditDeckManager extends AbstractDeckManager {
         this.pyDeckManager.callAttr("remove_from_index", cardIndex);
     }
 
-    void sendImagesToPi()
+    void sendImagesToPi(List<PlayingCard> cardsToSend)
     {
         Python py = Python.getInstance();
 
         PyObject pyFileTransfer = py.getModule("file_transfer");
         PyObject dict = pyFileTransfer.callAttr("FileTransferDict");
 
-        dict.callAttr("add", "https://photos.app.goo.gl/TjHt5YB4ZsdMkNnu6", "/data/user/0/com.example.herroworld/app_deck/test_image1");
-        dict.callAttr("add", "https://photos.app.goo.gl/s8AkN9a7J5oDMvXM8", "/data/user/0/com.example.herroworld/app_deck/test_image2");
+        for (PlayingCard card : cardsToSend)
+        {
+            dict.callAttr("add", card.getSavedUrl(), card.getImageAddress().toString());
+        }
 
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
-
-        // TODO: delete snippet
-        PyObject testDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
-        testDeckManager.callAttr("add_to_top", "/data/user/0/com.example.herroworld/app_deck/test_image1");
-        testDeckManager.callAttr("add_to_top", "/data/user/0/com.example.herroworld/app_deck/test_image2");
-        this.toFile(testDeckManager);
 
         LandingPageActivity.bluetooth_service.transferImages();
     }
@@ -138,18 +136,24 @@ public class EditDeckManager extends AbstractDeckManager {
     void saveDeck()
     {
         this.pyDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
+        List<PlayingCard> cardsToSend = new ArrayList<>();
 
         for(PlayingCard card : this.primaryDeck) {
             try {
-                card.save(this.context);
+                boolean wasSaved = card.save(this.context);
                 this.pyDeckManager.callAttr("add_to_top", card.getImageAddress().toString());
+
+                if (wasSaved)
+                {
+                    cardsToSend.add(card);
+                }
             } catch (IOException e) {
                 setIsDeckInMemory(false);
                 e.printStackTrace();
             }
         }
         this.toFile(this.pyDeckManager);
-        sendImagesToPi();
+        sendImagesToPi(cardsToSend);
         setIsDeckInMemory(true);
     }
 

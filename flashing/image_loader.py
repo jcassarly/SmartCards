@@ -56,19 +56,13 @@ def download_photo(destination_path, photos_url):
     destination path is the path to save the image
     photos_url is the url of the file to download
     """
-    response = requests.get(photos_url)
+    image = __download_image(photos_url)
 
-    match = re.search("content=\"(https://lh3.googleusercontent.com[^\"]*)=w600-h315-p-k\"", response.text)
-    image_url = "{}{}".format(match.group(1), "=w1355-h1805-no")
-
-    time.sleep(0.5)
-
-    response = requests.get(image_url)
-
-    with open(destination_path, "wb") as out:
-        out.write(response.content)
-
-    time.sleep(0.5)
+    if image is not None:
+        with open(destination_path, "wb") as out:
+            out.write(image.getbuffer())
+    else:
+        print("Error Downloading {}".format(photos_url))
 
 def image_cli():
     parser = argparse.ArgumentParser("Pull down a card image and convert it to the proper format and put it in the image processor")
@@ -106,6 +100,6 @@ def image_cli():
 if __name__ == '__main__':
     #args = image_cli()
     start = time.time()
-    download_photo("photo.jpg","https://photos.app.goo.gl/TjHt5YB4ZsdMkNnu6")
+    download_photo("photo.jpg","https://www.complexsql.com/wp-content/uploads/2018/11/null.png")
 
     print("Elapsed = {}".format(time.time() - start))

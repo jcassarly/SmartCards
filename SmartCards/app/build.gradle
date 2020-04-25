@@ -19,6 +19,8 @@ android {
             buildPython "py -3.8"
             pip {
                 install "numpy"
+                install "requests"
+                install "imgurpython"
             }
         }
     }
