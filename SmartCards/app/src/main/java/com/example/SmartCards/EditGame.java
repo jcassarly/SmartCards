@@ -9,18 +9,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditGame extends AppCompatActivity implements CardListAdapter.OnCardListener{
+public class EditGame extends AppCompatActivity implements CardListAdapter.OnCardListener, EditButtonAdapter.OnEditButtonListener{
 
     private List<PlayingCard> subdeck = new ArrayList<>();
     private DeckType deckType;
+
+    private final EditButtons[] deckButtons = {EditButtons.SHUFFLE_DECK, EditButtons.SHUFFLE_ADD_TO_TOP, EditButtons.DECK_TO_DISCARD};
+    private final EditButtons[] discardButtons = {EditButtons.DISCARD_TO_DECK_RANDOM, EditButtons.DISCARD_TO_TOP_OF_DECK};
 
 
 
@@ -31,20 +31,21 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     private EditDeckManager deckManager;
 
     private CardListAdapter cardListAdapter;
+    private EditButtonAdapter editButtonAdapter;
 
-    private RecyclerView recyclerView;
+    private RecyclerView cardRecyclerView, buttonRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_game);
 
-        recyclerView = findViewById(R.id.editGameDisplayListView);
+        cardRecyclerView = findViewById(R.id.editGameDisplayListView);
+        buttonRecyclerView = findViewById(R.id.editGameButtonListView);
         subDeckTitle = findViewById(R.id.editGameTitle);
 
         Intent intent = getIntent();
 
-        //subdeck = (List<PlayingCard>) intent.getSerializableExtra("subdeck");
         deckType = (DeckType) intent.getSerializableExtra("deckType");
 
         setSubDeckTitle(deckType);
@@ -54,16 +55,23 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         //deckManager.loadFromMemoryIfPossible(new TextView(this));
 
         cardListAdapter = new CardListAdapter(this, deckManager, this);
-        recyclerView.setAdapter(cardListAdapter);
+        cardRecyclerView.setAdapter(cardListAdapter);
 
-        //TODO: Add ability to drag cards, but not the ones in inplaysubdeck
+        if(deckType == DeckType.DECK) {
+            editButtonAdapter = new EditButtonAdapter(this, deckButtons, this);
+        }
+        if(deckType == DeckType.DISCARD){
+            editButtonAdapter = new EditButtonAdapter(this, discardButtons, this);
+        }
+        buttonRecyclerView.setAdapter(editButtonAdapter);
+
         if(deckType != DeckType.INPLAY) {
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
-            itemTouchHelper.attachToRecyclerView(recyclerView);
+            itemTouchHelper.attachToRecyclerView(cardRecyclerView);
         }
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
-        recyclerView.addItemDecoration(divider);
+        cardRecyclerView.addItemDecoration(divider);
     }
 
     ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
@@ -114,8 +122,12 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         super.finish();
     }
 
+    public void onButtonClick(int position) {
+        finish();
+    }
+
     @Override
-    public void onCardClick(int position) {
+    public void onCardClick(int position){
 
     }
 }
