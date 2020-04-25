@@ -1,5 +1,6 @@
 import os
 import threading
+import json
 
 from bluetooth_conn import BluetoothConn, QueryCode, RecvFileCode, ErrorCode
 import DeckManager
@@ -90,6 +91,9 @@ class DeckSynchronizer():
         elif query_code == QueryCode.OVERRIDE:
             next_state = self.override_files()
 
+        elif query_code == QueryCode.IMAGE_TRANSFER:
+            next_state = self.get_images()
+
         return next_state
 
     def override_files(self):
@@ -147,6 +151,35 @@ class DeckSynchronizer():
         # update the deck with the JSON file received since everything was received correctly
         self.deck.from_file(TEMP_DECK_LIST)
         self.deck.to_file(DeckManager.DECK_LIST)
+
+        self.deck_lock.release()
+
+        return SyncState.WAITING_FOR_QUERY
+
+    def get_images(self):
+        self.deck_lock.acquire()
+        self.connection.send_ack()
+
+        print("Receiving Image Transfer JSON")
+        recv_file_code = self.connection.recv_file(DeckManager.IMAGE_TRANSFER_LIST)
+
+        if recv_file_code != RecvFileCode.OK:
+            print("Recv Error: {}".format(recv_file_code))
+            self.deck_lock.release()
+            return SyncState.RECEIVE_ERROR
+
+        self.connection.send_ack()
+
+        image_dict = {}
+        with open(DeckManager.IMAGE_TRANSFER_LIST, 'r') as image_file:
+            image_dict = json.load(image_file)
+
+        print("Downloading Images")
+        for key in image_dict.keys():
+            image_url = image_dict[key]
+            print("Downloading {}".format(key))
+            # TODO: I dunno how to download from url, save it on pi
+            pass
 
         self.deck_lock.release()
 

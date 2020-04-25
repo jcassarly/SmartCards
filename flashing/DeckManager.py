@@ -5,6 +5,7 @@ import random
 
 IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'deck')
 DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.json')
+IMAGE_TRANSFER_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'image_transfer.json')
 
 def load_deck(file_path):
     """Creates a deck loaded from the given file path

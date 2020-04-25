@@ -10,6 +10,7 @@ class QueryCode():
     OVERRIDE = 3
     LOCK = 4
     UNLOCK = 5
+    IMAGE_TRANSFER = 6
 
 class RecvFileCode():
     OK = 1
