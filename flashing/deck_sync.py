@@ -4,6 +4,7 @@ import json
 
 from bluetooth_conn import BluetoothConn, QueryCode, RecvFileCode, ErrorCode
 import DeckManager
+import image_loader
 
 TEMP_DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'temp_deck.json')
 
@@ -179,8 +180,8 @@ class DeckSynchronizer():
         for url in image_dict.keys():
             image_name = image_dict[url]
             print("Downloading {} from {}".format(image_name, url))
-            # TODO: I dunno how to download from url, save it on pi
-            pass
+            image_path = DeckManager.add_path(image_name)
+            image_loader.download_photo(image_path, url)
 
         self.deck_lock.release()
 
