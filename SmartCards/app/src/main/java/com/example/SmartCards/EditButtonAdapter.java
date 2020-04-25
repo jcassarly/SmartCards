@@ -56,12 +56,12 @@ public class EditButtonAdapter extends RecyclerView.Adapter<EditButtonAdapter.Vi
 
         @Override
         public void onClick(View v) {
-            listener.onButtonClick(getAdapterPosition());
+            listener.onButtonClick(buttons[getAdapterPosition()]);
         }
     }
 
     public interface OnEditButtonListener {
-        void onButtonClick(int position);
+        void onButtonClick(EditButtons button);
     }
 
 }

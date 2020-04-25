@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,12 +142,74 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         super.finish();
     }
 
-    public void onButtonClick(int position) {
-        finish();
+    public void onButtonClick(EditButtons button) {
+        if(isButtonClickValid(button)){
+            switch (button){
+                case SHUFFLE_DECK:
+                    shuffleDeck();
+                    break;
+                case DISCARD_TO_TOP_OF_DECK:
+                    discardToTopOfDeck();
+                    break;
+                case DISCARD_TO_DECK_RANDOM:
+                    discardToDeckRandom();
+                    break;
+                case SHUFFLE_ADD_TO_TOP:
+                    shuffleAddToTop();
+                    break;
+                case DECK_TO_DISCARD:
+                    deckToDiscard();
+                    break;
+                case ALL_DISCARD_TO_DECK:
+                    shuffleInDiscard();
+                    break;
+            }
+            finish();
+        } else {
+            Toast.makeText(getApplicationContext(), "Please select a card first", Toast.LENGTH_SHORT).show();
+        }
     }
+
+    private boolean isButtonClickValid(EditButtons button){
+        if(cardListAdapter.getSelectedCardPosition() != -1 || button == EditButtons.ALL_DISCARD_TO_DECK){
+            return true;
+        }
+        return false;
+    }
+
 
     @Override
     public void onCardClick(int position){
+        //Do nothing
+    }
+
+    public void shuffleDeck(){
 
     }
+
+    public void shuffleInDiscard(){
+
+    }
+
+    public void deckToDiscard(){
+        //Manager needs indexInDeck
+        //cardListAdapter.getSelectedCardPosition();
+    }
+
+    public void discardToTopOfDeck(){
+        //Manager needs indexInDiscard
+    }
+
+    public void discardToDeckRandom(){
+        //Manager needs indexInDiscard
+    }
+
+    public void shuffleAddToTop(){
+        //Manager needs indexIn
+    }
+
+
+
+
+
 }

@@ -91,9 +91,13 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
             onCardListener.onCardClick(getAdapterPosition());
             if(!isDeckBeingEdited) {
                 selectedCardPosition = getAdapterPosition();
+                notifyDataSetChanged();
             }
-            notifyDataSetChanged();
         }
+    }
+
+    public int getSelectedCardPosition(){
+        return selectedCardPosition;
     }
 
     public interface OnCardListener {

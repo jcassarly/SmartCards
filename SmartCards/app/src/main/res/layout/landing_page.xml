@@ -83,11 +83,10 @@
         android:id="@+id/dbg_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginLeft="32dp"
         android:layout_marginTop="32dp"
         android:onClick="debug"
         android:text="@string/debug"
+        app:layout_constraintEnd_toStartOf="@+id/infoButton"
         app:layout_constraintStart_toEndOf="@+id/connect_button"
         app:layout_constraintTop_toBottomOf="@+id/playButton" />
 
