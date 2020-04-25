@@ -125,7 +125,7 @@ class BluetoothConn():
                     print("Received {} bytes".format(len(data)), end="\r", flush=True)
                 if len(data) == size:
                     return_code = RecvFileCode.OK
-                print("Done receiving")
+                print("\nDone receiving")
 
         return data, return_code
 
