@@ -176,9 +176,9 @@ class DeckSynchronizer():
             image_dict = json.load(image_file)
 
         print("Downloading Images")
-        for key in image_dict.keys():
-            image_url = image_dict[key]
-            print("Downloading {}".format(key))
+        for url in image_dict.keys():
+            image_name = image_dict[url]
+            print("Downloading {} from {}".format(image_name, url))
             # TODO: I dunno how to download from url, save it on pi
             pass
 
