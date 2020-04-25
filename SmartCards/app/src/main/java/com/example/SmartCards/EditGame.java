@@ -27,8 +27,7 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     //GridView cardGridView;
     TextView subDeckTitle;
 
-    // TODO: make game
-    private EditDeckManager deckManager;
+    private GameDeckManager deckManager;
 
     private CardListAdapter cardListAdapter;
     private EditButtonAdapter editButtonAdapter;
@@ -50,8 +49,8 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
         setSubDeckTitle(deckType);
 
-        // TODO: make game
-        deckManager = EditDeckManager.getInstance(this);
+        deckManager = GameDeckManager.getInstance(this);
+        deckManager.setPrimaryDeck(deckType);
         //deckManager.loadFromMemoryIfPossible(new TextView(this));
 
         cardListAdapter = new CardListAdapter(this, deckManager, this);
@@ -84,7 +83,8 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
             // TODO: the card list adapter has the deck we need, we can expose this from there which makes the actual call on the deck manager
             // cast the recycler view to a CardListAdapter since it should always be that
-            deckManager.swap(fromPosition, toPosition);
+            // TODO: remove swapping as it is no longer in game deck manager
+            // deckManager.swap(fromPosition, toPosition);
 
             recyclerView.getAdapter().notifyItemMoved(fromPosition, toPosition);
             //Note, `this` was added to the payload to make the default fade animation not play

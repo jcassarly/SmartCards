@@ -167,7 +167,6 @@ public class EditDeckManager extends AbstractDeckManager {
         return this.primaryDeck.get(index);
     }
 
-    @Override
     void swap(int fromPosition, int toPosition)
     {
         Collections.swap(this.primaryDeck, fromPosition, toPosition);
