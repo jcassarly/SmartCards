@@ -582,12 +582,9 @@ public class BluetoothService {
         int return_code = 0;
         sendQuery(ConnectionManager.QUERY_OVERRIDE);
         Pair<Integer, Integer> resp = receiveResponse();
-        Queue<String> file_names = readDecklist();
-        // Iterate through file list to send
-        while (!file_names.isEmpty() && resp.first == ConnectionManager.MSG_ACK) {
-            manage_conn_thread.sendFile(file_names.poll());
-            resp = receiveResponse();
-        }
+
+        sendFile(LandingPageActivity.DECK_LIST);
+        resp = receiveResponse();
 
         if (resp.first == ConnectionManager.MSG_ERROR) {
             return_code = resp.second;

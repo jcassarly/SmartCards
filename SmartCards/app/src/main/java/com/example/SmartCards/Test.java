@@ -29,45 +29,10 @@ public class Test extends AppCompatActivity {
         //String filename = codeView.getText().toString();
         //LandingPageActivity.bluetooth_service.sendFile(filename);
 
-        GameDeckManager deckManager = GameDeckManager.getInstance(this);
-        deckManager.loadDeck(null);
+        int retCode = LandingPageActivity.bluetooth_service.override();
 
-        deckManager.setPrimaryDeck(DeckType.DECK);
 
-        List<PlayingCard> cards = deckManager.allNonNullCards();
-
-        LandingPageActivity.bluetooth_service.sendQuery(3);
-        Pair<Integer, Integer> response= LandingPageActivity.bluetooth_service.receiveResponse();
-        String display_text = "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
-
-        LandingPageActivity.bluetooth_service.sendFile(LandingPageActivity.DECK_LIST);
-        response = LandingPageActivity.bluetooth_service.receiveResponse();
-        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
-
-        for (PlayingCard card : cards)
-        {
-            LandingPageActivity.bluetooth_service.sendFile(card.getImageAddress().toString());
-            response = LandingPageActivity.bluetooth_service.receiveResponse();
-
-            if (response.first != 0xBEEFCAFE)
-            {
-                LandingPageActivity.bluetooth_service.sendFile(card.getImageAddress().toString());
-                response = LandingPageActivity.bluetooth_service.receiveResponse();
-
-                if (response.first == 0xBEEFCAFE)
-                {
-                    LandingPageActivity.bluetooth_service.sendFile(card.getImageAddress().toString());
-                    response = LandingPageActivity.bluetooth_service.receiveResponse();
-
-                    if (response.first == 0xBEEFCAFE)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            display_text += "ACK (Name: " + card.getCardName() + ", ID: " + card.getIdName() + "): " + response.first.toString() + "\n";
-        }
+        String display_text = "ACK (" + retCode + ")\n";
 
         //LandingPageActivity.bluetooth_service.receiveFile("decklist.json");
         TextView respView = (TextView) findViewById(R.id.json_view);

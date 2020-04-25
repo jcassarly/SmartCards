@@ -121,32 +121,32 @@ class DeckSynchronizer():
 
         self.connection.send_ack()
 
-        for card_path in temp_deck:
-            # try to receive the file up to 3 times
-            for tries in range(0, 3):
-                print("Receiving {}".format(card_path))
-                exit_code = self.connection.recv_file(card_path)
+        #for card_path in temp_deck:
+        #    # try to receive the file up to 3 times
+        #    for tries in range(0, 3):
+        #        print("Receiving {}".format(card_path))
+        #        exit_code = self.connection.recv_file(card_path)
 
-                # TODO: handle erroneous exit code
-                if exit_code == RecvFileCode.OK:
-                    print("Received {}".format(card_path))
-                    break
+        #        # TODO: handle erroneous exit code
+        #        if exit_code == RecvFileCode.OK:
+        #            print("Received {}".format(card_path))
+        #            break
 
-                print("Error?")
-                self.send_receive_error()
+        #        print("Error?")
+        #        self.send_receive_error()
 
-            # if the above for loop exits normally, then we failed 3 times to receive the file
-            if exit_code != RecvFileCode.OK:
-                print("Error?")
-                self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
-                # TODO: consider reverting the images back to before override started
-                #       this would require temp storage
-                self.deck_lock.release()
-                return SyncState.UNKNOWN_ERROR
-            # otherwise the above loop received the file, so ACK it
-            else:
-                print("ACKING {}".format(card_path))
-                self.connection.send_ack()
+        #    # if the above for loop exits normally, then we failed 3 times to receive the file
+        #    if exit_code != RecvFileCode.OK:
+        #        print("Error?")
+        #        self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
+        #        # TODO: consider reverting the images back to before override started
+        #        #       this would require temp storage
+        #        self.deck_lock.release()
+        #        return SyncState.UNKNOWN_ERROR
+        #    # otherwise the above loop received the file, so ACK it
+        #    else:
+        #        print("ACKING {}".format(card_path))
+        #        self.connection.send_ack()
 
         print("Done Overriding")
         # update the deck with the JSON file received since everything was received correctly
@@ -182,6 +182,7 @@ class DeckSynchronizer():
             print("Downloading {} from {}".format(image_name, url))
             image_path = DeckManager.add_path(image_name)
             image_loader.download_photo(image_path, url)
+        print("Done Downloading Images")
 
         self.deck_lock.release()
 

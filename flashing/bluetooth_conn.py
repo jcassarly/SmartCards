@@ -100,26 +100,27 @@ class BluetoothConn():
             size = ints_to_bytes([len(data)])
             self.conn_sock.send(size + data)
 
-    def select_recv(self):
-        receiving, _, _ = select.select([self.conn_sock], [],[], 10)
-        if len(receiving) == 0:
-            self.conn_sock.close()
-            self.conn_sock = None
-            return None
-        else:
-            return receiving[0].recv(BluetoothConn.BUFFER_SIZE)
+    #def select_recv(self):
+    #    receiving, _, _ = select.select([self.conn_sock], [],[], 30)
+    #    if len(receiving) == 0:
+    #        print("Closing Connection - Received Nothing")
+    #        self.conn_sock.close()
+    #        self.conn_sock = None
+    #        return None
+    #    else:
+    #        return receiving[0].recv(BluetoothConn.BUFFER_SIZE)
 
     def recv(self):
         data = None
         return_code = RecvFileCode.ERR
         if self.is_connected():
-            data = self.select_recv()
+            data = self.conn_sock.recv(BluetoothConn.BUFFER_SIZE)
             if data is not None:
                 size = bytes_to_int(data, BluetoothConn.RECV_SIZE)
                 print("Receiving {} bytes, Packet size: {}".format(len(data), size))
                 data = data[BluetoothConn.RECV_DATA : ]
                 while len(data) < size:
-                    recv_data = self.select_recv()
+                    recv_data = self.conn_sock.recv(BluetoothConn.BUFFER_SIZE)
                     if data is None or recv_data is None:
                         break
                     data += recv_data

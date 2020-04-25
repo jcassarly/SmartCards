@@ -86,7 +86,7 @@ class Deck:
         :returns: the next card (yields)
 
         """
-        for card in self.__all_cards():
+        for card in self.all_cards():
             yield card
 
     def update_rev_number(self):
@@ -201,7 +201,7 @@ class Deck:
 
     def restart(self):
         """Resets the deck to have all the cards in play and discard shuffled back into the deck"""
-        self.deckList = self.__all_cards()
+        self.deckList = self.all_cards()
 
         self.discardList = []
         self.inPlayList = [None, None, None, None, None, None]

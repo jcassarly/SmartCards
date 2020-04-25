@@ -119,9 +119,16 @@ public class EditDeckManager extends AbstractDeckManager {
         PyObject pyFileTransfer = py.getModule("file_transfer");
         PyObject dict = pyFileTransfer.callAttr("FileTransferDict");
 
-        dict.callAttr("add", "https://photos.app.goo.gl/TjHt5YB4ZsdMkNnu6", "/data/user/0/com.example.herroworld/app_deck/1");
+        dict.callAttr("add", "https://photos.app.goo.gl/TjHt5YB4ZsdMkNnu6", "/data/user/0/com.example.herroworld/app_deck/test_image1");
+        dict.callAttr("add", "https://photos.app.goo.gl/s8AkN9a7J5oDMvXM8", "/data/user/0/com.example.herroworld/app_deck/test_image2");
 
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
+
+        // TODO: delete snippet
+        PyObject testDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
+        testDeckManager.callAttr("add_to_top", "/data/user/0/com.example.herroworld/app_deck/test_image1");
+        testDeckManager.callAttr("add_to_top", "/data/user/0/com.example.herroworld/app_deck/test_image2");
+        this.toFile(testDeckManager);
 
         LandingPageActivity.bluetooth_service.transferImages();
     }
@@ -132,18 +139,17 @@ public class EditDeckManager extends AbstractDeckManager {
     {
         this.pyDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
 
-        for(PlayingCard card : this.primaryDeck){
-            try{
+        for(PlayingCard card : this.primaryDeck) {
+            try {
                 card.save(this.context);
                 this.pyDeckManager.callAttr("add_to_top", card.getImageAddress().toString());
-            }
-            catch(IOException e){
+            } catch (IOException e) {
                 setIsDeckInMemory(false);
                 e.printStackTrace();
             }
         }
-        sendImagesToPi();
         this.toFile(this.pyDeckManager);
+        sendImagesToPi();
         setIsDeckInMemory(true);
     }
 
