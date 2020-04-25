@@ -174,6 +174,7 @@ public class BluetoothService {
         public final static int QUERY_OVERRIDE = 3;
         public final static int QUERY_LOCK = 4;
         public final static int QUERY_UNLOCK = 5;
+        public final static int QUERY_IMAGE_TRANSFER = 6;
 
         // Receive File Codes
 //        private final static int RECV_FILE_OK = 1; // Now defined in bluetooth service
@@ -515,6 +516,20 @@ public class BluetoothService {
 
     public void unblock() {
         sendQuery(ConnectionManager.QUERY_UNLOCK);
+    }
+
+    public int transferImages() {
+        int return_code = -1;
+        sendQuery(ConnectionManager.QUERY_IMAGE_TRANSFER);
+        Pair<Integer, Integer> resp = receiveResponse();
+        if (resp.first == ConnectionManager.MSG_ACK) {
+            sendFile(LandingPageActivity.IMAGE_TRANSFER_FILE);
+            resp = receiveResponse();
+            if (resp.first == ConnectionManager.MSG_ACK) {
+                return_code = 0;
+            }
+        }
+        return return_code;
     }
 
     private Queue<String> readDecklist() {

@@ -5,6 +5,7 @@ import random
 
 IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'deck')
 DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.json')
+IMAGE_TRANSFER_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'image_transfer.json')
 
 def empty_deck():
     return Deck([])
