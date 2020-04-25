@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 
 import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -109,6 +110,17 @@ public class EditDeckManager extends AbstractDeckManager {
         this.primaryDeck.remove(card);
 
         this.pyDeckManager.callAttr("remove_from_index", cardIndex);
+    }
+
+    void sendImagesToPi()
+    {
+        Python py = Python.getInstance();
+
+        PyObject pyFileTransfer = py.getModule("file_transfer");
+        PyObject dict = pyFileTransfer.callAttr("FileTransferDict");
+        dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
+
+        
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
