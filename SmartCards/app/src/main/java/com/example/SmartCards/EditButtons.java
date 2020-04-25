@@ -8,7 +8,8 @@ public enum EditButtons {
     DISCARD_TO_TOP_OF_DECK,
     DISCARD_TO_DECK_RANDOM,
     SHUFFLE_ADD_TO_TOP,
-    DECK_TO_DISCARD;
+    DECK_TO_DISCARD,
+    ALL_DISCARD_TO_DECK;
 
     private static final int shuffleDeckIcon = R.drawable.shuffle;
     private static final String shuffleDeckText = "Shuffle Deck";
@@ -23,7 +24,10 @@ public enum EditButtons {
     private static final String shuffleAddToTopText = "Add To Top";
 
     private static final int deckToDiscardIcon = R.drawable.deck_to_discard;
-    private static final String deckToDiscardText = "Add All To Deck";
+    private static final String deckToDiscardText = "Add To Discard";
+
+    private static final int allDiscardToDeckIcon = R.drawable.all_discard_to_deck;
+    private static final String allDiscardToDeckIconText = "Add All To Deck";
 
 
     public static Drawable getIcon(Context context, EditButtons button){
@@ -38,6 +42,8 @@ public enum EditButtons {
                 return context.getResources().getDrawable(shuffleAddToTopIcon);
             case DECK_TO_DISCARD:
                 return context.getResources().getDrawable(deckToDiscardIcon);
+            case ALL_DISCARD_TO_DECK:
+                return context.getResources().getDrawable(allDiscardToDeckIcon);
         }
         return null;
     }
@@ -54,6 +60,8 @@ public enum EditButtons {
                 return shuffleAddToTopText;
             case DECK_TO_DISCARD:
                 return deckToDiscardText;
+            case ALL_DISCARD_TO_DECK:
+                return allDiscardToDeckIconText;
         }
         return null;
     }

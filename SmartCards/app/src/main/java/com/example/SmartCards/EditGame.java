@@ -20,11 +20,9 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     private DeckType deckType;
 
     private final EditButtons[] deckButtons = {EditButtons.SHUFFLE_DECK, EditButtons.SHUFFLE_ADD_TO_TOP, EditButtons.DECK_TO_DISCARD};
-    private final EditButtons[] discardButtons = {EditButtons.DISCARD_TO_DECK_RANDOM, EditButtons.DISCARD_TO_TOP_OF_DECK};
+    private final EditButtons[] discardButtons = {EditButtons.DISCARD_TO_DECK_RANDOM, EditButtons.DISCARD_TO_TOP_OF_DECK, EditButtons.ALL_DISCARD_TO_DECK};
 
 
-
-    //GridView cardGridView;
     TextView subDeckTitle;
 
     private GameDeckManager deckManager;
