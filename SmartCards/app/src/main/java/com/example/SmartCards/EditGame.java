@@ -2,6 +2,8 @@ package com.example.SmartCards;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,6 +32,8 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     private CardListAdapter cardListAdapter;
     private EditButtonAdapter editButtonAdapter;
 
+    private ConstraintLayout constraintLayout;
+
     private RecyclerView cardRecyclerView, buttonRecyclerView;
 
     @Override
@@ -40,6 +44,7 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         cardRecyclerView = findViewById(R.id.editGameDisplayListView);
         buttonRecyclerView = findViewById(R.id.editGameButtonListView);
         subDeckTitle = findViewById(R.id.editGameTitle);
+        constraintLayout = findViewById(R.id.editGameLayout);
 
         Intent intent = getIntent();
 
@@ -51,26 +56,40 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         deckManager.setPrimaryDeck(deckType);
         //deckManager.loadFromMemoryIfPossible(new TextView(this));
 
-        cardListAdapter = new CardListAdapter(this, deckManager, this);
+        cardListAdapter = new CardListAdapter(this, deckManager, false, this);
         cardRecyclerView.setAdapter(cardListAdapter);
 
-        if(deckType == DeckType.DECK) {
-            editButtonAdapter = new EditButtonAdapter(this, deckButtons, this);
-        }
-        if(deckType == DeckType.DISCARD){
-            editButtonAdapter = new EditButtonAdapter(this, discardButtons, this);
-        }
-        buttonRecyclerView.setAdapter(editButtonAdapter);
+        modifyLayoutForDeckType();
 
+        /*
         if(deckType != DeckType.INPLAY) {
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
             itemTouchHelper.attachToRecyclerView(cardRecyclerView);
         }
+        */
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         cardRecyclerView.addItemDecoration(divider);
     }
 
+    private void modifyLayoutForDeckType(){
+        if(deckType == DeckType.DECK) {
+            editButtonAdapter = new EditButtonAdapter(this, deckButtons, this);
+            buttonRecyclerView.setAdapter(editButtonAdapter);
+        }
+        if(deckType == DeckType.DISCARD){
+            editButtonAdapter = new EditButtonAdapter(this, discardButtons, this);
+            buttonRecyclerView.setAdapter(editButtonAdapter);
+        }
+        if(deckType == DeckType.INPLAY) {
+            ConstraintSet constraintSet = new ConstraintSet();
+            constraintSet.clone(constraintLayout);
+            constraintSet.connect(cardRecyclerView.getId(),ConstraintSet.BOTTOM,constraintLayout.getId(),ConstraintSet.BOTTOM, 0);
+            constraintSet.applyTo(constraintLayout);
+        }
+    }
+
+ /*
     ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
             ItemTouchHelper.DOWN, 0) {
         @Override
@@ -96,6 +115,8 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
         }
     };
+
+  */
 
     private void setSubDeckTitle(DeckType deckType) {
         switch (deckType) {
