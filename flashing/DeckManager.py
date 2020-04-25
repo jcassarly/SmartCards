@@ -6,6 +6,9 @@ import random
 IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'deck')
 DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.json')
 
+def empty_deck():
+    return Deck([])
+
 def load_deck(file_path):
     """Creates a deck loaded from the given file path
 
@@ -13,9 +16,15 @@ def load_deck(file_path):
     :returns: the Deck object created after reading this file
 
     """
-    deck = Deck([])
+    deck = empty_deck()
     deck.from_file(file_path)
     return deck
+
+def remove_path(file_path):
+    return file_path[len(IMAGE_DIR) + len(os.sep):] if file_path is not None else None
+
+def add_path(file_path):
+    return os.path.join(IMAGE_DIR, file_path) if file_path is not None else None
 
 class Deck:
     def __init__(self, image_paths):
@@ -54,7 +63,7 @@ class Deck:
         """
         return hash((tuple(self.deckList), tuple(self.inPlayList), tuple(self.discardList)))
 
-    def __all_cards(self):
+    def all_cards(self):
         """Puts all the cards in the deck into a single list
 
         :returns: a list with all the cards in the order: in play, deck, discard
@@ -99,7 +108,7 @@ class Deck:
         for card in deck_list:
             # TODO: add something to handle the case of the card not having the IMAGE_DIR prefix
             # remove the prefix (or leave alone if None)
-            filenames.append(card[len(IMAGE_DIR) + len(os.sep):] if card is not None else None)
+            filenames.append(remove_path(card))
 
         return filenames
 
@@ -119,7 +128,7 @@ class Deck:
 
         for card in deck_list:
             # append the IMAGE_DIR prefix (or do nothing if the card is None)
-            paths.append(os.path.join(IMAGE_DIR, card) if card is not None else None)
+            paths.append(add_path(card))
 
         return paths
 
@@ -170,15 +179,20 @@ class Deck:
         """
         '''filepath is where we read from'''
         if os.path.exists(file_path):
-            with open(file_path, 'r') as input_file:
-                deck_data = json.load(input_file)
+            try:
+                with open(file_path, 'r') as input_file:
+                    deck_data = json.load(input_file)
 
-                self.deckList = self.__add_path(deck_data['deckList'])
-                self.inPlayList = self.__add_path(deck_data['inPlayList'])
-                self.discardList = self.__add_path(deck_data['discardList'])
-                self.rev_number = deck_data['rev_number']
+                    self.deckList = self.__add_path(deck_data['deckList'])
+                    self.inPlayList = self.__add_path(deck_data['inPlayList'])
+                    self.discardList = self.__add_path(deck_data['discardList'])
+                    self.rev_number = deck_data['rev_number']
+            except json.JSONDecodeError:
+                self.__init__([])
+                self.to_file(file_path)
         else:
             self.__init__([])
+            self.to_file(file_path)
 
     def shuffle(self):
         """Shuffle the order of the deck list"""
@@ -319,6 +333,25 @@ class Deck:
 
         """
         return self.remove_from_index(self.deck_len() - 1)
+
+    def shuffle_add_to_top(self, deck_index):
+        """Moves the card in the deck to the top of the deck and shuffles the rest
+
+        :param int deck_index:
+            the index of the card to put on the top of the deck
+        :return:
+            True if the card was moved to the top of th deck, False otherwise
+            (ie the deck list was empty)
+
+        """
+        removed_card = self.remove_from_index(deck_index)
+        was_success = removed_card is not None
+
+        if was_success:
+            self.shuffle()
+            self.add_to_top(removed_card)
+
+        return was_success
 
     def discard_from_play(self, display_id):
         """Discards the card on display_id from play
