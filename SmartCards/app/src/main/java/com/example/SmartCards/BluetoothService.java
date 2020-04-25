@@ -200,8 +200,8 @@ public class BluetoothService {
         private int state = STATE_QUERY;
 
         // Bluetooth packet size
-        private final int RECEIVE_BUFFER_SIZE = 8124;
-        private final int TRANSMIT_BUFFER_SIZE = 8124;
+        private final int RECEIVE_BUFFER_SIZE = 8192;
+        private final int TRANSMIT_BUFFER_SIZE = 8192;
         private final int INT_SIZE = 4;
 
         public static final String TAG = "BLUETOOTH_MANAGER";

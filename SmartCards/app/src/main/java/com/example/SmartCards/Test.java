@@ -48,6 +48,24 @@ public class Test extends AppCompatActivity {
         {
             LandingPageActivity.bluetooth_service.sendFile(card.getImageAddress().toString());
             response = LandingPageActivity.bluetooth_service.receiveResponse();
+
+            if (response.first != 0xBEEFCAFE)
+            {
+                LandingPageActivity.bluetooth_service.sendFile(card.getImageAddress().toString());
+                response = LandingPageActivity.bluetooth_service.receiveResponse();
+
+                if (response.first == 0xBEEFCAFE)
+                {
+                    LandingPageActivity.bluetooth_service.sendFile(card.getImageAddress().toString());
+                    response = LandingPageActivity.bluetooth_service.receiveResponse();
+
+                    if (response.first == 0xBEEFCAFE)
+                    {
+                        break;
+                    }
+                }
+            }
+
             display_text += "ACK (Name: " + card.getCardName() + ", ID: " + card.getIdName() + "): " + response.first.toString() + "\n";
         }
 

@@ -119,7 +119,7 @@ class BluetoothConn():
                 data = data[BluetoothConn.RECV_DATA : ]
                 while len(data) < size:
                     recv_data = self.select_recv()
-                    if data is None:
+                    if data is None or recv_data is None:
                         break
                     data += recv_data
                     print("Received {} bytes".format(len(data)), end="\r", flush=True)
@@ -155,7 +155,7 @@ class BluetoothConn():
     def recv_query(self):
         # returns type of query, an integer
         data, code = self.recv()
-        if bytes_to_int(data, BluetoothConn.INDEX_TYPE) == BluetoothConn.MSG_QUERY:
+        if data is not None and bytes_to_int(data, BluetoothConn.INDEX_TYPE) == BluetoothConn.MSG_QUERY:
             code = bytes_to_int(data, BluetoothConn.INDEX_CODE)
         else:
             code = -1 # temp err handling
@@ -163,7 +163,7 @@ class BluetoothConn():
 
     def recv_file(self, file_path):
         data, code = self.recv()
-        
+
         if code == RecvFileCode.OK:
             with open(file_path, 'wb') as phil:
                 phil.write(data)
@@ -173,7 +173,7 @@ class BluetoothConn():
 if __name__=="__main__":
     server = BluetoothConn()
     server.wait_for_connection()
-    
+
     while server.is_connected():
         server.recv()
         server.send_ack()
