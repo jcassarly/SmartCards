@@ -68,6 +68,8 @@ def download_photo(destination_path, photos_url):
     with open(destination_path, "wb") as out:
         out.write(response.content)
 
+    time.sleep(0.5)
+
 def image_cli():
     parser = argparse.ArgumentParser("Pull down a card image and convert it to the proper format and put it in the image processor")
 
