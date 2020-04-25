@@ -101,7 +101,7 @@ class BluetoothConn():
 
     def select_recv(self):
         receiving, _, _ = select.select([self.conn_sock], [],[], 10)
-        if receiving is None:
+        if len(receiving) == 0:
             self.conn_sock.close()
             self.conn_sock = None
             return None
@@ -110,20 +110,22 @@ class BluetoothConn():
 
     def recv(self):
         data = None
-        return_code = RecvFileCode.OK
+        return_code = RecvFileCode.ERR
         if self.is_connected():
             data = self.select_recv()
-            size = bytes_to_int(data, BluetoothConn.RECV_SIZE)
-            print("Receiving {} bytes, Packet size: {}".format(len(data), size))
-            data = data[BluetoothConn.RECV_DATA : ]
-            while len(data) < size:
-                data += self.select_recv()
-                if data is None:
-                    break
-                print("Received {} bytes".format(len(data)), end="\r", flush=True)
-            if len(data) < size:
-                return_code = RecvFileCode.ERR
-            print("Done receiving")
+            if data is not None:
+                size = bytes_to_int(data, BluetoothConn.RECV_SIZE)
+                print("Receiving {} bytes, Packet size: {}".format(len(data), size))
+                data = data[BluetoothConn.RECV_DATA : ]
+                while len(data) < size:
+                    recv_data = self.select_recv()
+                    if data is None:
+                        break
+                    data += recv_data
+                    print("Received {} bytes".format(len(data)), end="\r", flush=True)
+                if len(data) == size:
+                    return_code = RecvFileCode.OK
+                print("Done receiving")
 
         return data, return_code
 
