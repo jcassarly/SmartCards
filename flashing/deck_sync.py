@@ -165,6 +165,7 @@ class DeckSynchronizer():
 
         if recv_file_code != RecvFileCode.OK:
             print("Recv Error: {}".format(recv_file_code))
+            self.connection.send_err(ErrorCode.RECEIVE)
             self.deck_lock.release()
             return SyncState.RECEIVE_ERROR
 
