@@ -120,5 +120,8 @@ public class LandingPageActivity extends AppCompatActivity {
 
     public void connectBluetooth(View view) {
         bluetooth_service.connect(CONNECTION_UUID);
+        //Toast.makeText(this, "Connection Starting", Toast.LENGTH_SHORT).show();
+        while (!bluetooth_service.isConnected());
+        Toast.makeText(this, "Connection Successful", Toast.LENGTH_SHORT).show();
     }
 }
