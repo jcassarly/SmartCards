@@ -85,7 +85,7 @@ public class LandingPageActivity extends AppCompatActivity {
     public void openInfo(View view) {
         Intent intent = new Intent(this, InfoActivity.class);
         startActivity(intent);
-        overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom);
+        overridePendingTransition(R.anim.slide_in_bottom, R.anim.slide_out_top);
     }
 
     public void createDeck(View view) {

@@ -94,9 +94,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
         Intent intent = new Intent(this, EditGame.class);
 
-        //intent.putExtra("deckType", deckType);
-        //intent.putExtra("subdeck", (Serializable) deckManager.getDeck());
-
         switch(deckType){
             case DECK:
                 intent.putExtra("subdeck", (Serializable) deckSubdeck);
@@ -114,8 +111,8 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
 
-        //startActivity(intent);
         startActivityForResult(intent, RESULT_EDIT_GAME);
+        overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom);
         setResult(RESULT_OK, intent);
     }
 
