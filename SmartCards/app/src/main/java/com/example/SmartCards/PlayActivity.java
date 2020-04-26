@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -89,32 +90,39 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
 
     public void modifySubdeck(DeckType deckType){
+        if (LandingPageActivity.bluetooth_service.isConnected()) {
+            if (LandingPageActivity.bluetooth_service.block() == BluetoothService.SEND_STATUS.SUCCESS) {
+                Intent intent = new Intent(this, EditGame.class);
 
-        Intent intent = new Intent(this, EditGame.class);
+                //intent.putExtra("deckType", deckType);
+                //intent.putExtra("subdeck", (Serializable) deckManager.getDeck());
 
-        //intent.putExtra("deckType", deckType);
-        //intent.putExtra("subdeck", (Serializable) deckManager.getDeck());
+                switch (deckType) {
+                    case DECK:
+                        intent.putExtra("subdeck", (Serializable) deckSubdeck);
+                        intent.putExtra("deckType", deckType);
+                        break;
+                    case INPLAY:
+                        intent.putExtra("subdeck", (Serializable) inPlaySubdeck);
+                        intent.putExtra("deckType", deckType);
+                        break;
+                    case DISCARD:
+                        intent.putExtra("subdeck", (Serializable) discardSubdeck);
+                        intent.putExtra("deckType", deckType);
+                        break;
+                    default:
+                        break;
+                }
 
-        switch(deckType){
-            case DECK:
-                intent.putExtra("subdeck", (Serializable) deckSubdeck);
-                intent.putExtra("deckType", deckType);
-                break;
-            case INPLAY:
-                intent.putExtra("subdeck", (Serializable) inPlaySubdeck);
-                intent.putExtra("deckType", deckType);
-                break;
-            case DISCARD:
-                intent.putExtra("subdeck", (Serializable) discardSubdeck);
-                intent.putExtra("deckType", deckType);
-                break;
-            default:
-                break;
+                //startActivity(intent);
+                startActivityForResult(intent, RESULT_EDIT_GAME);
+                setResult(RESULT_OK, intent);
+            } else {
+                Toast.makeText(this, "Unable to lock the deck", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Bluetooth is not connected", Toast.LENGTH_SHORT).show();
         }
-
-        //startActivity(intent);
-        startActivityForResult(intent, RESULT_EDIT_GAME);
-        setResult(RESULT_OK, intent);
     }
 
 

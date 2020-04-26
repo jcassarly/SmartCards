@@ -106,7 +106,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 startActivity(intent);
                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             } else {
-                Toast.makeText(this, "Error overriding pi", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Unable to override pi", Toast.LENGTH_SHORT).show();
             }
         } else {
             Toast.makeText(this, "Connect Bluetooth First", Toast.LENGTH_SHORT).show();

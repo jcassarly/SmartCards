@@ -551,6 +551,14 @@ public class BluetoothService {
         return sendQuery(QUERY_CODES.UNLOCK);
     }
 
+    public int getDeckList() {
+        int return_code = SEND_STATUS.ERROR;
+        if (sendQuery(QUERY_CODES.JSON) == SEND_STATUS.SUCCESS) {
+            return_code = receiveFile(LandingPageActivity.DECK_LIST);
+        }
+        return return_code;
+    }
+
     public int transferImages() {
         int return_code = SEND_STATUS.ERROR;
         if (sendQuery(QUERY_CODES.IMAGE_TRANSFER) == SEND_STATUS.SUCCESS) {
