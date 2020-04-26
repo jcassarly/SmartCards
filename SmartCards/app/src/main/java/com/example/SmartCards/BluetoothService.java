@@ -380,23 +380,30 @@ public class BluetoothService {
                     }
                 }
             }
-            try {
-                query_responses.put(new Pair<Integer, Integer>(msgType, msgCode));
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
+
+            if (msgType != MSG_TYPES.RECV_FILE)
+            {
+                try {
+                    query_responses.put(new Pair<Integer, Integer>(msgType, msgCode));
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
             }
+
         }
 
-        public int receiveFile(String file_name) {
+        public int receiveFile(String file_path) {
             FileOutputStream fos = null;
             try {
                 byte file_data[] = file_queue.take();
+
+                String debug = new String(file_data);
                 // Check if we actually received an error message instead
                 if (file_data.length <= 8) {
                     // Return error code
                     return RECV_FILE_CODES.ERR;
                 }
-                File file = new File(parent_activity.getFilesDir(), file_name);
+                File file = new File(file_path);
                 if (!file.exists()) {
                     file.createNewFile();
                 }
@@ -513,10 +520,10 @@ public class BluetoothService {
         }
     }
 
-    public int receiveFile(String file_name) {
+    public int receiveFile(String file_path) {
         int return_code = SEND_STATUS.ERROR;
         if (manage_conn_thread != null) {
-            if (manage_conn_thread.receiveFile(file_name) == RECV_FILE_CODES.OK) {
+            if (manage_conn_thread.receiveFile(file_path) == RECV_FILE_CODES.OK) {
                 return_code = SEND_STATUS.SUCCESS;
             }
         }

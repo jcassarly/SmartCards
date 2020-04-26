@@ -133,7 +133,13 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         }
     }
 
-    public void completeEdit(View view){
+    public void completeEdit(View view)
+    {
+        finish();
+    }
+
+    public void completeAndSaveEdit()
+    {
         deckManager.saveDeck(this);
         LandingPageActivity.bluetooth_service.override();
         finish();
@@ -169,6 +175,7 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
                     break;
             }
             setResult(RESULT_OK);
+            completeAndSaveEdit();
             finish();
         } else {
             Toast.makeText(getApplicationContext(), "Please select a card first", Toast.LENGTH_SHORT).show();

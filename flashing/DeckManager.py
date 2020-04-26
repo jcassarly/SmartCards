@@ -189,6 +189,7 @@ class Deck:
                     self.discardList = self.__add_path(deck_data['discardList'])
                     self.rev_number = deck_data['rev_number']
             except json.JSONDecodeError:
+                print("Wat")
                 self.__init__([])
                 self.to_file(file_path)
         else:

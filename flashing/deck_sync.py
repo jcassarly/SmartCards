@@ -57,26 +57,26 @@ class DeckSynchronizer():
 
         next_state = SyncState.WAITING_FOR_QUERY
 
-        if self.deck_lock.locked() and self.app_lock and query_code == QueryCode.UNLOCK:
+        if self.deck_lock.locked() and self.app_lock and query_code == QueryCode.UNLOCK: # 111
             self.deck_lock.release()
             self.app_lock = False
             self.connection.send_ack()
 
-        elif self.deck_lock.locked():
+        elif self.deck_lock.locked() and not self.app_lock: # 101 100
             next_state = SyncState.BUSY_ERROR
 
-        elif query_code == QueryCode.UNLOCK and not self.app_lock:
+        elif not self.deck_lock.locked() and not self.app_lock and query_code == QueryCode.UNLOCK: # 001
             # the deck is unlocked already, but this error is not really an issue
             self.connection.send_ack()
 
-        elif query_code == QueryCode.UNLOCK or self.app_lock:
+        elif not self.deck_lock.locked() and query_code == QueryCode.UNLOCK: # 010 011
             print("I have no idea how we got here")
             # this should be impossible because app lock can
             # never be true without the deck lock being locked
             next_state = SyncState.UNKNOWN_ERROR
-
+# 000 110
         elif query_code == QueryCode.LOCK:
-            self.deck_lock.acquire()
+            self.__acquire_lock_with_app_bypass()
             self.app_lock = True
             self.connection.send_ack()
 
