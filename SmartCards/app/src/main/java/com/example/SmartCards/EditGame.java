@@ -139,6 +139,7 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
     @Override
     public void finish() {
+        deckManager.saveDeck(this);
         super.finish();
         overridePendingTransition(R.anim.slide_in_bottom, R.anim.slide_out_top);
     }
