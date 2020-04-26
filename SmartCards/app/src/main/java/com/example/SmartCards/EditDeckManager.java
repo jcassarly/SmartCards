@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
@@ -128,7 +129,9 @@ public class EditDeckManager extends AbstractDeckManager {
 
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
 
-        LandingPageActivity.bluetooth_service.transferImages();
+        if (LandingPageActivity.bluetooth_service.transferImages() == BluetoothService.SEND_STATUS.ERROR) {
+            Toast.makeText(context, "Unable to transfer images", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)

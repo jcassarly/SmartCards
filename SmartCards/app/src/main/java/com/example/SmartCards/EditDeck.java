@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -79,10 +80,15 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     // TODO: leave this function, but move the save deck and name to be a call from deckmanager
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void completeEditDeck(View view){
-        //Convert list deck to the deck manager
-        deckManager.saveDeck(this);
-        deckManager.saveDeckName(this.deckName);
-        finish();
+        if (LandingPageActivity.bluetooth_service.isConnected()) {
+
+            //Convert list deck to the deck manager
+            deckManager.saveDeck(this);
+            deckManager.saveDeckName(this.deckName);
+            finish();
+        } else {
+            Toast.makeText(this, "Bluetooth is not connected", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // refreshes the display seen by the user
