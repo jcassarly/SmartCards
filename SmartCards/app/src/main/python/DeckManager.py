@@ -3,8 +3,12 @@ import json
 import threading
 import random
 
-IMAGE_DIR = os.path.join(os.sep, 'data', 'user', '0', 'com.example.herroworld', 'app_deck')
-DECK_LIST = os.path.join(os.sep, 'data', 'user', '0', 'com.example.herroworld', 'decklist.json')
+IMAGE_DIR = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'deck')
+DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'decklist.json')
+IMAGE_TRANSFER_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'image_transfer.json')
+
+def empty_deck():
+    return Deck([])
 
 def load_deck(file_path):
     """Creates a deck loaded from the given file path
@@ -13,12 +17,15 @@ def load_deck(file_path):
     :returns: the Deck object created after reading this file
 
     """
-    deck = Deck([])
+    deck = empty_deck()
     deck.from_file(file_path)
     return deck
 
-def empty_deck():
-    return Deck([])
+def remove_path(file_path):
+    return file_path[len(IMAGE_DIR) + len(os.sep):] if file_path is not None else None
+
+def add_path(file_path):
+    return os.path.join(IMAGE_DIR, file_path) if file_path is not None else None
 
 class Deck:
     def __init__(self, image_paths):
@@ -79,7 +86,7 @@ class Deck:
         :returns: the next card (yields)
 
         """
-        for card in self.__all_cards():
+        for card in self.all_cards():
             yield card
 
     def update_rev_number(self):
@@ -102,7 +109,7 @@ class Deck:
         for card in deck_list:
             # TODO: add something to handle the case of the card not having the IMAGE_DIR prefix
             # remove the prefix (or leave alone if None)
-            filenames.append(card[len(IMAGE_DIR) + len(os.sep):] if card is not None else None)
+            filenames.append(remove_path(card))
 
         return filenames
 
@@ -122,7 +129,7 @@ class Deck:
 
         for card in deck_list:
             # append the IMAGE_DIR prefix (or do nothing if the card is None)
-            paths.append(os.path.join(IMAGE_DIR, card) if card is not None else None)
+            paths.append(add_path(card))
 
         return paths
 
@@ -194,7 +201,7 @@ class Deck:
 
     def restart(self):
         """Resets the deck to have all the cards in play and discard shuffled back into the deck"""
-        self.deckList = self.__all_cards()
+        self.deckList = self.all_cards()
 
         self.discardList = []
         self.inPlayList = [None, None, None, None, None, None]
@@ -346,7 +353,6 @@ class Deck:
             self.add_to_top(removed_card)
 
         return was_success
-
 
     def discard_from_play(self, display_id):
         """Discards the card on display_id from play

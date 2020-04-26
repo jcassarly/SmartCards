@@ -80,7 +80,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
-        deckManager.saveDeck();
+        deckManager.saveDeck(this);
         deckManager.saveDeckName(this.deckName);
         finish();
     }

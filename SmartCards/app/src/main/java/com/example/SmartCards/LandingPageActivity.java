@@ -34,6 +34,7 @@ public class LandingPageActivity extends AppCompatActivity {
     public static String IMAGE_DIR = "images";
     public static String DECK_LIST_DIR;
     public static String DECK_LIST;
+    public static String FILE_TRANSFER_LIST;
     public static String BLUETOOTH_DEVICE_NAME = "raspberrypi";
     public static ReceiveMsgHandler receive_msg_handler = null;
     public static BluetoothService bluetooth_service = null;
@@ -63,6 +64,7 @@ public class LandingPageActivity extends AppCompatActivity {
         IMAGE_DIR = dir.toString();
         DECK_LIST_DIR = decklist.toString();
         DECK_LIST = DECK_LIST_DIR + "/decklist.json";
+        FILE_TRANSFER_LIST = DECK_LIST_DIR + "/file_transfer.json";
 
 
         // Setup bluetooth, do something if it fails?
@@ -76,6 +78,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 IMAGE_DIR);
 
         deckManager = EditDeckManager.getInstance(this);
+
     }
 
 

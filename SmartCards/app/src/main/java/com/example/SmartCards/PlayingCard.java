@@ -6,8 +6,12 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
+
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,13 +21,14 @@ import java.io.Serializable;
 public class PlayingCard implements Serializable {
 
     //private Context context;
-    private String cardName, tempImageAddress, savedImageAddress, idName;
+    private String cardName, tempImageAddress, savedImageAddress, idName, savedUrl;
     private boolean isSaved;
 
     public PlayingCard(Context context, String cardName, Uri tempImageAddress){
         //this.context = context;
         this.cardName = cardName;
         this.tempImageAddress = tempImageAddress.toString();
+        this.savedUrl = null;
         this.isSaved = false;
     }
 
@@ -33,6 +38,9 @@ public class PlayingCard implements Serializable {
         this.idName = new File(savedImageAddress).getName();
         SharedPreferences sharedPreferences = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
         this.cardName = sharedPreferences.getString(idName,"DefaultCardName");
+
+        // TODO: consider changing the default image
+        this.savedUrl = sharedPreferences.getString(idName + "_url", "https://www.complexsql.com/wp-content/uploads/2018/11/null.png");
         isSaved = true;
     }
 
@@ -47,6 +55,11 @@ public class PlayingCard implements Serializable {
         else{
             return Uri.parse(tempImageAddress);
         }
+    }
+
+    public String getSavedUrl()
+    {
+        return this.savedUrl;
     }
 
     public void setCardName(Context context, String cardName) {
@@ -69,9 +82,12 @@ public class PlayingCard implements Serializable {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void save(Context context) throws IOException {
-        if(!isSaved) {
+    public boolean save(Context context) throws IOException {
+        boolean needsToSave = !isSaved;
+        if(needsToSave) {
             idName = String.valueOf(EditDeckManager.getNextID(context));
+
+            Toast.makeText(context, "Saving " + this.cardName, Toast.LENGTH_SHORT).show();
 
             //Save Card Image
             if (!this.tempImageAddress.equals(this.savedImageAddress)) {
@@ -79,12 +95,20 @@ public class PlayingCard implements Serializable {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), getImageAddress());
                 File imageFile = new File(dir, idName);
 
+                Bitmap.CompressFormat format = (getImageAddress().toString().endsWith(".png")) ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
                 try (FileOutputStream out = new FileOutputStream(imageFile)) {
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    bitmap.compress(format, 100, out);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 savedImageAddress = imageFile.getAbsolutePath();
+            }
+
+            PyObject pyImgurUploader = AbstractDeckManager.getPyImgurUploaderInstance();
+            this.savedUrl = pyImgurUploader.callAttr("upload_image", savedImageAddress).toString();
+            if (this.savedUrl != null)
+            {
+                saveUrl(context, this.savedUrl);
             }
 
             //Save Card Name
@@ -92,6 +116,17 @@ public class PlayingCard implements Serializable {
 
             isSaved = true;
         }
+
+        // return if the image actually got saved
+        return needsToSave;
+    }
+
+    private void saveUrl(Context context, String url)
+    {
+        SharedPreferences sharedPref = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(idName + "_url", url);
+        editor.apply();
     }
 
     private void saveCardName(Context context, String name){
@@ -108,6 +143,8 @@ public class PlayingCard implements Serializable {
             savedImageAddress = null;
             SharedPreferences sharedPref = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
             sharedPref.edit().remove(idName);
+            sharedPref.edit().remove(idName + "_url");
+
             idName = null;
         }
     }
