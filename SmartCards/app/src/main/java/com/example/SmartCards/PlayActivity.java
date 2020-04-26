@@ -19,7 +19,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     private static final int RESULT_EDIT_GAME = 1;
 
     TextView deckNameText, deckCountText, inPlayCountText, discardCountText;
-    Button exitButton;
+    Button exitButton, restartButton;
     ConstraintLayout deckSubdeckButton, inPlaySubdeckButton, discardSubdeckButton;
     private String deckName;
 
@@ -39,6 +39,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         inPlayCountText = (TextView) findViewById(R.id.inPlayCountText);
         discardCountText = (TextView) findViewById(R.id.discardCountText);
         exitButton = (Button) findViewById(R.id.exitGameButton);
+        restartButton = (Button) findViewById(R.id.playRestartButton);
         deckSubdeckButton = (ConstraintLayout) findViewById(R.id.deckControlsLayout);
         inPlaySubdeckButton = (ConstraintLayout) findViewById(R.id.inPlayControlsLayout);
         discardSubdeckButton = (ConstraintLayout) findViewById(R.id.discardControlsLayout);
@@ -79,6 +80,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void restartGame(View view){
         //When game is restarted so all cards are back in Deck subdeck and shuffled
         //TODO:Send restart command to pi
+        deckManager.restartGame();
         this.updateDeckCounts();
     }
 

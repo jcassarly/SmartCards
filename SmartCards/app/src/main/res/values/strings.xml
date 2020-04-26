@@ -63,6 +63,8 @@
     <string name="play_screen_deck_text">Deck</string>
     <string name="play_screen_in_play_text">In Play</string>
     <string name="play_screen_discard_text">Discarded</string>
+    <string name="play_screen_shuffle_text">Shuffle Deck</string>
+    <string name="play_screen_restart_text">Restart Game</string>
 
     <!-- Edit Game Screen -->
     <string name="edit_game_back_text">Back</string>
