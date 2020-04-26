@@ -133,7 +133,7 @@ class BluetoothConn():
 
     def send_ack(self):
         print("sending ack")
-        self.send(ints_to_bytes([BluetoothConn.MSG_ACK, 0]))
+        self.send(BluetoothConn.MSG_ACK + ints_to_bytes([0]))
 
     def send_err(self, code=ErrorCode.UNKNOWN):
         # send an error code to the app?
