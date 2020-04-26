@@ -556,6 +556,10 @@ public class BluetoothService {
             if (receiveResponse().first == MSG_TYPES.ACK) {
                 return_code = SEND_STATUS.SUCCESS;
             }
+            else
+            {
+                return_code = SEND_STATUS.ERROR;
+            }
         }
         return return_code;
     }
@@ -565,6 +569,10 @@ public class BluetoothService {
         if (return_code == SEND_STATUS.SUCCESS) {
             if (receiveResponse().first == MSG_TYPES.ACK) {
                 return_code = SEND_STATUS.SUCCESS;
+            }
+            else
+            {
+                return_code = SEND_STATUS.ERROR;
             }
         }
         return return_code;
@@ -588,6 +596,14 @@ public class BluetoothService {
                 if (resp.first == MSG_TYPES.ACK) {
                     return_code = SEND_STATUS.SUCCESS;
                 }
+                else
+                {
+                    return_code = SEND_STATUS.ERROR;
+                }
+            }
+            else
+            {
+                return_code = SEND_STATUS.ERROR;
             }
         }
         return return_code;
@@ -651,6 +667,14 @@ public class BluetoothService {
                 if (resp.first == MSG_TYPES.ACK) {
                     return_code = SEND_STATUS.SUCCESS;
                 }
+                else
+                {
+                    return_code = SEND_STATUS.ERROR;
+                }
+            }
+            else
+            {
+                return_code = SEND_STATUS.ERROR;
             }
         }
         return return_code;
