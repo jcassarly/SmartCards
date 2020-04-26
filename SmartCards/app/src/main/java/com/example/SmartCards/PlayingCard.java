@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
@@ -17,6 +19,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+
+import static androidx.core.content.ContextCompat.getSystemService;
 
 public class PlayingCard implements Serializable {
 
@@ -87,7 +91,17 @@ public class PlayingCard implements Serializable {
         if(needsToSave) {
             idName = String.valueOf(EditDeckManager.getNextID(context));
 
-            Toast.makeText(context, "Saving " + this.cardName, Toast.LENGTH_SHORT).show();
+            Vibrator v = (Vibrator) context.getSystemService(context.VIBRATOR_SERVICE);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            {
+                v.vibrate(VibrationEffect.createOneShot(750, VibrationEffect.EFFECT_HEAVY_CLICK));
+            }
+            else
+            {
+                v.vibrate(750);
+            }
+
 
             //Save Card Image
             if (!this.tempImageAddress.equals(this.savedImageAddress)) {
