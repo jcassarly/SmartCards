@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class EditDeckManager extends AbstractDeckManager {
 
@@ -129,10 +130,17 @@ public class EditDeckManager extends AbstractDeckManager {
 
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
 
-        // TODO: Is this actually how I want to handle this?
-        if (LandingPageActivity.bluetooth_service.transferImages() == BluetoothService.SEND_STATUS.ERROR) {
-            Toast.makeText(context, "Unable to transfer images", Toast.LENGTH_SHORT).show();
-        }
+       int counter = 0;
+       while (counter < 5 && LandingPageActivity.bluetooth_service.transferImages() == BluetoothService.SEND_STATUS.ERROR) {
+           counter++;
+           // TODO: how do I actually sleep
+           try {
+               TimeUnit.SECONDS.sleep(5);
+           } catch (InterruptedException ie) {
+               ie.printStackTrace();
+           }
+           Toast.makeText(context, "Unable to transfer images", Toast.LENGTH_SHORT).show();
+       }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)

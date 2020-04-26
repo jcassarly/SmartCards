@@ -134,13 +134,15 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     }
 
     public void completeEdit(View view){
+        deckManager.saveDeck(this);
+        LandingPageActivity.bluetooth_service.override();
         finish();
     }
 
     @Override
     public void finish() {
-        super.finish();
         LandingPageActivity.bluetooth_service.unblock();
+        super.finish();
     }
 
     public void onButtonClick(EditButtons button) {

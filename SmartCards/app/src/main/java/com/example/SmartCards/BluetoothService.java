@@ -544,11 +544,23 @@ public class BluetoothService {
     }
 
     public int block() {
-        return sendQuery(QUERY_CODES.LOCK);
+        int return_code = sendQuery(QUERY_CODES.LOCK);
+        if (return_code == SEND_STATUS.SUCCESS) {
+            if (receiveResponse().first == MSG_TYPES.ACK) {
+                return_code = SEND_STATUS.SUCCESS;
+            }
+        }
+        return return_code;
     }
 
     public int unblock() {
-        return sendQuery(QUERY_CODES.UNLOCK);
+        int return_code = sendQuery(QUERY_CODES.UNLOCK);
+        if (return_code == SEND_STATUS.SUCCESS) {
+            if (receiveResponse().first == MSG_TYPES.ACK) {
+                return_code = SEND_STATUS.SUCCESS;
+            }
+        }
+        return return_code;
     }
 
     public int getDeckList() {
