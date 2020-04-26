@@ -104,31 +104,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
 
     public void modifySubdeck(DeckType deckType){
-<<<<<<< HEAD
-
-        Intent intent = new Intent(this, EditGame.class);
-
-        switch(deckType){
-            case DECK:
-                intent.putExtra("subdeck", (Serializable) deckSubdeck);
-                intent.putExtra("deckType", deckType);
-                break;
-            case INPLAY:
-                intent.putExtra("subdeck", (Serializable) inPlaySubdeck);
-                intent.putExtra("deckType", deckType);
-                break;
-            case DISCARD:
-                intent.putExtra("subdeck", (Serializable) discardSubdeck);
-                intent.putExtra("deckType", deckType);
-                break;
-            default:
-                break;
-        }
-
-        startActivityForResult(intent, RESULT_EDIT_GAME);
-        overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom);
-        setResult(RESULT_OK, intent);
-=======
         if (LandingPageActivity.bluetooth_service.isConnected()) {
             if (LandingPageActivity.bluetooth_service.block() == BluetoothService.SEND_STATUS.SUCCESS) {
                 Intent intent = new Intent(this, EditGame.class);
@@ -158,6 +133,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
                 //startActivity(intent);
                 startActivityForResult(intent, RESULT_EDIT_GAME);
+                overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom);
                 setResult(RESULT_OK, intent);
             } else {
                 Toast.makeText(this, "Unable to lock the deck", Toast.LENGTH_SHORT).show();
@@ -165,7 +141,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             Toast.makeText(this, "Bluetooth is not connected", Toast.LENGTH_SHORT).show();
         }
->>>>>>> shota/play_interface_bt
     }
 
 
