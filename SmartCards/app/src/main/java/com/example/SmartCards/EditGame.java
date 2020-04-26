@@ -164,6 +164,7 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
                     shuffleInDiscard();
                     break;
             }
+            setResult(RESULT_OK);
             finish();
         } else {
             Toast.makeText(getApplicationContext(), "Please select a card first", Toast.LENGTH_SHORT).show();
