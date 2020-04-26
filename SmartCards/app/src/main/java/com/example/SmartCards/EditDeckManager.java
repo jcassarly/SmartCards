@@ -133,7 +133,7 @@ public class EditDeckManager extends AbstractDeckManager {
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
-    void saveDeck()
+    void saveDeck(Context context)
     {
         this.pyDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
         List<PlayingCard> cardsToSend = new ArrayList<>();

@@ -95,7 +95,7 @@ public class GameDeckManager extends AbstractDeckManager {
     }
 
     @Override
-    void saveDeck() {
+    void saveDeck(Context context) {
         this.pyDeckManager.callAttr("to_file", LandingPageActivity.DECK_LIST);
     }
 

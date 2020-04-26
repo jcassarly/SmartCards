@@ -79,7 +79,7 @@ public abstract class AbstractDeckManager {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    abstract void saveDeck();
+    abstract void saveDeck(Context context);
     abstract void loadDeck(TextView deckName);
     abstract List<PlayingCard> getPrimaryDeck();
     abstract PlayingCard getCard(int index); // gets the card from the primary deck

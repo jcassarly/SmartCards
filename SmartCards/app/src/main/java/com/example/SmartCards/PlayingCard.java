@@ -87,6 +87,8 @@ public class PlayingCard implements Serializable {
         if(needsToSave) {
             idName = String.valueOf(EditDeckManager.getNextID(context));
 
+            Toast.makeText(context, "Saving " + this.cardName, Toast.LENGTH_SHORT).show();
+
             //Save Card Image
             if (!this.tempImageAddress.equals(this.savedImageAddress)) {
                 File dir = context.getDir("deck", context.MODE_PRIVATE);
@@ -102,7 +104,6 @@ public class PlayingCard implements Serializable {
                 savedImageAddress = imageFile.getAbsolutePath();
             }
 
-            Toast.makeText(context, "Uploading " + this.cardName, Toast.LENGTH_SHORT).show();
             PyObject pyImgurUploader = AbstractDeckManager.getPyImgurUploaderInstance();
             this.savedUrl = pyImgurUploader.callAttr("upload_image", savedImageAddress).toString();
             if (this.savedUrl != null)
