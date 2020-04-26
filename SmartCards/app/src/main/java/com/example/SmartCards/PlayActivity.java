@@ -81,6 +81,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         //When game is restarted so all cards are back in Deck subdeck and shuffled
         //TODO:Send restart command to pi
         deckManager.restartGame();
+        deckManager.saveDeck(this);
         this.updateDeckCounts();
     }
 
