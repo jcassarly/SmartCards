@@ -81,8 +81,10 @@ class DeckSynchronizer():
             self.connection.send_ack()
 
         elif query_code == QueryCode.JSON:
+            # probably dont need to lock to do this
             self.connection.send_file(DeckManager.DECK_LIST)
 
+        # this is not used, but leaving the functionality here because why not
         elif query_code == QueryCode.IMAGE:
             self.deck_lock.acquire()
             for card_path in self.deck:
@@ -97,8 +99,22 @@ class DeckSynchronizer():
 
         return next_state
 
+    def __acquire_lock_with_app_bypass(self):
+        if not self.app_lock and self.deck_lock.locked():
+            print("not sure how we got here (Acquire)")
+
+        if not self.app_lock:
+            self.deck_lock.acquire()
+
+    def __release_lock_with_app_bypass(self):
+        if not self.app_lock and not self.deck_lock.locked():
+            print("not sure how we got here (Release)")
+
+        if not self.app_lock:
+            self.deck_lock.release()
+
     def override_files(self):
-        self.deck_lock.acquire()
+        self.__acquire_lock_with_app_bypass()
 
         self.connection.send_ack()
 
@@ -153,12 +169,12 @@ class DeckSynchronizer():
         self.deck.from_file(TEMP_DECK_LIST)
         self.deck.to_file(DeckManager.DECK_LIST)
 
-        self.deck_lock.release()
+        self.__release_lock_with_app_bypass()
 
         return SyncState.WAITING_FOR_QUERY
 
     def get_images(self):
-        self.deck_lock.acquire()
+        self.__acquire_lock_with_app_bypass()
         self.connection.send_ack()
 
         print("Receiving Image Transfer JSON")
@@ -184,7 +200,7 @@ class DeckSynchronizer():
             image_loader.download_photo(image_path, url)
         print("Done Downloading Images")
 
-        self.deck_lock.release()
+        self.__release_lock_with_app_bypass()
 
         return SyncState.WAITING_FOR_QUERY
 
