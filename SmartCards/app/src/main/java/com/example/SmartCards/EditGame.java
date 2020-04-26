@@ -172,7 +172,7 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     }
 
     private boolean isButtonClickValid(EditButtons button){
-        if(cardListAdapter.getSelectedCardPosition() != -1 || button == EditButtons.ALL_DISCARD_TO_DECK){
+        if(cardListAdapter.getSelectedCardPosition() != -1 || button == EditButtons.ALL_DISCARD_TO_DECK || button == EditButtons.SHUFFLE_DECK){
             return true;
         }
         return false;
