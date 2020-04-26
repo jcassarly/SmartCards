@@ -217,10 +217,9 @@ public class BluetoothService {
 
         // File Transfer members
         private ByteBuffer cur_packet = null;
-        private Queue<String> send_file_queue;
 
-        private LinkedBlockingQueue<Pair<Integer, Integer>> query_responses;
-        private LinkedBlockingQueue<byte[]> file_queue = null;
+        private LinkedBlockingQueue<byte[]> query_responses;
+//        private LinkedBlockingQueue<byte[]> file_queue = null;
 
         private final String DECKLIST_FILE_NAME;
 
@@ -254,9 +253,8 @@ public class BluetoothService {
 //            TRANSMIT_BUFFER_SIZE = mmSocket.getMaxTransmitPacketSize();
             mmBuffer = ByteBuffer.allocate(RECEIVE_BUFFER_SIZE);
             this.parent_activity = parent_activity;
-            send_file_queue = new LinkedList<String>();
             query_responses = new LinkedBlockingQueue<>();
-            file_queue = new LinkedBlockingQueue<>();
+//            file_queue = new LinkedBlockingQueue<>();
             DECKLIST_FILE_NAME = deck_file_name;
 
 
@@ -360,7 +358,8 @@ public class BluetoothService {
             if (state == STATE_QUERY) {
                 parseResponse(msg);
             } else if (state == STATE_RECEIVE) {
-                file_queue.add(msg);
+//                file_queue.add(msg);
+                query_responses.add(msg);
 //                send(msg);
                 state = STATE_QUERY;
             }
@@ -384,7 +383,8 @@ public class BluetoothService {
             if (msgType != MSG_TYPES.RECV_FILE)
             {
                 try {
-                    query_responses.put(new Pair<Integer, Integer>(msgType, msgCode));
+//                    query_responses.put(new Pair<Integer, Integer>(msgType, msgCode));
+                    query_responses.put(msg);
                 } catch (InterruptedException ie) {
                     ie.printStackTrace();
                 }
@@ -395,7 +395,7 @@ public class BluetoothService {
         public int receiveFile(String file_path) {
             FileOutputStream fos = null;
             try {
-                byte file_data[] = file_queue.take();
+                byte file_data[] = query_responses.take();
 
                 String debug = new String(file_data);
                 // Check if we actually received an error message instead
@@ -459,7 +459,8 @@ public class BluetoothService {
         public Pair<Integer, Integer> getQueryResponse() {
             Pair<Integer, Integer> response = new Pair<Integer, Integer>(0,0);
             try {
-                response = query_responses.take();
+                byte response_bytes[] = query_responses.take();
+                response = new Pair<Integer, Integer>(getMsgInt(response_bytes, INDEX_TYPE), getMsgInt(response_bytes, INDEX_CODE));
             } catch (InterruptedException ie) {
                 ie.printStackTrace();
             }
