@@ -54,6 +54,12 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         updateSubdecks();
 
         deckManager = GameDeckManager.getInstance(this);
+
+        this.updateDeckCounts();
+    }
+
+    public void updateDeckCounts()
+    {
         deckManager.loadDeck(this.deckNameText);
 
         deckManager.setPrimaryDeck(DeckType.DECK);
@@ -73,6 +79,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void restartGame(View view){
         //When game is restarted so all cards are back in Deck subdeck and shuffled
         //TODO:Send restart command to pi
+        this.updateDeckCounts();
     }
 
     public void blockDock(){
@@ -122,6 +129,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RESULT_EDIT_GAME || resultCode == RESULT_OK){
             //TODO: Add whatever needs to happen everytime an 'editDeck' activity gets completed
+            this.updateDeckCounts();
         }
     }
 
