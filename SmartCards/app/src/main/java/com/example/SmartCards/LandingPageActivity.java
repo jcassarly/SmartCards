@@ -15,6 +15,7 @@ import android.os.Message;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
@@ -89,15 +90,27 @@ public class LandingPageActivity extends AppCompatActivity {
     }
 
     public void createDeck(View view) {
-        Intent intent = new Intent(this, EditDeck.class);
-        startActivity(intent);
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        if (bluetooth_service.isConnected()) {
+            Intent intent = new Intent(this, EditDeck.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        } else {
+            Toast.makeText(this, "Connect Bluetooth First", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void playGame(View view) {
-        Intent intent = new Intent(this, PlayActivity.class);
-        startActivity(intent);
-        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+        if (bluetooth_service.isConnected()) {
+            if (bluetooth_service.override() == BluetoothService.SEND_STATUS.SUCCESS) {
+                Intent intent = new Intent(this, PlayActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            } else {
+                Toast.makeText(this, "Unable to override pi", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Connect Bluetooth First", Toast.LENGTH_SHORT).show();
+        }
     }
     
     public void debug(View view) {

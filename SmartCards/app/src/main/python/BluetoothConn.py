@@ -149,24 +149,15 @@ class BluetoothConn():
         #   2: received not a full file, nothing written
         #   3: received an error
         print("Waiting to receive file: {}".format(file_name))
-        # metadata = self.recv()
-        # # file_name = bytes_to_int(data, BluetoothConn.INDEX_NAME)
-        # file_size = bytes_to_int(metadata, BluetoothConn.INDEX_SIZE)
-        # print("Receiving file of size: {}".format(file_size))
-        # data = bytearray()
-        # # extra_data = bytearray()
-        # remaining_data = file_size
-        # while remaining_data > 0:
-        #     remaining_data = remaining_data - len(data)
-        #     # recv_data = self.recv()
-        #     # data += recv_data[:remaining_data]
-        #     data += self.recv()
 
         data = self.recv()
-        print("data is equal: {}".format(data == self.moon))
-        print("Writing file: {}. Data amount: {}".format(file_name, len(data)))
-        with open(file_dir + file_name, 'wb') as phil:
-            phil.write(data)
+        if len(data) <= 8:
+            return RecvFileCode.ERR
+        else:
+            print("Writing file: {}. Data amount: {}".format(file_name, len(data)))
+            with open(file_dir + file_name, 'wb') as phil:
+                phil.write(data)
+            return RecvFileCode.OK
 
 if __name__=="__main__":
     server = BluetoothConn()

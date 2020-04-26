@@ -9,10 +9,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class PlayActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -83,6 +85,9 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         deckManager.restartGame();
         deckManager.saveDeck(this);
         this.updateDeckCounts();
+        if (LandingPageActivity.bluetooth_service.override() == BluetoothService.SEND_STATUS.ERROR) {
+            Toast.makeText(this, "Sync not complete, try again.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void blockDock(){
@@ -99,6 +104,7 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
 
     public void modifySubdeck(DeckType deckType){
+<<<<<<< HEAD
 
         Intent intent = new Intent(this, EditGame.class);
 
@@ -122,6 +128,44 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         startActivityForResult(intent, RESULT_EDIT_GAME);
         overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom);
         setResult(RESULT_OK, intent);
+=======
+        if (LandingPageActivity.bluetooth_service.isConnected()) {
+            if (LandingPageActivity.bluetooth_service.block() == BluetoothService.SEND_STATUS.SUCCESS) {
+                Intent intent = new Intent(this, EditGame.class);
+
+                //intent.putExtra("deckType", deckType);
+                //intent.putExtra("subdeck", (Serializable) deckManager.getDeck());
+
+                switch (deckType) {
+                    case DECK:
+                        intent.putExtra("subdeck", (Serializable) deckSubdeck);
+                        intent.putExtra("deckType", deckType);
+                        break;
+                    case INPLAY:
+                        intent.putExtra("subdeck", (Serializable) inPlaySubdeck);
+                        intent.putExtra("deckType", deckType);
+                        break;
+                    case DISCARD:
+                        intent.putExtra("subdeck", (Serializable) discardSubdeck);
+                        intent.putExtra("deckType", deckType);
+                        break;
+                    default:
+                        break;
+                }
+
+                LandingPageActivity.bluetooth_service.getDeckList();
+                deckManager.loadDeck(null);
+
+                //startActivity(intent);
+                startActivityForResult(intent, RESULT_EDIT_GAME);
+                setResult(RESULT_OK, intent);
+            } else {
+                Toast.makeText(this, "Unable to lock the deck", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Bluetooth is not connected", Toast.LENGTH_SHORT).show();
+        }
+>>>>>>> shota/play_interface_bt
     }
 
 
@@ -153,6 +197,16 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void finish() {
+        int counter = 0;
+        while (counter++ < 5 && LandingPageActivity.bluetooth_service.getDeckList() == BluetoothService.SEND_STATUS.ERROR) {
+            // TODO: how do I actually sleep
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+            Toast.makeText(this, "Unable to get Pi's deck", Toast.LENGTH_SHORT).show();
+        }
         super.finish();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }

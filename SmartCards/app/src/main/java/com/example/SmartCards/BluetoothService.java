@@ -60,12 +60,43 @@ public class BluetoothService {
     private ConnectThread make_conn_thread = null;
     private ConnectionManager manage_conn_thread = null;
 
-    // Receiving file codes
-    private final static int RECV_FILE_OK = 1;
-    private final static int RECV_FILE_ERR = 2;
+    public interface MSG_TYPES {
+        int QUERY = 1;
+        int RECV_FILE = 2;
+        int ERROR = 3;
+        int ACK = 0xBEEFCAFE;
+    }
 
-    public final static int SUCCESS = 0;
-    public final static int ERROR = -1;
+    public interface QUERY_CODES {
+        // Query Codes
+        int JSON = 1;
+        int IMAGE = 2;
+        int OVERRIDE = 3;
+        int LOCK = 4;
+        int UNLOCK = 5;
+        int IMAGE_TRANSFER = 6;
+    }
+
+    // Receiving file codes
+    public interface RECV_FILE_CODES {
+        int OK = 1;
+        int ERR = 2;
+        int BEGIN = 3;
+        int END = 4;
+    }
+
+    public interface ERROR_CODES {
+        int BUSY = 2;
+        int RECEIVE = 3;
+        int MISMATCH = 4;
+        int UNKNOWN = 5;
+    }
+
+    public interface SEND_STATUS {
+        int SUCCESS = 0;
+        int ERROR = -1;
+    }
+
 
     public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity, String file_name, String image_dir) {
         parent_activity = activity;
@@ -165,32 +196,6 @@ public class BluetoothService {
     }
 
     private class ConnectionManager extends Thread {
-        // Message Types
-        public final static int MSG_QUERY = 1;
-        private final static int MSG_RECV_FILE = 2;
-        private final static int MSG_ERROR = 3;
-        public final static int MSG_ACK = 0xBEEFCAFE;
-
-        // Query Codes
-        public final static int QUERY_JSON = 1;
-        public final static int QUERY_IMAGE = 2;
-        public final static int QUERY_OVERRIDE = 3;
-        public final static int QUERY_LOCK = 4;
-        public final static int QUERY_UNLOCK = 5;
-        public final static int QUERY_IMAGE_TRANSFER = 6;
-
-        // Receive File Codes
-//        private final static int RECV_FILE_OK = 1; // Now defined in bluetooth service
-//        private final static int RECV_FILE_ERR = 2; // Now defined in bluetooth service
-        private final static int RECV_FILE_BEGIN = 3;
-        private final static int RECV_FILE_END = 4;
-
-        // Error Codes
-        private final static int ERROR_BUSY = 2;
-        private final static int ERROR_RECEIVE = 3;
-        private final static int ERROR_MISMATCH = 4;
-        private final static int ERROR_UNKNOWN = 5;
-
         // Indexes of data locations in correctly formatted messages
 //        private final static int INDEX_PACKET_SIZE = 0;
         private final static int INDEX_TYPE = 0;
@@ -364,13 +369,13 @@ public class BluetoothService {
         private void parseResponse(byte msg[]) {
             int msgType = getMsgInt(msg, INDEX_TYPE);
             int msgCode = -1;
-            if (msgType != MSG_ACK) {
+            if (msgType != MSG_TYPES.ACK) {
                 msgCode = getMsgInt(msg, INDEX_CODE);
 
-                if (msgType == MSG_RECV_FILE) {
-                    if (msgCode == RECV_FILE_BEGIN) {
+                if (msgType == MSG_TYPES.RECV_FILE) {
+                    if (msgCode == RECV_FILE_CODES.BEGIN) {
                         state = STATE_RECEIVE;
-                    } else if (msgCode == RECV_FILE_END) {
+                    } else if (msgCode == RECV_FILE_CODES.END) {
                         state = STATE_QUERY;
                     }
                 }
@@ -389,7 +394,7 @@ public class BluetoothService {
                 // Check if we actually received an error message instead
                 if (file_data.length <= 8) {
                     // Return error code
-                    return RECV_FILE_ERR;
+                    return RECV_FILE_CODES.ERR;
                 }
                 File file = new File(parent_activity.getFilesDir(), file_name);
                 if (!file.exists()) {
@@ -413,7 +418,7 @@ public class BluetoothService {
                     System.out.println("Error in closing the stream");
                 }
             }
-            return RECV_FILE_OK;
+            return RECV_FILE_CODES.OK;
         }
 
         public void sendFile(String file_name) {
@@ -478,6 +483,11 @@ public class BluetoothService {
             return msgCopy;
         }
 
+        public boolean socketConnected() {
+            return mmSocket.isConnected();
+        }
+
+
         // Call this method from the main activity to shut down the connection.
         public void cancel() {
             try {
@@ -497,17 +507,17 @@ public class BluetoothService {
     public int sendFile(String file_name) {
         if (manage_conn_thread != null) {
             manage_conn_thread.sendFile(file_name);
-            return SUCCESS;
+            return SEND_STATUS.SUCCESS;
         } else {
-            return ERROR;
+            return SEND_STATUS.ERROR;
         }
     }
 
     public int receiveFile(String file_name) {
-        int return_code = ERROR;
+        int return_code = SEND_STATUS.ERROR;
         if (manage_conn_thread != null) {
-            if (manage_conn_thread.receiveFile(file_name) == RECV_FILE_OK) {
-                return_code = SUCCESS;
+            if (manage_conn_thread.receiveFile(file_name) == RECV_FILE_CODES.OK) {
+                return_code = SEND_STATUS.SUCCESS;
             }
         }
         return return_code;
@@ -522,34 +532,54 @@ public class BluetoothService {
     }
 
     public int sendQuery(int code) {
-        int return_code = ERROR;
+        int return_code = SEND_STATUS.ERROR;
         if (manage_conn_thread != null) {
             ByteBuffer send_bytes = ByteBuffer.allocate(8);
-            send_bytes.putInt(ConnectionManager.MSG_QUERY);
+            send_bytes.putInt(MSG_TYPES.QUERY);
             send_bytes.putInt(code);
             manage_conn_thread.send(send_bytes.array());
-            return_code = SUCCESS;
+            return_code = SEND_STATUS.SUCCESS;
         }
         return return_code;
     }
 
     public int block() {
-        return sendQuery(ConnectionManager.QUERY_LOCK);
+        int return_code = sendQuery(QUERY_CODES.LOCK);
+        if (return_code == SEND_STATUS.SUCCESS) {
+            if (receiveResponse().first == MSG_TYPES.ACK) {
+                return_code = SEND_STATUS.SUCCESS;
+            }
+        }
+        return return_code;
     }
 
     public int unblock() {
-        return sendQuery(ConnectionManager.QUERY_UNLOCK);
+        int return_code = sendQuery(QUERY_CODES.UNLOCK);
+        if (return_code == SEND_STATUS.SUCCESS) {
+            if (receiveResponse().first == MSG_TYPES.ACK) {
+                return_code = SEND_STATUS.SUCCESS;
+            }
+        }
+        return return_code;
+    }
+
+    public int getDeckList() {
+        int return_code = SEND_STATUS.ERROR;
+        if (sendQuery(QUERY_CODES.JSON) == SEND_STATUS.SUCCESS) {
+            return_code = receiveFile(LandingPageActivity.DECK_LIST);
+        }
+        return return_code;
     }
 
     public int transferImages() {
-        int return_code = ERROR;
-        if (sendQuery(ConnectionManager.QUERY_IMAGE_TRANSFER) == SUCCESS) {
+        int return_code = SEND_STATUS.ERROR;
+        if (sendQuery(QUERY_CODES.IMAGE_TRANSFER) == SEND_STATUS.SUCCESS) {
             Pair<Integer, Integer> resp = receiveResponse();
-            if (resp.first == ConnectionManager.MSG_ACK) {
+            if (resp.first == MSG_TYPES.ACK) {
                 sendFile(LandingPageActivity.FILE_TRANSFER_LIST);
                 resp = receiveResponse();
-                if (resp.first == ConnectionManager.MSG_ACK) {
-                    return_code = SUCCESS;
+                if (resp.first == MSG_TYPES.ACK) {
+                    return_code = SEND_STATUS.SUCCESS;
                 }
             }
         }
@@ -603,18 +633,24 @@ public class BluetoothService {
 
 
     public int override() {
-        int return_code = sendQuery(ConnectionManager.QUERY_OVERRIDE);
-        if (return_code == SUCCESS){
+        int return_code = sendQuery(QUERY_CODES.OVERRIDE);
+        if (return_code == SEND_STATUS.SUCCESS){
             Pair<Integer, Integer> resp = receiveResponse();
 
-            sendFile(LandingPageActivity.DECK_LIST);
-            resp = receiveResponse();
+            if (resp.first == MSG_TYPES.ACK) {
+                sendFile(LandingPageActivity.DECK_LIST);
+                resp = receiveResponse();
 
-            if (resp.first == ConnectionManager.MSG_ERROR) {
-                return_code = resp.second;
+                if (resp.first == MSG_TYPES.ACK) {
+                    return_code = SEND_STATUS.SUCCESS;
+                }
             }
         }
         return return_code;
+    }
+
+    public boolean isConnected() {
+        return manage_conn_thread != null && manage_conn_thread.isAlive() && manage_conn_thread.socketConnected();
     }
 
     public int checkBluetoothEnabled() {

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class EditDeckManager extends AbstractDeckManager {
 
@@ -128,7 +130,16 @@ public class EditDeckManager extends AbstractDeckManager {
 
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
 
-        LandingPageActivity.bluetooth_service.transferImages();
+       int counter = 0;
+       while (counter++ < 5 && LandingPageActivity.bluetooth_service.transferImages() == BluetoothService.SEND_STATUS.ERROR) {
+           // TODO: how do I actually sleep
+           try {
+               TimeUnit.SECONDS.sleep(5);
+           } catch (InterruptedException ie) {
+               ie.printStackTrace();
+           }
+           Toast.makeText(context, "Unable to transfer images", Toast.LENGTH_SHORT).show();
+       }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
