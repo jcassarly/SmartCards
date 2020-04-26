@@ -107,3 +107,36 @@ Make sure to create `PYTHON` enviroment variable with the value that is the path
     - this should be in the finish method
         - call before super.finish
 - need to update the deck numbers whenever the play game screen loads
+
+
+# Demo
+
+Before Demo
+- add all the hearts except KH, QH, JH, 10H
+- get on 4G
+- download an image of lightning bolt
+- put cards that need to be uploaded in easier to access folder
+
+1. Connect ot bluetooth
+1. add the rest of the hearts, except that JH was actually added as JS (image and text)
+1. fix JS to be JH (image and text)
+1. name the deck "demo"
+1. save the deck
+1. go to play game
+1. open the deck and shuffle
+1. repeat the last step to show that it changed
+1. open the deck and note the next 4 cards to draw and go back to the play game screen
+1. flash a card onto a display
+1. flash a card onto another display
+1. flash a card on yet another display
+1. show the in play list is updated and deck list has decremented (open both)
+1. flash a card onto the first display
+1. show that the card that was on that display in the inplay list is in the discard and the 4th card in the deck was drawn into play
+1. go to discard, add the card to the top of the deck and then flash it onto the 4th display
+1. show the changes to the discard
+1. turn on clear mode
+1. discard 2 of the images and show the discard and inplay to prove it worked
+1. restart the game and show the deck list to prove it worked
+1. go back and edit deck and upload a magic card
+
+
