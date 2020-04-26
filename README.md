@@ -81,22 +81,29 @@ Make sure to create `PYTHON` enviroment variable with the value that is the path
 
 # Gettin the images baybeee
 
-1. need to open the image location on the app to let the user click the the create link
-    - nick
-2. need a text box for the shared image link to put it onto the app
-    - nick
-3. need to write the awk script to parse out the url and download it from the shared link
-    - jared
-    - theres a content variable and "w1355-h1805-no" needs to go on the end of the final url
-4. need to make a json object that gets saved and sent from the app to the pi to sync the deck
-    - should map filename to shared link url
-5. the json object should have the unsaved images written to it and then sent to the pi when the user finishes editing the deck
-6. when the pi receives the json, those images need to be downloaded into the deck folder
+- whenever we go to edit deck or play game, need to check if connected and not move if not connected
+    - when we finish and are sending the image files, we should keep trying until its not busy - so wait
+    - maybe want to send a toast to say its busy
+        - if this works, should be able to also send toasts while uploading/saving images
+- whenever we go from landing page to play game - need to override the images on the pi
+    - also need to not go to this page if we are not connected via bluetooth
+        - if not connected, dont change pages
+    - if its busy when we override, jsut dont change pages and send a toast to say that
+- whenever we go to edit one of the list on the play game screen,
+    - lock the pi
+    - we should get the pi json and save that and then load it
 
-- python function to write unsaved image shared link urls to a json mapped to their stored location filename in internal memory
-    - the filename should not have the full path - just need it to save the image on the pi
-    - app code to call this python function on save
-    - jared
+    - if we get busy after locking, then just dont go to the edit screen and pop up a toast
+- whenever we finish making an edit to the deck (clicking one of the manipulation buttons)
+    - we need to save the changes
+    - we need to send those down to the pi
+    - then unlock the pi
 
-- app code to send this json object to the pi via bluetooth (new query) and then save it on the pi once received in the state machine
-    - shota
+    - no need to error checking - pi could not lock the deck
+- when restart game is clicked, just make the changes, save, and override
+    - if the pi is locked, then just make a toast and dont do it
+- whenever we go from the play game screen to the landing page, need to get the pi's version of the deck
+    - keep trying until not busy
+    - this should be in the finish method
+        - call before super.finish
+- need to update the deck numbers whenever the play game screen loads

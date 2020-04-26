@@ -64,6 +64,9 @@ public class BluetoothService {
     private final static int RECV_FILE_OK = 1;
     private final static int RECV_FILE_ERR = 2;
 
+    public final static int SUCCESS = 0;
+    public final static int ERROR = -1;
+
     public BluetoothService(String device_address, String device_name, Handler msg_handler, Activity activity, String file_name, String image_dir) {
         parent_activity = activity;
         mmAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -491,42 +494,63 @@ public class BluetoothService {
         make_conn_thread.start();
     }
 
-    public void sendFile(String file_name) {
-        manage_conn_thread.sendFile(file_name);
+    public int sendFile(String file_name) {
+        if (manage_conn_thread != null) {
+            manage_conn_thread.sendFile(file_name);
+            return SUCCESS;
+        } else {
+            return ERROR;
+        }
     }
 
     public int receiveFile(String file_name) {
-        return manage_conn_thread.receiveFile(file_name);
+        int return_code = ERROR;
+        if (manage_conn_thread != null) {
+            if (manage_conn_thread.receiveFile(file_name) == RECV_FILE_OK) {
+                return_code = SUCCESS;
+            }
+        }
+        return return_code;
     }
 
     public Pair<Integer, Integer> receiveResponse() {
-        return manage_conn_thread.getQueryResponse();
+        if (manage_conn_thread != null) {
+            return manage_conn_thread.getQueryResponse();
+        } else {
+            return null;
+        }
     }
 
-    public void sendQuery(int code) {
-        ByteBuffer send_bytes = ByteBuffer.allocate(8);
-        send_bytes.putInt(ConnectionManager.MSG_QUERY);
-        send_bytes.putInt(code);
-        manage_conn_thread.send(send_bytes.array());
+    public int sendQuery(int code) {
+        int return_code = ERROR;
+        if (manage_conn_thread != null) {
+            ByteBuffer send_bytes = ByteBuffer.allocate(8);
+            send_bytes.putInt(ConnectionManager.MSG_QUERY);
+            send_bytes.putInt(code);
+            manage_conn_thread.send(send_bytes.array());
+            return_code = SUCCESS;
+        }
+        return return_code;
     }
 
-    public void block() {
-        sendQuery(ConnectionManager.QUERY_LOCK);
+    public int block() {
+        return sendQuery(ConnectionManager.QUERY_LOCK);
     }
 
-    public void unblock() {
-        sendQuery(ConnectionManager.QUERY_UNLOCK);
+    public int unblock() {
+        return sendQuery(ConnectionManager.QUERY_UNLOCK);
     }
 
     public int transferImages() {
-        int return_code = -1;
-        sendQuery(ConnectionManager.QUERY_IMAGE_TRANSFER);
-        Pair<Integer, Integer> resp = receiveResponse();
-        if (resp.first == ConnectionManager.MSG_ACK) {
-            sendFile(LandingPageActivity.FILE_TRANSFER_LIST);
-            resp = receiveResponse();
+        int return_code = ERROR;
+        if (sendQuery(ConnectionManager.QUERY_IMAGE_TRANSFER) == SUCCESS) {
+            Pair<Integer, Integer> resp = receiveResponse();
             if (resp.first == ConnectionManager.MSG_ACK) {
-                return_code = 0;
+                sendFile(LandingPageActivity.FILE_TRANSFER_LIST);
+                resp = receiveResponse();
+                if (resp.first == ConnectionManager.MSG_ACK) {
+                    return_code = SUCCESS;
+                }
             }
         }
         return return_code;
@@ -579,17 +603,17 @@ public class BluetoothService {
 
 
     public int override() {
-        int return_code = 0;
-        sendQuery(ConnectionManager.QUERY_OVERRIDE);
-        Pair<Integer, Integer> resp = receiveResponse();
+        int return_code = sendQuery(ConnectionManager.QUERY_OVERRIDE);
+        if (return_code == SUCCESS){
+            Pair<Integer, Integer> resp = receiveResponse();
 
-        sendFile(LandingPageActivity.DECK_LIST);
-        resp = receiveResponse();
+            sendFile(LandingPageActivity.DECK_LIST);
+            resp = receiveResponse();
 
-        if (resp.first == ConnectionManager.MSG_ERROR) {
-            return_code = resp.second;
+            if (resp.first == ConnectionManager.MSG_ERROR) {
+                return_code = resp.second;
+            }
         }
-
         return return_code;
     }
 
