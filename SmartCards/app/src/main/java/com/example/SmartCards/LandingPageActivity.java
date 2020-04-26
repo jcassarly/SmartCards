@@ -101,9 +101,13 @@ public class LandingPageActivity extends AppCompatActivity {
 
     public void playGame(View view) {
         if (bluetooth_service.isConnected()) {
-            Intent intent = new Intent(this, PlayActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            if (bluetooth_service.override() == BluetoothService.SEND_STATUS.SUCCESS) {
+                Intent intent = new Intent(this, PlayActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            } else {
+                Toast.makeText(this, "Error overriding pi", Toast.LENGTH_SHORT).show();
+            }
         } else {
             Toast.makeText(this, "Connect Bluetooth First", Toast.LENGTH_SHORT).show();
         }

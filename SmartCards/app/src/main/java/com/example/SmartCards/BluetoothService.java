@@ -617,11 +617,13 @@ public class BluetoothService {
         if (return_code == SEND_STATUS.SUCCESS){
             Pair<Integer, Integer> resp = receiveResponse();
 
-            sendFile(LandingPageActivity.DECK_LIST);
-            resp = receiveResponse();
+            if (resp.first == MSG_TYPES.ACK) {
+                sendFile(LandingPageActivity.DECK_LIST);
+                resp = receiveResponse();
 
-            if (resp.first == SEND_STATUS.ERROR) {
-                return_code = resp.second;
+                if (resp.first == MSG_TYPES.ACK) {
+                    return_code = SEND_STATUS.SUCCESS;
+                }
             }
         }
         return return_code;

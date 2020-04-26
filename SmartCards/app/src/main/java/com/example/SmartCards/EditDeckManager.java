@@ -129,6 +129,7 @@ public class EditDeckManager extends AbstractDeckManager {
 
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
 
+        // TODO: Is this actually how I want to handle this?
         if (LandingPageActivity.bluetooth_service.transferImages() == BluetoothService.SEND_STATUS.ERROR) {
             Toast.makeText(context, "Unable to transfer images", Toast.LENGTH_SHORT).show();
         }
