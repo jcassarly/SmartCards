@@ -14,6 +14,7 @@ import android.widget.Toast;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class PlayActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -74,6 +75,11 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void restartGame(View view){
         //When game is restarted so all cards are back in Deck subdeck and shuffled
         //TODO:Send restart command to pi
+        deckManager.restartGame();
+        deckManager.saveDeck(this);
+        if (LandingPageActivity.bluetooth_service.override() == BluetoothService.SEND_STATUS.ERROR) {
+            Toast.makeText(this, "Sync not complete, try again.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void blockDock(){
@@ -114,6 +120,9 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                         break;
                 }
 
+                LandingPageActivity.bluetooth_service.getDeckList();
+                deckManager.loadDeck(null);
+
                 //startActivity(intent);
                 startActivityForResult(intent, RESULT_EDIT_GAME);
                 setResult(RESULT_OK, intent);
@@ -153,6 +162,16 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void finish() {
+        int counter = 0;
+        while (counter++ < 5 && LandingPageActivity.bluetooth_service.getDeckList() == BluetoothService.SEND_STATUS.ERROR) {
+            // TODO: how do I actually sleep
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+            Toast.makeText(this, "Unable to get Pi's deck", Toast.LENGTH_SHORT).show();
+        }
         super.finish();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }

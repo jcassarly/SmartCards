@@ -131,8 +131,7 @@ public class EditDeckManager extends AbstractDeckManager {
         dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
 
        int counter = 0;
-       while (counter < 5 && LandingPageActivity.bluetooth_service.transferImages() == BluetoothService.SEND_STATUS.ERROR) {
-           counter++;
+       while (counter++ < 5 && LandingPageActivity.bluetooth_service.transferImages() == BluetoothService.SEND_STATUS.ERROR) {
            // TODO: how do I actually sleep
            try {
                TimeUnit.SECONDS.sleep(5);
