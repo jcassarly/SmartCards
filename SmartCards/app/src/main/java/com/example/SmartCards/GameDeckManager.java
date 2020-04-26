@@ -76,8 +76,26 @@ public class GameDeckManager extends AbstractDeckManager {
         this.shuffleDeck();
     }
 
+    List<PlayingCard> allNonNullCards()
+    {
+        PyObject pyAllCards = this.pyDeckManager.callAttr("all_cards");
+
+        List<PlayingCard> cardList = new ArrayList<>();
+        // TODO: refactor this for loop
+        // TODO: remove the null check - unnecessary
+        for (PyObject cardPath : pyAllCards.asList())
+        {
+            if (cardPath != null)
+            {
+                cardList.add(this.pyCardPathToPlayingCard(cardPath));
+            }
+        }
+
+        return cardList;
+    }
+
     @Override
-    void saveDeck() {
+    void saveDeck(Context context) {
         this.pyDeckManager.callAttr("to_file", LandingPageActivity.DECK_LIST);
     }
 

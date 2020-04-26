@@ -11,8 +11,12 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Test extends AppCompatActivity {
@@ -27,25 +31,19 @@ public class Test extends AppCompatActivity {
         EditText codeView = (EditText) findViewById(R.id.code_input);
         //String filename = codeView.getText().toString();
         //LandingPageActivity.bluetooth_service.sendFile(filename);
-        LandingPageActivity.bluetooth_service.sendQuery(3);
-        Pair<Integer, Integer> response= LandingPageActivity.bluetooth_service.receiveResponse();
-        String display_text = "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
 
-        LandingPageActivity.bluetooth_service.sendFile("decklist.json");
-        response = LandingPageActivity.bluetooth_service.receiveResponse();
-        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+        int retCode = LandingPageActivity.bluetooth_service.override();
 
-        LandingPageActivity.bluetooth_service.sendFile("orig_gary.jpg");
-        response = LandingPageActivity.bluetooth_service.receiveResponse();
-        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+        //Python py = Python.getInstance();
 
-        LandingPageActivity.bluetooth_service.sendFile("orig_bruce.png");
-        response = LandingPageActivity.bluetooth_service.receiveResponse();
-        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+        //PyObject imgur = py.getModule("imgur_test");
+        //String display_text = imgur.callAttr("upload_image", "/data/user/0/com.example.herroworld/app_deck/1").toString();
+        //PyObject requests = py.getModule("requests");
+        //PyObject response = requests.callAttr("get", "https://i.imgur.com/h8NGQEx.jpg");
 
-        LandingPageActivity.bluetooth_service.sendFile("orig_murica.jpg");
-        response = LandingPageActivity.bluetooth_service.receiveResponse();
-        display_text += "ACK (" + 0xBEEFCAFE + "): " + response.first.toString() + "\n";
+        //String display_text = response.get("text").toString();
+
+        String display_text = "ACK (" + retCode + ")\n";
 
         //LandingPageActivity.bluetooth_service.receiveFile("decklist.json");
         TextView respView = (TextView) findViewById(R.id.json_view);

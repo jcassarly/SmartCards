@@ -2,6 +2,8 @@ package com.example.SmartCards;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -9,41 +11,44 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditGame extends AppCompatActivity implements CardListAdapter.OnCardListener{
+public class EditGame extends AppCompatActivity implements CardListAdapter.OnCardListener, EditButtonAdapter.OnEditButtonListener{
 
     private List<PlayingCard> subdeck = new ArrayList<>();
     private DeckType deckType;
 
+    private final EditButtons[] deckButtons = {EditButtons.SHUFFLE_DECK, EditButtons.SHUFFLE_ADD_TO_TOP, EditButtons.DECK_TO_DISCARD};
+    private final EditButtons[] discardButtons = {EditButtons.DISCARD_TO_DECK_RANDOM, EditButtons.DISCARD_TO_TOP_OF_DECK, EditButtons.ALL_DISCARD_TO_DECK};
 
 
-    //GridView cardGridView;
     TextView subDeckTitle;
 
     private GameDeckManager deckManager;
 
     private CardListAdapter cardListAdapter;
+    private EditButtonAdapter editButtonAdapter;
 
-    private RecyclerView recyclerView;
+    private ConstraintLayout constraintLayout;
+
+    private RecyclerView cardRecyclerView, buttonRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_game);
 
-        recyclerView = findViewById(R.id.editGameDisplayListView);
+        cardRecyclerView = findViewById(R.id.editGameDisplayListView);
+        buttonRecyclerView = findViewById(R.id.editGameButtonListView);
         subDeckTitle = findViewById(R.id.editGameTitle);
+        constraintLayout = findViewById(R.id.editGameLayout);
 
         Intent intent = getIntent();
 
-        //subdeck = (List<PlayingCard>) intent.getSerializableExtra("subdeck");
         deckType = (DeckType) intent.getSerializableExtra("deckType");
 
         setSubDeckTitle(deckType);
@@ -52,19 +57,40 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         deckManager.setPrimaryDeck(deckType);
         //deckManager.loadFromMemoryIfPossible(new TextView(this));
 
-        cardListAdapter = new CardListAdapter(this, deckManager, this);
-        recyclerView.setAdapter(cardListAdapter);
+        cardListAdapter = new CardListAdapter(this, deckManager, false, this);
+        cardRecyclerView.setAdapter(cardListAdapter);
 
-        //TODO: Add ability to drag cards, but not the ones in inplaysubdeck
+        modifyLayoutForDeckType();
+
+        /*
         if(deckType != DeckType.INPLAY) {
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
-            itemTouchHelper.attachToRecyclerView(recyclerView);
+            itemTouchHelper.attachToRecyclerView(cardRecyclerView);
         }
+        */
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
-        recyclerView.addItemDecoration(divider);
+        cardRecyclerView.addItemDecoration(divider);
     }
 
+    private void modifyLayoutForDeckType(){
+        if(deckType == DeckType.DECK) {
+            editButtonAdapter = new EditButtonAdapter(this, deckButtons, this);
+            buttonRecyclerView.setAdapter(editButtonAdapter);
+        }
+        if(deckType == DeckType.DISCARD){
+            editButtonAdapter = new EditButtonAdapter(this, discardButtons, this);
+            buttonRecyclerView.setAdapter(editButtonAdapter);
+        }
+        if(deckType == DeckType.INPLAY) {
+            ConstraintSet constraintSet = new ConstraintSet();
+            constraintSet.clone(constraintLayout);
+            constraintSet.connect(cardRecyclerView.getId(),ConstraintSet.BOTTOM,constraintLayout.getId(),ConstraintSet.BOTTOM, 0);
+            constraintSet.applyTo(constraintLayout);
+        }
+    }
+
+ /*
     ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
             ItemTouchHelper.DOWN, 0) {
         @Override
@@ -91,6 +117,8 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         }
     };
 
+  */
+
     private void setSubDeckTitle(DeckType deckType) {
         switch (deckType) {
             case DECK:
@@ -114,8 +142,79 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
         super.finish();
     }
 
-    @Override
-    public void onCardClick(int position) {
-
+    public void onButtonClick(EditButtons button) {
+        if(isButtonClickValid(button)){
+            switch (button){
+                case SHUFFLE_DECK:
+                    shuffleDeck();
+                    break;
+                case DISCARD_TO_TOP_OF_DECK:
+                    discardToTopOfDeck();
+                    break;
+                case DISCARD_TO_DECK_RANDOM:
+                    discardToDeckRandom();
+                    break;
+                case SHUFFLE_ADD_TO_TOP:
+                    shuffleAddToTop();
+                    break;
+                case DECK_TO_DISCARD:
+                    deckToDiscard();
+                    break;
+                case ALL_DISCARD_TO_DECK:
+                    shuffleInDiscard();
+                    break;
+            }
+            setResult(RESULT_OK);
+            finish();
+        } else {
+            Toast.makeText(getApplicationContext(), "Please select a card first", Toast.LENGTH_SHORT).show();
+        }
     }
+
+    private boolean isButtonClickValid(EditButtons button){
+        if(cardListAdapter.getSelectedCardPosition() != -1 || button == EditButtons.ALL_DISCARD_TO_DECK){
+            return true;
+        }
+        return false;
+    }
+
+
+    @Override
+    public void onCardClick(int position){
+        //Do nothing
+    }
+
+    public void shuffleDeck(){
+        deckManager.shuffleDeck();
+    }
+
+    public void shuffleInDiscard(){
+        deckManager.shuffleInDiscard();
+    }
+
+    public void deckToDiscard(){
+        //Manager needs indexInDeck
+        //cardListAdapter.getSelectedCardPosition();
+        deckManager.deckToDiscard(cardListAdapter.getSelectedCardPosition());
+    }
+
+    public void discardToTopOfDeck(){
+        //Manager needs indexInDiscard
+        deckManager.discardToTopOfDeck(cardListAdapter.getSelectedCardPosition());
+    }
+
+    public void discardToDeckRandom(){
+        //Manager needs indexInDiscard
+        deckManager.discardToDeckRandom(cardListAdapter.getSelectedCardPosition());
+    }
+
+    public void shuffleAddToTop(){
+        //Manager needs indexIn
+        deckManager.shuffleAddToTop(cardListAdapter.getSelectedCardPosition());
+    }
+
+
+
+
+
 }

@@ -1,8 +1,10 @@
 import os
 import threading
+import json
 
 from bluetooth_conn import BluetoothConn, QueryCode, RecvFileCode, ErrorCode
 import DeckManager
+import image_loader
 
 TEMP_DECK_LIST = os.path.join(os.sep, 'home', 'pi', 'eDeck', 'temp_deck.json')
 
@@ -90,6 +92,9 @@ class DeckSynchronizer():
         elif query_code == QueryCode.OVERRIDE:
             next_state = self.override_files()
 
+        elif query_code == QueryCode.IMAGE_TRANSFER:
+            next_state = self.get_images()
+
         return next_state
 
     def override_files(self):
@@ -116,37 +121,68 @@ class DeckSynchronizer():
 
         self.connection.send_ack()
 
-        for card_path in temp_deck:
-            # try to receive the file up to 3 times
-            for tries in range(0, 3):
-                print("Receiving {}".format(card_path))
-                exit_code = self.connection.recv_file(card_path)
+        #for card_path in temp_deck:
+        #    # try to receive the file up to 3 times
+        #    for tries in range(0, 3):
+        #        print("Receiving {}".format(card_path))
+        #        exit_code = self.connection.recv_file(card_path)
 
-                # TODO: handle erroneous exit code
-                if exit_code == RecvFileCode.OK:
-                    print("Received {}".format(card_path))
-                    break
+        #        # TODO: handle erroneous exit code
+        #        if exit_code == RecvFileCode.OK:
+        #            print("Received {}".format(card_path))
+        #            break
 
-                print("Error?")
-                self.send_receive_error()
+        #        print("Error?")
+        #        self.send_receive_error()
 
-            # if the above for loop exits normally, then we failed 3 times to receive the file
-            if exit_code != RecvFileCode.OK:
-                print("Error?")
-                self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
-                # TODO: consider reverting the images back to before override started
-                #       this would require temp storage
-                self.deck_lock.release()
-                return SyncState.UNKNOWN_ERROR
-            # otherwise the above loop received the file, so ACK it
-            else:
-                print("ACKING {}".format(card_path))
-                self.connection.send_ack()
+        #    # if the above for loop exits normally, then we failed 3 times to receive the file
+        #    if exit_code != RecvFileCode.OK:
+        #        print("Error?")
+        #        self.deck.to_file(DeckManager.DECK_LIST)  # revert to before the JSON
+        #        # TODO: consider reverting the images back to before override started
+        #        #       this would require temp storage
+        #        self.deck_lock.release()
+        #        return SyncState.UNKNOWN_ERROR
+        #    # otherwise the above loop received the file, so ACK it
+        #    else:
+        #        print("ACKING {}".format(card_path))
+        #        self.connection.send_ack()
 
         print("Done Overriding")
         # update the deck with the JSON file received since everything was received correctly
         self.deck.from_file(TEMP_DECK_LIST)
         self.deck.to_file(DeckManager.DECK_LIST)
+
+        self.deck_lock.release()
+
+        return SyncState.WAITING_FOR_QUERY
+
+    def get_images(self):
+        self.deck_lock.acquire()
+        self.connection.send_ack()
+
+        print("Receiving Image Transfer JSON")
+        recv_file_code = self.connection.recv_file(DeckManager.IMAGE_TRANSFER_LIST)
+
+        if recv_file_code != RecvFileCode.OK:
+            print("Recv Error: {}".format(recv_file_code))
+            self.connection.send_err(ErrorCode.RECEIVE)
+            self.deck_lock.release()
+            return SyncState.RECEIVE_ERROR
+
+        self.connection.send_ack()
+
+        image_dict = {}
+        with open(DeckManager.IMAGE_TRANSFER_LIST, 'r') as image_file:
+            image_dict = json.load(image_file)
+
+        print("Downloading Images")
+        for url in image_dict.keys():
+            image_name = image_dict[url]
+            print("Downloading {} from {}".format(image_name, url))
+            image_path = DeckManager.add_path(image_name)
+            image_loader.download_photo(image_path, url)
+        print("Done Downloading Images")
 
         self.deck_lock.release()
 

@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
@@ -19,13 +20,17 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
     private Activity context;
     private AbstractDeckManager deck;
     private OnCardListener mOnCardListener;
+    private int selectedCardPosition = -1;
+
+    private boolean isDeckBeingEdited;
 
 
     // TODO: change to deck manager object
-    public CardListAdapter(Activity context, AbstractDeckManager deck, OnCardListener onCardListener) {
+    public CardListAdapter(Activity context, AbstractDeckManager deck, boolean isDeckBeingEdited, OnCardListener onCardListener) {
         this.context = context;
         this.deck = deck;
         this.mOnCardListener = onCardListener;
+        this.isDeckBeingEdited = isDeckBeingEdited;
     }
 
     // TODO: Still need to add swap function? Still need to have a DeckManager member?
@@ -40,6 +45,11 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        if(position == selectedCardPosition){
+            holder.constraintLayout.setBackgroundColor(Color.LTGRAY);
+        } else {
+            holder.constraintLayout.setBackgroundColor(Color.WHITE);
+        }
         holder.cardNumber.setText(Integer.toString(position+1));
         if(deck.getCard(position) != null){
             holder.cardFace.setImageURI(deck.getCard(position).getImageAddress());
@@ -64,12 +74,14 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
         TextView cardName, cardNumber;
         ImageView cardFace;
         OnCardListener onCardListener;
+        ConstraintLayout constraintLayout;
 
         ViewHolder(View v, OnCardListener onCardListener) {
             super(v);
             cardName = (TextView) v.findViewById(R.id.cardPreviewText);
             cardNumber = (TextView) v.findViewById(R.id.cardNumberText);
             cardFace = (ImageView) v.findViewById(R.id.cardPreviewImageView);
+            constraintLayout = (ConstraintLayout) v.findViewById(R.id.cardListViewLayout);
             this.onCardListener = onCardListener;
             v.setOnClickListener(this);
         }
@@ -77,7 +89,15 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
         @Override
         public void onClick(View v) {
             onCardListener.onCardClick(getAdapterPosition());
+            if(!isDeckBeingEdited) {
+                selectedCardPosition = getAdapterPosition();
+                notifyDataSetChanged();
+            }
         }
+    }
+
+    public int getSelectedCardPosition(){
+        return selectedCardPosition;
     }
 
     public interface OnCardListener {

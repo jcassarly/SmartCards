@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 
 import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class EditDeckManager extends AbstractDeckManager {
     private Context context;
     private PyObject pyDeckManagerModule;
     private PyObject pyDeckManager;
+    private PyObject pyImgurUploader;
 
     private static EditDeckManager singletonManager = null;
 
@@ -30,6 +32,7 @@ public class EditDeckManager extends AbstractDeckManager {
         this.primaryDeck = new ArrayList<>();
         this.context = context;
         this.pyDeckManagerModule = AbstractDeckManager.getPyDeckManagerModuleInstance();
+        this.pyImgurUploader = AbstractDeckManager.getPyImgurUploaderInstance();
         this.pyDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
     }
 
@@ -111,23 +114,46 @@ public class EditDeckManager extends AbstractDeckManager {
         this.pyDeckManager.callAttr("remove_from_index", cardIndex);
     }
 
+    void sendImagesToPi(List<PlayingCard> cardsToSend)
+    {
+        Python py = Python.getInstance();
+
+        PyObject pyFileTransfer = py.getModule("file_transfer");
+        PyObject dict = pyFileTransfer.callAttr("FileTransferDict");
+
+        for (PlayingCard card : cardsToSend)
+        {
+            dict.callAttr("add", card.getSavedUrl(), card.getImageAddress().toString());
+        }
+
+        dict.callAttr("save_file_transfer", LandingPageActivity.FILE_TRANSFER_LIST);
+
+        LandingPageActivity.bluetooth_service.transferImages();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
-    void saveDeck()
+    void saveDeck(Context context)
     {
         this.pyDeckManager = this.pyDeckManagerModule.callAttr("empty_deck");
+        List<PlayingCard> cardsToSend = new ArrayList<>();
 
-        for(PlayingCard card : this.primaryDeck){
-            try{
-                card.save(this.context);
+        for(PlayingCard card : this.primaryDeck) {
+            try {
+                boolean wasSaved = card.save(this.context);
                 this.pyDeckManager.callAttr("add_to_top", card.getImageAddress().toString());
-            }
-            catch(IOException e){
+
+                if (wasSaved)
+                {
+                    cardsToSend.add(card);
+                }
+            } catch (IOException e) {
                 setIsDeckInMemory(false);
                 e.printStackTrace();
             }
         }
         this.toFile(this.pyDeckManager);
+        sendImagesToPi(cardsToSend);
         setIsDeckInMemory(true);
     }
 

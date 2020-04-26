@@ -53,7 +53,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
         deckManager.loadDeck(this.deckName);
 
         //Populate RecyclerView
-        cardListAdapter = new CardListAdapter(this, deckManager, this);
+        cardListAdapter = new CardListAdapter(this, deckManager, true, this);
         deckListView.setAdapter(cardListAdapter);
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
@@ -80,7 +80,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void completeEditDeck(View view){
         //Convert list deck to the deck manager
-        deckManager.saveDeck();
+        deckManager.saveDeck(this);
         deckManager.saveDeckName(this.deckName);
         finish();
     }

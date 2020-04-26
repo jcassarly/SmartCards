@@ -16,6 +16,7 @@ import java.util.List;
 
 public class PlayActivity extends AppCompatActivity implements View.OnClickListener{
 
+    private static final int RESULT_EDIT_GAME = 1;
 
     TextView deckNameText, deckCountText, inPlayCountText, discardCountText;
     Button exitButton;
@@ -111,7 +112,17 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
 
-        startActivity(intent);
+        //startActivity(intent);
+        startActivityForResult(intent, RESULT_EDIT_GAME);
+        setResult(RESULT_OK, intent);
+    }
+
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == RESULT_EDIT_GAME || resultCode == RESULT_OK){
+            //TODO: Add whatever needs to happen everytime an 'editDeck' activity gets completed
+        }
     }
 
 

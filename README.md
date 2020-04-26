@@ -78,3 +78,25 @@ Make sure to create `PYTHON` enviroment variable with the value that is the path
     - void deckToDiscard(int deckIndex) // to top of discard
     - void discardToTopOfDeck(int indexInDiscard)
     - void discardToDeckRandom(int indexInDiscard)
+
+# Gettin the images baybeee
+
+1. need to open the image location on the app to let the user click the the create link
+    - nick
+2. need a text box for the shared image link to put it onto the app
+    - nick
+3. need to write the awk script to parse out the url and download it from the shared link
+    - jared
+    - theres a content variable and "w1355-h1805-no" needs to go on the end of the final url
+4. need to make a json object that gets saved and sent from the app to the pi to sync the deck
+    - should map filename to shared link url
+5. the json object should have the unsaved images written to it and then sent to the pi when the user finishes editing the deck
+6. when the pi receives the json, those images need to be downloaded into the deck folder
+
+- python function to write unsaved image shared link urls to a json mapped to their stored location filename in internal memory
+    - the filename should not have the full path - just need it to save the image on the pi
+    - app code to call this python function on save
+    - jared
+
+- app code to send this json object to the pi via bluetooth (new query) and then save it on the pi once received in the state machine
+    - shota
