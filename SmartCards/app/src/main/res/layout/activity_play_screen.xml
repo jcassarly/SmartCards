@@ -52,7 +52,6 @@
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/deckTitleText"
         app:layout_constraintVertical_bias="1.0">
@@ -104,8 +103,8 @@
             android:layout_width="130dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@+id/deckControlsLayout">
+            app:layout_constraintLeft_toRightOf="@+id/deckControlsLayout"
+            app:layout_constraintTop_toTopOf="parent">
 
 
             <ImageView
@@ -147,8 +146,8 @@
             android:layout_width="130dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toRightOf="@+id/inPlayControlsLayout">
+            app:layout_constraintLeft_toRightOf="@+id/inPlayControlsLayout"
+            app:layout_constraintTop_toTopOf="parent">
 
 
             <ImageView

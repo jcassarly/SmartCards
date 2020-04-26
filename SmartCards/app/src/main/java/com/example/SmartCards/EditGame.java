@@ -184,28 +184,32 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     }
 
     public void shuffleDeck(){
-
+        deckManager.shuffleDeck();
     }
 
     public void shuffleInDiscard(){
-
+        deckManager.shuffleInDiscard();
     }
 
     public void deckToDiscard(){
         //Manager needs indexInDeck
         //cardListAdapter.getSelectedCardPosition();
+        deckManager.deckToDiscard(cardListAdapter.getSelectedCardPosition());
     }
 
     public void discardToTopOfDeck(){
         //Manager needs indexInDiscard
+        deckManager.discardToTopOfDeck(cardListAdapter.getSelectedCardPosition());
     }
 
     public void discardToDeckRandom(){
         //Manager needs indexInDiscard
+        deckManager.discardToDeckRandom(cardListAdapter.getSelectedCardPosition());
     }
 
     public void shuffleAddToTop(){
         //Manager needs indexIn
+        deckManager.shuffleAddToTop(cardListAdapter.getSelectedCardPosition());
     }
 
 
