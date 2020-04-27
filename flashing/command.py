@@ -7,7 +7,7 @@ class CommandStructure:
 class Command:
     """Definitions for specific command on  the ePaper Display"""
     PANEL_SETTING = CommandStructure(0x00, [0x1B])
-    POWER_SETTING = CommandStructure(0x01, [0x03, 0x00, 0x2B, 0x2B]) # TODO: only datasheet as the last byte (0x09)
+    POWER_SETTING = CommandStructure(0x01, [0x03, 0x00, 0x2B, 0x2B])
     POWER_ON = CommandStructure(0x04, [])
     BOOSTER_SOFT_START = CommandStructure(0x06, [0x17, 0x17, 0x17])
     DATA_STOP = CommandStructure(0x11, [])

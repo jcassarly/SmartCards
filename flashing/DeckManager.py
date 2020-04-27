@@ -107,7 +107,6 @@ class Deck:
         """
         filenames = []
         for card in deck_list:
-            # TODO: add something to handle the case of the card not having the IMAGE_DIR prefix
             # remove the prefix (or leave alone if None)
             filenames.append(remove_path(card))
 

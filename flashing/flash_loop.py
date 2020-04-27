@@ -14,7 +14,6 @@ from deck_sync import DeckSynchronizer
 
 REREAD_DELAY = 0.5 # s
 
-# TODO: need to add something to read the from file and load that in
 def deck_loader():
     """Creates a deck from the images listed in the IMAGE_DIR
 
@@ -190,8 +189,6 @@ def flash_loop(deck, deck_lock):
            and new_display_id != DisplayIdentification.NO_DISPLAY:
             # wait a bit and reread the display to allow all the wires to finish
             # being plugged in
-            # TODO: maybe make a real hysteresis to alleviate the issue, but the user taking forever to plug in could still be an issue
-            # TODO: may also want to unbundle the inputs from the output and vcc/gnd
             time.sleep(REREAD_DELAY)
             new_display_id = identifier.find_display()
 
@@ -214,7 +211,7 @@ def main():
 
     # spawn the bluetooth update process with deck
     synchronizer = DeckSynchronizer(deck, deck_lock)
-    bluetooth_thread = threading.Thread(target=synchronizer.run_state_machine) # TODO replace None with the bluetooth call
+    bluetooth_thread = threading.Thread(target=synchronizer.run_state_machine)
     bluetooth_thread.start()
 
     flash_loop(deck, deck_lock)

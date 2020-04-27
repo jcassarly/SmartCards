@@ -57,3 +57,8 @@ Notes
 |||3. Begin the override sequence|All the bluetooth packets should send with no issues||
 |||4. While the override sequence is happening, plug in the display to the Pi|The Pi should wait until the override sequence is done sending and then flash the next card in the deck the App sent||
 |Override Receive Error|Tests that if the app sends an override and then sends a different query before finishing sending all images, that the Pi responds with a receive error and resets the connection after sending the receive error 3 times|1. |results||
+
+# System Tests
+
+|Test Name|Test Description|Result|
+|Create Deck|Verifies

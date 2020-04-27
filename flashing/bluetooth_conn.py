@@ -144,7 +144,7 @@ class BluetoothConn():
         with open(file_path, 'rb') as phil:
             data = phil.read()
         self.moon = data
-        # TODO: I may not need to send the name of the file being sent
+        # NOTE: I may not need to send the name of the file being sent
         # name_bytes = bytearray(file_name.encode('utf-8'))
         # name_size = len(name_bytes)
         int_bytes = ints_to_bytes([BluetoothConn.MSG_RECV_FILE, RecvFileCode.BEGIN])
