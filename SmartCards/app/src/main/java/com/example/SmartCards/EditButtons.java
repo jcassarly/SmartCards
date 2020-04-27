@@ -65,20 +65,4 @@ public enum EditButtons {
         }
         return null;
     }
-
-
 }
-
-
-
-/*
- GameDeckManager extends AbstractDeckManager
-    - GameDeckManager getInstance(Context context)
-    - void setPrimaryDeck(subDeck sd)
-    - void restartGame()
-    - void shuffleDeck()
-    - void shuffleInDiscard()
-    - void deckToDiscard(int deckIndex) // to top of discard
-    - void discardToTopOfDeck(int indexInDiscard)
-    - void discardToDeckRandom(int indexInDiscard)
- */

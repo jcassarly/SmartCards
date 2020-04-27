@@ -1,9 +1,7 @@
 <resources>
     <string name="app_name">SmartCards</string>
     <string name="action_settings">Settings</string>
-    <string name="button_text">Touch Me Daddy</string>
     <string name="aloha_text">Aloha</string>
-    <string name="penis_text"></string>
     <string name="py_text"></string>
     <string name="blue_connect_button">Connect</string>
     <string name="blue_debug_button">Debug</string>
@@ -32,7 +30,6 @@
     <string name="edit_card_upload_text">Upload Image</string>
     <string name="edit_card_button_text">Confirm Changes</string>
     <string name="edit_card_delete_button_text">Delete Card</string>
-
 
     <!--Edit deck -->
     <string name="edit_deck_done_button_text">Complete</string>

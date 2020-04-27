@@ -8,28 +8,23 @@ import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.MediaStore;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
 import com.chaquo.python.PyObject;
-import com.chaquo.python.Python;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 
-import static androidx.core.content.ContextCompat.getSystemService;
 
 public class PlayingCard implements Serializable {
 
-    //private Context context;
     private String cardName, tempImageAddress, savedImageAddress, idName, savedUrl;
     private boolean isSaved;
 
     public PlayingCard(Context context, String cardName, Uri tempImageAddress){
-        //this.context = context;
         this.cardName = cardName;
         this.tempImageAddress = tempImageAddress.toString();
         this.savedUrl = null;
@@ -37,7 +32,6 @@ public class PlayingCard implements Serializable {
     }
 
     public PlayingCard(Context context, String imageAddress){
-        //TODO: Error handling if the image address is bad
         savedImageAddress = imageAddress;
         this.idName = new File(savedImageAddress).getName();
         SharedPreferences sharedPreferences = context.getSharedPreferences(EditDeck.SHARED_PREFS, context.MODE_PRIVATE);
@@ -124,13 +118,10 @@ public class PlayingCard implements Serializable {
             {
                 saveUrl(context, this.savedUrl);
             }
-
             //Save Card Name
             saveCardName(context, cardName);
-
             isSaved = true;
         }
-
         // return if the image actually got saved
         return needsToSave;
     }

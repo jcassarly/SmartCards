@@ -47,8 +47,6 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
 
         isImageUploaded = true;
 
-        // TODO: get the instance of the deck manager (or from extra if singleton fails)
-//        card = EditDeck.deck.get(getIntent().getExtras().getInt("position"));
         deckManager = EditDeckManager.getInstance(this);
         card = deckManager.getCard(getIntent().getExtras().getInt("position"));
 
@@ -85,7 +83,6 @@ public class EditCard extends AppCompatActivity implements View.OnClickListener 
 
         } else if(v == deleteCardButton) {
             card.delete(this);
-//            EditDeck.deck.remove(card); // tODO: use the deckmanager
             deckManager.remove(card);
             setResult(RESULT_OK);
             finish();

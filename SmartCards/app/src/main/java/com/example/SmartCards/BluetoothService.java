@@ -4,36 +4,26 @@ import android.app.Activity;
 import android.bluetooth.BluetoothSocket;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 
-import androidx.core.content.res.TypedArrayUtils;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.sql.Connection;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -120,10 +110,9 @@ public class BluetoothService {
 
         // Creates a new file directory for images
         File directory = parent_activity.getFilesDir();
-//        DECKLIST_FILE_NAME = directory.getAbsolutePath() + "/" + file_name;
         DECKLIST_FILE_NAME = file_name;
         File new_img_dir = new File(directory, image_dir);
-        IMAGE_DIR = image_dir; //new_img_dir.getAbsolutePath();
+        IMAGE_DIR = image_dir;
 
     }
 

@@ -181,7 +181,6 @@ public class EditDeckManager extends AbstractDeckManager {
             this.toFile(this.pyDeckManager);
 
             PyObject pyAllCards = this.pyDeckManager.callAttr("all_cards");
-            //allCards = pyAllCards.toJava();
 
             for (PyObject cardPath : pyAllCards.asList())
             {
