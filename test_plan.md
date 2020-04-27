@@ -5,8 +5,8 @@
 |Empty Deck|Tests that the Pi can correctly start up from an empty deck file|Pass|
 |Single Card Deck|Tests that the Pi can correctly start up with a decklist that only has one card in it and flash that card to the first display inserted|Pass|
 |Multi-Card Deck|Tests that the Pi can flash multiple cards in a pre-existing deck that it loads in|Pass|
-|Disconnected Display|Tests that the flash error turns on after a display is detected from its ID circuit but the physical ePaper display is never inserted.  This flash error goes away after the display is reinserted correctly and flashed||Pass|
-|Clear Mode With Empty Deck|Tests that clear mode will clear displays even when the deck is empty||Pass|
+|Disconnected Display|Tests that the flash error turns on after a display is detected from its ID circuit but the physical ePaper display is never inserted.  This flash error goes away after the display is reinserted correctly and flashed|Pass|
+|Clear Mode With Empty Deck|Tests that clear mode will clear displays even when the deck is empty|Pass|
 |Clear Mode With Non-Empty Deck|Tests that clear mode only discards cards from play and does not manipulate the deck in any other way|Pass|
 
 # System Tests
