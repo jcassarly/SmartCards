@@ -7,9 +7,6 @@ public enum DeckType {
 
     private String pyFieldName;
 
-    /**
-     * Auto-generated constructor and getter
-     */
 
     DeckType(String pyFieldName) {
         this.pyFieldName = pyFieldName;

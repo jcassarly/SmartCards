@@ -25,15 +25,12 @@ public class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.ViewHo
     private boolean isDeckBeingEdited;
 
 
-    // TODO: change to deck manager object
     public CardListAdapter(Activity context, AbstractDeckManager deck, boolean isDeckBeingEdited, OnCardListener onCardListener) {
         this.context = context;
         this.deck = deck;
         this.mOnCardListener = onCardListener;
         this.isDeckBeingEdited = isDeckBeingEdited;
     }
-
-    // TODO: Still need to add swap function? Still need to have a DeckManager member?
 
     @NonNull
     @Override

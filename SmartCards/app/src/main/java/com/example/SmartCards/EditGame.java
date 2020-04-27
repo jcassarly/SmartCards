@@ -19,7 +19,6 @@ import java.util.List;
 
 public class EditGame extends AppCompatActivity implements CardListAdapter.OnCardListener, EditButtonAdapter.OnEditButtonListener{
 
-    private List<PlayingCard> subdeck = new ArrayList<>();
     private DeckType deckType;
 
     private final EditButtons[] deckButtons = {EditButtons.SHUFFLE_DECK, EditButtons.SHUFFLE_ADD_TO_TOP, EditButtons.DECK_TO_DISCARD};
@@ -55,19 +54,12 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
 
         deckManager = GameDeckManager.getInstance(this);
         deckManager.setPrimaryDeck(deckType);
-        //deckManager.loadFromMemoryIfPossible(new TextView(this));
 
         cardListAdapter = new CardListAdapter(this, deckManager, false, this);
         cardRecyclerView.setAdapter(cardListAdapter);
 
         modifyLayoutForDeckType();
 
-        /*
-        if(deckType != DeckType.INPLAY) {
-            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
-            itemTouchHelper.attachToRecyclerView(cardRecyclerView);
-        }
-        */
 
         RecyclerView.ItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
         cardRecyclerView.addItemDecoration(divider);
@@ -89,35 +81,6 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
             constraintSet.applyTo(constraintLayout);
         }
     }
-
- /*
-    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP |
-            ItemTouchHelper.DOWN, 0) {
-        @Override
-        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
-                              @NonNull RecyclerView.ViewHolder target) {
-            int fromPosition = viewHolder.getAdapterPosition();
-            int toPosition = target.getAdapterPosition();
-
-            // TODO: the card list adapter has the deck we need, we can expose this from there which makes the actual call on the deck manager
-            // cast the recycler view to a CardListAdapter since it should always be that
-            // TODO: remove swapping as it is no longer in game deck manager
-            // deckManager.swap(fromPosition, toPosition);
-
-            recyclerView.getAdapter().notifyItemMoved(fromPosition, toPosition);
-            //Note, `this` was added to the payload to make the default fade animation not play
-            recyclerView.getAdapter().notifyItemChanged(fromPosition, this);
-            recyclerView.getAdapter().notifyItemChanged(toPosition, this);
-            return false;
-        }
-
-        @Override
-        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-
-        }
-    };
-
-  */
 
     private void setSubDeckTitle(DeckType deckType) {
         switch (deckType) {
@@ -204,23 +167,18 @@ public class EditGame extends AppCompatActivity implements CardListAdapter.OnCar
     }
 
     public void deckToDiscard(){
-        //Manager needs indexInDeck
-        //cardListAdapter.getSelectedCardPosition();
         deckManager.deckToDiscard(cardListAdapter.getSelectedCardPosition());
     }
 
     public void discardToTopOfDeck(){
-        //Manager needs indexInDiscard
         deckManager.discardToTopOfDeck(cardListAdapter.getSelectedCardPosition());
     }
 
     public void discardToDeckRandom(){
-        //Manager needs indexInDiscard
         deckManager.discardToDeckRandom(cardListAdapter.getSelectedCardPosition());
     }
 
     public void shuffleAddToTop(){
-        //Manager needs indexIn
         deckManager.shuffleAddToTop(cardListAdapter.getSelectedCardPosition());
     }
 

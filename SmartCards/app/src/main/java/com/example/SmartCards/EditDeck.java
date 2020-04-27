@@ -1,7 +1,6 @@
 package com.example.SmartCards;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -12,16 +11,10 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCardListener {
 
@@ -31,8 +24,6 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     public static final String SHARED_PREFS = "sharedPrefs";
     public static final String DECK_NAME = "deckName";
     public static final String IS_DECK_IN_MEMORY = "isDeckInMemory";
-
-    //public static List<PlayingCard> deck = new ArrayList<>();
 
     RecyclerView deckListView;
 
@@ -112,8 +103,6 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
             int fromPosition = viewHolder.getAdapterPosition();
             int toPosition = target.getAdapterPosition();
 
-            // TODO: the card list adapter has the deck we need, we can expose this from there which makes the actual call on the deck manager
-            // cast the recycler view to a CardListAdapter since it should always be that
             deckManager.swap(fromPosition, toPosition);
 
             recyclerView.getAdapter().notifyItemMoved(fromPosition,toPosition);
@@ -142,8 +131,7 @@ public class EditDeck extends AppCompatActivity implements CardListAdapter.OnCar
     public void onCardClick(int position) {
         Intent editCardIntent = new Intent(this, EditCard.class);
         Bundle extras = new Bundle();
-        // TODO: this will need to have the deck object passed as extra if singleton doesnt work
-//        extras.putSerializable(LandingPageActivity.DECK_MANAGER, deckManager);
+
         extras.putInt("position", position);
         editCardIntent.putExtras(extras);
         startActivityForResult(editCardIntent, RESULT_EDIT_CARD);

@@ -54,7 +54,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         SharedPreferences sharedPreferences = getSharedPreferences(EditDeck.SHARED_PREFS, MODE_PRIVATE);
         deckName = sharedPreferences.getString(EditDeck.DECK_NAME,"DeckName");
         deckNameText.setText(deckName);
-        updateSubdecks();
 
         deckManager = GameDeckManager.getInstance(this);
 
@@ -75,13 +74,9 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
         discardCountText.setText(String.valueOf(deckManager.size()));
     }
 
-    public void updateSubdecks(){
-        //updates all 3 subdecks to match what was downloaded from the pi
-    }
 
     public void restartGame(View view){
         //When game is restarted so all cards are back in Deck subdeck and shuffled
-        //TODO:Send restart command to pi
         deckManager.restartGame();
         deckManager.saveDeck(this);
         this.updateDeckCounts();
@@ -92,13 +87,11 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
 
     public void blockDock(){
         //When modifying subdecks, send message to dock to prevent it from flashing cards
-        //TODO:Send block command to pi
         LandingPageActivity.bluetooth_service.block();
     }
 
     public void unblockDock(){
         //When finished modifying subdecks, send message to dock to allow it to flash cards
-        //TODO:Send unblock command to pi
         LandingPageActivity.bluetooth_service.unblock();
     }
 
@@ -106,32 +99,12 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void modifySubdeck(DeckType deckType){
         if (LandingPageActivity.bluetooth_service.isConnected()) {
             if (LandingPageActivity.bluetooth_service.block() == BluetoothService.SEND_STATUS.SUCCESS) {
+
                 Intent intent = new Intent(this, EditGame.class);
-
-                //intent.putExtra("deckType", deckType);
-                //intent.putExtra("subdeck", (Serializable) deckManager.getDeck());
-
-                switch (deckType) {
-                    case DECK:
-                        intent.putExtra("subdeck", (Serializable) deckSubdeck);
-                        intent.putExtra("deckType", deckType);
-                        break;
-                    case INPLAY:
-                        intent.putExtra("subdeck", (Serializable) inPlaySubdeck);
-                        intent.putExtra("deckType", deckType);
-                        break;
-                    case DISCARD:
-                        intent.putExtra("subdeck", (Serializable) discardSubdeck);
-                        intent.putExtra("deckType", deckType);
-                        break;
-                    default:
-                        break;
-                }
-
+                intent.putExtra("deckType", deckType);
                 LandingPageActivity.bluetooth_service.getDeckList();
                 deckManager.loadDeck(null);
 
-                //startActivity(intent);
                 startActivityForResult(intent, RESULT_EDIT_GAME);
                 overridePendingTransition(R.anim.slide_in_top, R.anim.slide_out_bottom);
                 setResult(RESULT_OK, intent);
@@ -147,7 +120,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RESULT_EDIT_GAME || resultCode == RESULT_OK){
-            //TODO: Add whatever needs to happen everytime an 'editDeck' activity gets completed
             this.updateDeckCounts();
         }
     }
@@ -174,7 +146,6 @@ public class PlayActivity extends AppCompatActivity implements View.OnClickListe
     public void finish() {
         int counter = 0;
         while (counter++ < 5 && LandingPageActivity.bluetooth_service.getDeckList() == BluetoothService.SEND_STATUS.ERROR) {
-            // TODO: how do I actually sleep
             try {
                 TimeUnit.SECONDS.sleep(5);
             } catch (InterruptedException ie) {

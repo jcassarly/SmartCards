@@ -35,7 +35,6 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
         uploadedCardName = (EditText) findViewById(R.id.editCardNameField);
         uploadButton = (Button) findViewById(R.id.editCardButton);
 
-        // TODO: load in the deck manager into an instance variable
         deckManager = EditDeckManager.getInstance(this);
 
         imageUpload.setOnClickListener(this);
@@ -47,7 +46,6 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         if(v == imageUpload){
-            //Would like to get back to ACTION_PICK because it only gives you the image selector which is nicer, yet the URI permissions expire
             Intent galleryIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(galleryIntent, RESULT_LOAD_IMAGE);
         }
@@ -58,7 +56,7 @@ public class AddCard extends AppCompatActivity implements View.OnClickListener {
             }
             else {
                 PlayingCard newCard = new PlayingCard(this, uploadedCardName.getText().toString(), uploadedURI);
-                deckManager.addCard(newCard); // TODO: use the instance variable here
+                deckManager.addCard(newCard);
                 setResult(RESULT_OK);
                 this.finish();
             }
