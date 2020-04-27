@@ -1,6 +1,16 @@
 # SmartCards
 
-# Pinout
+An embedded system solution to simulate physical play cards digitally using ePaper displays
+
+## Description
+
+ePaper displays offer an almost identical physical experience to a traditional playing card, with several advantages you can only get with a software controlled system. SmartCards will address all of the above concerns except for cost. As of 2020, ePaper displays are still costly so unless you were to use these cards exclusively, it would be quite the investment. But as hardware becomes more accessible, this could soon be far more affordable, convenient, and environmentally friendly option than traditional print cards.
+
+To play a game with SmartCards, the user needs an Android Device, A raspberry pi dock, and enough eInk displays for the max number of concurrently used cards for the game you are trying to play (i.e.Texas Holdem with 2 players would require at least 9 cards). To create the deck that will be used, the user must find images of every card needed, and upload them to the app. Then when the game starts, players begin with all the displays being unused, and when they normally would draw from the deck, they take an unused card and place it into the dock. This will ‘draw’ a card from the deck and display the card face onto the display. Now the cards can be used just the same as a normal print playing card. If cards need to be discarded they can just be placed to the side in a graveyard/discard pile as normal. Now if all of the unused displays have had cards drawn onto them, the user can take any of those discarded cards, and stick them into the dock to ‘draw’ a new card. The system will keep track of which cards have been drawn and discarded and the user can view these lists from the app. Additionally, the app contains options for flashing chosen cards, shuffling, and moving cards to and from the discard and the deck. This design we believe can be used to emulate almost every playing card game.
+
+## Pinout
+
+The following table shows the PinOut on the Raspberry Pi for the SmartCards Dock
 
 |Pin Number|Pi Pin Function|External Connection|
 |:--:|:--|:--|
@@ -45,98 +55,6 @@
 |39|GND|LED Ground|
 |40|GPIO 21|NC|
 
-# App Enviroment
-Make sure to create `PYTHON` enviroment variable with the value that is the path to your python.exe. Must be at least V3.8.
+## Test Cases
 
-- AbstractDeckManager superclass
-    - protected void toFile() // same in both
-    - void loadDeckName(TextView deckName)
-    - abstract void saveDeck()
-    - abstract void loadDeck(Context context)
-    - abstract void getPrimaryDeck()
-    - abstract void getCard(int index) // gets the card from the primary deck
-    - abstract void swap(int fromPosition, int toPosition) // swaps in the primary deck
-    - abstract void size()
-
-
-- EditDeckManager extends AbstractDeckManager
-    - EditDeckManager getInstance(Context context)
-    - void clearDeckFromMemory(Context context)
-    - void setIsDeckInMemory(boolean bool)
-    - static int getNextID(Context context)
-    - static void resetIDs(Context context)
-    - void saveDeckName(TextView deckName)
-    - void addCard(PlayingCard card)
-    - void remove(PlayingCard card)
-
-- GameDeckManager extends AbstractDeckManager
-    - GameDeckManager getInstance(Context context)
-    - void setPrimaryDeck(subDeck sd)
-    - void restartGame()
-    - void shuffleDeck()
-    - void shuffleInDiscard()
-    - void deckToDiscard(int deckIndex) // to top of discard
-    - void discardToTopOfDeck(int indexInDiscard)
-    - void discardToDeckRandom(int indexInDiscard)
-
-# Gettin the images baybeee
-
-- whenever we go to edit deck or play game, need to check if connected and not move if not connected
-    - when we finish and are sending the image files, we should keep trying until its not busy - so wait
-    - maybe want to send a toast to say its busy
-        - if this works, should be able to also send toasts while uploading/saving images
-- whenever we go from landing page to play game - need to override the images on the pi
-    - also need to not go to this page if we are not connected via bluetooth
-        - if not connected, dont change pages
-    - if its busy when we override, jsut dont change pages and send a toast to say that
-- whenever we go to edit one of the list on the play game screen,
-    - lock the pi
-    - we should get the pi json and save that and then load it
-
-    - if we get busy after locking, then just dont go to the edit screen and pop up a toast
-- whenever we finish making an edit to the deck (clicking one of the manipulation buttons)
-    - we need to save the changes
-    - we need to send those down to the pi
-    - then unlock the pi
-
-    - no need to error checking - pi could not lock the deck
-- when restart game is clicked, just make the changes, save, and override
-    - if the pi is locked, then just make a toast and dont do it
-- whenever we go from the play game screen to the landing page, need to get the pi's version of the deck
-    - keep trying until not busy
-    - this should be in the finish method
-        - call before super.finish
-- need to update the deck numbers whenever the play game screen loads
-
-
-# Demo
-
-Before Demo
-- add all the hearts except KH, QH, JH, 10H
-- get on 4G
-- download an image of lightning bolt
-- put cards that need to be uploaded in easier to access folder
-
-1. Connect ot bluetooth
-1. add the rest of the hearts, except that JH was actually added as JS (image and text)
-1. fix JS to be JH (image and text)
-1. name the deck "demo"
-1. save the deck
-1. go to play game
-1. open the deck and shuffle
-1. repeat the last step to show that it changed
-1. open the deck and note the next 4 cards to draw and go back to the play game screen
-1. flash a card onto a display
-1. flash a card onto another display
-1. flash a card on yet another display
-1. show the in play list is updated and deck list has decremented (open both)
-1. flash a card onto the first display
-1. show that the card that was on that display in the inplay list is in the discard and the 4th card in the deck was drawn into play
-1. go to discard, add the card to the top of the deck and then flash it onto the 4th display
-1. show the changes to the discard
-1. turn on clear mode
-1. discard 2 of the images and show the discard and inplay to prove it worked
-1. restart the game and show the deck list to prove it worked
-1. go back and edit deck and upload a magic card
-
-
+See the [test plan](./test_plan.md) for more information
