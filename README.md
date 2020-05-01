@@ -2,6 +2,8 @@
 
 An embedded system solution to simulate physical play cards digitally using ePaper displays
 
+You can see a video demo of it [here](https://www.youtube.com/watch?v=mQfrvQA3OFU)
+
 ## Description
 
 ePaper displays offer an almost identical physical experience to a traditional playing card, with several advantages you can only get with a software controlled system. SmartCards will address all of the above concerns except for cost. As of 2020, ePaper displays are still costly so unless you were to use these cards exclusively, it would be quite the investment. But as hardware becomes more accessible, this could soon be far more affordable, convenient, and environmentally friendly option than traditional print cards.
